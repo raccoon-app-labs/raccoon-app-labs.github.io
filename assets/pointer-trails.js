@@ -3,7 +3,8 @@
   const reduced = matchMedia('(prefers-reduced-motion: reduce)');
   const fine = matchMedia('(any-pointer: fine)');
   const theme = document.body.dataset.product;
-  const motifs = {stories:'✦',keys:['木','氵','口','日'],bloom:'✿',neon:['+','◇','⌁'],food:'❧',dokupit:'✓',muropolis:'paw'};
+  const bloomWords = ['你好','学习','朋友','谢谢','书','人','我','你'];
+  const motifs = {stories:'✦',keys:['木','氵','口','日'],bloom:['学','词','你好','书','HSK'],neon:['+','◇','⌁'],food:'❧',dokupit:'✓',muropolis:'paw'};
   if (motifs[theme]) {
     const background = document.createElement('div');
     background.className = 'page-atmosphere';background.setAttribute('aria-hidden','true');
@@ -48,8 +49,8 @@
       } else if (theme==='keys') {
         ctx.beginPath();ctx.arc(-3,0,3.7,0,Math.PI*2);ctx.stroke();ctx.beginPath();ctx.moveTo(.8,0);ctx.lineTo(9,0);ctx.lineTo(9,3);ctx.moveTo(5,0);ctx.lineTo(5,2.5);ctx.stroke();
       } else if (theme==='bloom') {
-        for(let i=0;i<5;i++){ctx.save();ctx.rotate(i*Math.PI*2/5);ellipse(0,-4,2.5,4);ctx.restore();}
-        ctx.fillStyle='#ffd77b';ellipse(0,0,2);
+        ctx.font='16px "Noto Serif SC", "SimSun", serif';ctx.textAlign='center';ctx.textBaseline='middle';
+        ctx.globalAlpha=fade*.5;ctx.fillText(p.word,0,0);
       } else if (theme==='neon') {
         ctx.shadowColor=p.color;ctx.shadowBlur=8;ctx.beginPath();ctx.moveTo(-7,0);ctx.lineTo(5,0);ctx.stroke();ctx.beginPath();ctx.moveTo(0,-4);ctx.lineTo(0,4);ctx.stroke();
       } else if (theme==='food') {
@@ -66,14 +67,15 @@
     const now=performance.now(), point={x:e.clientX,y:e.clientY};
     if(!previous){previous=point;return;}
     const dx=point.x-previous.x,dy=point.y-previous.y,distance=Math.hypot(dx,dy);
-    const spacing=theme==='muropolis'?25:theme==='neon'?14:22;
+    const spacing=theme==='muropolis'?25:theme==='neon'?14:theme==='bloom'?35:22;
     if(distance<spacing||now-lastSpawn<22)return;
     // Place impressions along the actual pointer path, alternating left and right paws.
     const angle=Math.atan2(dy,dx), count=Math.min(5,Math.floor(distance/spacing));
     for(let i=1;i<=count;i++){
       const fraction=i/count,side=theme==='muropolis'?(step++%2?5:-5):0;
-      const scatterX=theme==='stories'?(Math.random()-.5)*38:0,scatterY=theme==='stories'?(Math.random()-.5)*38:0;
-      particles.push({x:previous.x+dx*fraction-Math.sin(angle)*side+scatterX,y:previous.y+dy*fraction+Math.cos(angle)*side+scatterY,born:now,life:theme==='stories'?1300+Math.random()*700:theme==='neon'?650:1200,angle:theme==='muropolis'?angle+Math.PI/2:angle,size:theme==='muropolis'?1.15:theme==='stories'?.55+Math.random()*1.7:.8+Math.random()*.35,spin:(Math.random()-.5)*2,seed:Math.random()*6,color:palettes[theme][Math.floor(Math.random()*2)]});
+      const scatterRange=theme==='bloom'?90:theme==='stories'?38:0;
+      const scatterX=(Math.random()-.5)*scatterRange,scatterY=(Math.random()-.5)*scatterRange;
+      particles.push({x:previous.x+dx*fraction-Math.sin(angle)*side+scatterX,y:previous.y+dy*fraction+Math.cos(angle)*side+scatterY,born:now,life:theme==='stories'?1300+Math.random()*700:theme==='bloom'?1100+Math.random()*800:theme==='neon'?650:1200,angle:theme==='muropolis'?angle+Math.PI/2:theme==='bloom'?(Math.random()-.5)*.3:angle,size:theme==='muropolis'?1.15:theme==='stories'?.55+Math.random()*1.7:theme==='bloom'?.7+Math.random()*.55:.8+Math.random()*.35,spin:(Math.random()-.5)*(theme==='bloom'?.3:2),seed:Math.random()*6,color:palettes[theme][Math.floor(Math.random()*2)],word:theme==='bloom'?bloomWords[Math.floor(Math.random()*bloomWords.length)]:null});
     }
     particles=particles.slice(-64);previous=point;lastSpawn=now;
     if(!frame)frame=requestAnimationFrame(draw);

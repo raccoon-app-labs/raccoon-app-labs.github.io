@@ -21,7 +21,7 @@ body.product-neon .hero-scene:before{background:linear-gradient(135deg,#65f4df0d
 .ambient-motif{position:absolute;left:var(--x);top:var(--y);width:var(--size);height:var(--size);color:var(--accent);opacity:.09;display:grid;place-items:center;font-family:Georgia,'SimSun',serif;font-size:var(--size);line-height:1;animation:world-drift var(--duration) ease-in-out infinite;animation-delay:var(--delay);transform:rotate(var(--angle));user-select:none}
 .ambient-motif svg{width:100%;height:100%;fill:currentColor}
 .product-stories .ambient-motif{font-size:18px;filter:drop-shadow(0 0 7px #efc58088);animation-name:world-firefly;opacity:.25}
-.product-bloom .ambient-motif{animation-name:world-petal;opacity:.11}
+.product-bloom .ambient-motif{animation-name:world-drift;font-size:calc(var(--size)*.6);width:auto;min-width:var(--size);white-space:nowrap;opacity:.09}
 .product-neon .page-atmosphere:before{content:'';position:absolute;inset:0;background-image:linear-gradient(#76efec06 1px,transparent 1px),linear-gradient(90deg,#76efec06 1px,transparent 1px);background-size:70px 70px;mask-image:linear-gradient(transparent,#0008,transparent)}
 .product-neon .ambient-motif{font-family:monospace;color:#76efec;animation-name:world-neon;opacity:.12}
 .product-dokupit .ambient-motif{font-family:system-ui;border:1px solid #8bd5c035;border-radius:12px;font-size:calc(var(--size)*.55)}
