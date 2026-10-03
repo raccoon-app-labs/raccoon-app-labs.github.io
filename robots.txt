@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://enotessa.github.io/raccoon.app.labs.io/sitemap.xml
+Sitemap: https://raccoon-app-labs.github.io/sitemap.xml
