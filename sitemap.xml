@@ -1,16 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url>
-    <loc>https://raccoon-app-labs.github.io/</loc>
-    <lastmod>2026-10-03</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>1.0</priority>
-  </url>
-  <url><loc>https://raccoon-app-labs.github.io/apps/magical-stories/</loc><lastmod>2026-10-03</lastmod><changefreq>monthly</changefreq><priority>0.8</priority></url>
-  <url><loc>https://raccoon-app-labs.github.io/apps/hanzi-keys/</loc><lastmod>2026-10-03</lastmod><changefreq>monthly</changefreq><priority>0.8</priority></url>
-  <url><loc>https://raccoon-app-labs.github.io/apps/hanzi-bloom/</loc><lastmod>2026-10-03</lastmod><changefreq>monthly</changefreq><priority>0.8</priority></url>
-  <url><loc>https://raccoon-app-labs.github.io/apps/muropolis/</loc><lastmod>2026-10-03</lastmod><changefreq>monthly</changefreq><priority>0.8</priority></url>
-  <url><loc>https://raccoon-app-labs.github.io/apps/neon-cyber-wall-kicker/</loc><lastmod>2026-10-03</lastmod><changefreq>monthly</changefreq><priority>0.8</priority></url>
-  <url><loc>https://raccoon-app-labs.github.io/apps/what-to-eat/</loc><lastmod>2026-10-03</lastmod><changefreq>monthly</changefreq><priority>0.8</priority></url>
-  <url><loc>https://raccoon-app-labs.github.io/apps/dokupit/</loc><lastmod>2026-10-03</lastmod><changefreq>monthly</changefreq><priority>0.8</priority></url>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">
+  <url><loc>https://raccoon-app-labs.github.io/</loc><lastmod>2026-10-04</lastmod></url>
+  <url><loc>https://raccoon-app-labs.github.io/apps/magical-stories/</loc><lastmod>2026-10-04</lastmod><xhtml:link rel="alternate" hreflang="ru" href="https://raccoon-app-labs.github.io/apps/magical-stories/"/><xhtml:link rel="alternate" hreflang="en" href="https://raccoon-app-labs.github.io/en/apps/magical-stories/"/></url>
+  <url><loc>https://raccoon-app-labs.github.io/en/apps/magical-stories/</loc><lastmod>2026-10-04</lastmod><xhtml:link rel="alternate" hreflang="ru" href="https://raccoon-app-labs.github.io/apps/magical-stories/"/><xhtml:link rel="alternate" hreflang="en" href="https://raccoon-app-labs.github.io/en/apps/magical-stories/"/></url>
+  <url><loc>https://raccoon-app-labs.github.io/apps/hanzi-keys/</loc><lastmod>2026-10-04</lastmod><xhtml:link rel="alternate" hreflang="ru" href="https://raccoon-app-labs.github.io/apps/hanzi-keys/"/><xhtml:link rel="alternate" hreflang="en" href="https://raccoon-app-labs.github.io/en/apps/hanzi-keys/"/></url>
+  <url><loc>https://raccoon-app-labs.github.io/en/apps/hanzi-keys/</loc><lastmod>2026-10-04</lastmod><xhtml:link rel="alternate" hreflang="ru" href="https://raccoon-app-labs.github.io/apps/hanzi-keys/"/><xhtml:link rel="alternate" hreflang="en" href="https://raccoon-app-labs.github.io/en/apps/hanzi-keys/"/></url>
+  <url><loc>https://raccoon-app-labs.github.io/apps/hanzi-bloom/</loc><lastmod>2026-10-04</lastmod><xhtml:link rel="alternate" hreflang="ru" href="https://raccoon-app-labs.github.io/apps/hanzi-bloom/"/><xhtml:link rel="alternate" hreflang="en" href="https://raccoon-app-labs.github.io/en/apps/hanzi-bloom/"/></url>
+  <url><loc>https://raccoon-app-labs.github.io/en/apps/hanzi-bloom/</loc><lastmod>2026-10-04</lastmod><xhtml:link rel="alternate" hreflang="ru" href="https://raccoon-app-labs.github.io/apps/hanzi-bloom/"/><xhtml:link rel="alternate" hreflang="en" href="https://raccoon-app-labs.github.io/en/apps/hanzi-bloom/"/></url>
+  <url><loc>https://raccoon-app-labs.github.io/apps/muropolis/</loc><lastmod>2026-10-04</lastmod><xhtml:link rel="alternate" hreflang="ru" href="https://raccoon-app-labs.github.io/apps/muropolis/"/><xhtml:link rel="alternate" hreflang="en" href="https://raccoon-app-labs.github.io/en/apps/muropolis/"/></url>
+  <url><loc>https://raccoon-app-labs.github.io/en/apps/muropolis/</loc><lastmod>2026-10-04</lastmod><xhtml:link rel="alternate" hreflang="ru" href="https://raccoon-app-labs.github.io/apps/muropolis/"/><xhtml:link rel="alternate" hreflang="en" href="https://raccoon-app-labs.github.io/en/apps/muropolis/"/></url>
+  <url><loc>https://raccoon-app-labs.github.io/apps/neon-cyber-wall-kicker/</loc><lastmod>2026-10-04</lastmod><xhtml:link rel="alternate" hreflang="ru" href="https://raccoon-app-labs.github.io/apps/neon-cyber-wall-kicker/"/><xhtml:link rel="alternate" hreflang="en" href="https://raccoon-app-labs.github.io/en/apps/neon-cyber-wall-kicker/"/></url>
+  <url><loc>https://raccoon-app-labs.github.io/en/apps/neon-cyber-wall-kicker/</loc><lastmod>2026-10-04</lastmod><xhtml:link rel="alternate" hreflang="ru" href="https://raccoon-app-labs.github.io/apps/neon-cyber-wall-kicker/"/><xhtml:link rel="alternate" hreflang="en" href="https://raccoon-app-labs.github.io/en/apps/neon-cyber-wall-kicker/"/></url>
+  <url><loc>https://raccoon-app-labs.github.io/apps/what-to-eat/</loc><lastmod>2026-10-04</lastmod><xhtml:link rel="alternate" hreflang="ru" href="https://raccoon-app-labs.github.io/apps/what-to-eat/"/><xhtml:link rel="alternate" hreflang="en" href="https://raccoon-app-labs.github.io/en/apps/what-to-eat/"/></url>
+  <url><loc>https://raccoon-app-labs.github.io/en/apps/what-to-eat/</loc><lastmod>2026-10-04</lastmod><xhtml:link rel="alternate" hreflang="ru" href="https://raccoon-app-labs.github.io/apps/what-to-eat/"/><xhtml:link rel="alternate" hreflang="en" href="https://raccoon-app-labs.github.io/en/apps/what-to-eat/"/></url>
+  <url><loc>https://raccoon-app-labs.github.io/apps/dokupit/</loc><lastmod>2026-10-04</lastmod><xhtml:link rel="alternate" hreflang="ru" href="https://raccoon-app-labs.github.io/apps/dokupit/"/><xhtml:link rel="alternate" hreflang="en" href="https://raccoon-app-labs.github.io/en/apps/dokupit/"/></url>
+  <url><loc>https://raccoon-app-labs.github.io/en/apps/dokupit/</loc><lastmod>2026-10-04</lastmod><xhtml:link rel="alternate" hreflang="ru" href="https://raccoon-app-labs.github.io/apps/dokupit/"/><xhtml:link rel="alternate" hreflang="en" href="https://raccoon-app-labs.github.io/en/apps/dokupit/"/></url>
 </urlset>
