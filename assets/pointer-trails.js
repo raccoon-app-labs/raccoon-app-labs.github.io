@@ -38,9 +38,11 @@
       ctx.save();ctx.translate(p.x+(theme==='muropolis'?0:Math.sin(age*5+p.seed)*age*13),p.y+(theme==='muropolis'?0:-age*23));
       ctx.rotate(p.angle+(theme==='muropolis'?0:age*p.spin));ctx.scale(p.size,p.size);ctx.fillStyle=p.color;ctx.strokeStyle=p.color;ctx.globalAlpha=fade*(theme==='muropolis'?.35:.65);ctx.lineWidth=1.7;
       if (theme==='stories') {
-        ctx.globalAlpha=fade*.12;ellipse(0,0,13,13);ctx.globalAlpha=fade*.72;
-        ctx.shadowColor=p.color;ctx.shadowBlur=12;ellipse(0,0,2.3,3.2);ctx.shadowBlur=0;
-        ctx.globalAlpha=fade*.38;ctx.fillStyle='#fff8d8';ellipse(-3,-2,3,1.6);ellipse(3,-2,3,1.6);
+        // Scattered round lights, not insects: a soft halo around a tiny luminous dot.
+        const glow=ctx.createRadialGradient(0,0,0,0,0,10);
+        glow.addColorStop(0,p.color+'80');glow.addColorStop(.3,p.color+'30');glow.addColorStop(1,p.color+'00');
+        ctx.globalAlpha=fade;ctx.fillStyle=glow;ellipse(0,0,10,10);
+        ctx.fillStyle='#fffbd9';ctx.globalAlpha=fade*.85;ctx.shadowColor=p.color;ctx.shadowBlur=10;ellipse(0,0,1.7,1.7);ctx.shadowBlur=0;
       } else if (theme==='muropolis') {
         ellipse(0,2.5,4.7,3.7);ellipse(-5,-2,1.8,2.4);ellipse(-2,-5,1.8,2.4);ellipse(2,-5,1.8,2.4);ellipse(5,-2,1.8,2.4);
       } else if (theme==='keys') {
@@ -70,7 +72,8 @@
     const angle=Math.atan2(dy,dx), count=Math.min(5,Math.floor(distance/spacing));
     for(let i=1;i<=count;i++){
       const fraction=i/count,side=theme==='muropolis'?(step++%2?5:-5):0;
-      particles.push({x:previous.x+dx*fraction-Math.sin(angle)*side,y:previous.y+dy*fraction+Math.cos(angle)*side,born:now,life:theme==='stories'?1600:theme==='neon'?650:1200,angle:theme==='muropolis'?angle+Math.PI/2:angle,size:theme==='muropolis'?1.15:.8+Math.random()*.35,spin:(Math.random()-.5)*2,seed:Math.random()*6,color:palettes[theme][Math.floor(Math.random()*2)]});
+      const scatterX=theme==='stories'?(Math.random()-.5)*38:0,scatterY=theme==='stories'?(Math.random()-.5)*38:0;
+      particles.push({x:previous.x+dx*fraction-Math.sin(angle)*side+scatterX,y:previous.y+dy*fraction+Math.cos(angle)*side+scatterY,born:now,life:theme==='stories'?1300+Math.random()*700:theme==='neon'?650:1200,angle:theme==='muropolis'?angle+Math.PI/2:angle,size:theme==='muropolis'?1.15:theme==='stories'?.55+Math.random()*1.7:.8+Math.random()*.35,spin:(Math.random()-.5)*2,seed:Math.random()*6,color:palettes[theme][Math.floor(Math.random()*2)]});
     }
     particles=particles.slice(-64);previous=point;lastSpawn=now;
     if(!frame)frame=requestAnimationFrame(draw);
