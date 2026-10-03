@@ -1,0 +1,113 @@
+/* Shared phone layout, loaded last on the portfolio and every product page. */
+@media(max-width:760px){
+  html{scroll-padding-top:82px;text-size-adjust:100%;-webkit-text-size-adjust:100%}
+  body{min-width:320px}
+  .shell{width:calc(100% - 32px);max-width:640px}
+  h1,h2,h3,.lead,.intro,.section-copy,.related,.app-pair-heading{overflow-wrap:break-word}
+  .hero-copy,.hero>div,.app-main>div,.app-pair,.value-card{min-width:0}
+  footer{overflow-wrap:anywhere;padding-bottom:max(28px,env(safe-area-inset-bottom))}
+  button,a,input,select{-webkit-tap-highlight-color:transparent}
+  body[data-product] .site-header{padding:10px max(16px,env(safe-area-inset-left));min-height:72px;gap:8px}
+  body[data-product] .brand{gap:7px;font-size:12px;flex-shrink:1}
+  body[data-product] .brand img{width:28px;height:28px;flex-shrink:0}
+  body[data-product] .header-tools{gap:8px;flex-shrink:0}
+  body[data-product] .language-switch{gap:0;padding:2px}
+  body[data-product] .language-switch a{min-width:42px;min-height:44px;display:grid;place-items:center;padding:5px 9px}
+  body[data-product] .hero{padding-top:30px;gap:24px}
+  body[data-product] h1{font-size:clamp(35px,9.1vw,56px);line-height:1.1;letter-spacing:-.045em}
+  body.product-neon h1{font-size:clamp(39px,10vw,62px)}
+  body[data-product] .lead{font-size:16px;line-height:1.65;margin:20px 0 24px}
+  body[data-product] .hero-scene{width:100%;max-width:420px;min-height:340px;overflow:clip;border-radius:24px}
+  body[data-product] .hero-scene:before{inset:5% 0}
+  body[data-product] .screen-fan{width:78%;height:320px}
+  body[data-product] .scene-note{left:8%;right:8%;max-width:none;font-size:11px}
+  body.product-stories .hero-scene{min-height:260px}
+  body.product-stories .screen-fan{height:235px;width:84%}
+  body.product-stories .fan-image{top:65px}
+  body.product-stories .fan-back{top:20px}
+  body[data-product] .store-link{flex:1 1 145px;justify-content:center;min-height:54px;padding:12px;font-size:16px}
+  body[data-product] .store-link small{font-size:11px}
+  body[data-product] .try-link{min-height:44px;line-height:1.5;margin-top:14px}
+  body[data-product] .carousel-toolbar{flex-wrap:wrap;row-gap:10px}
+  body[data-product] .carousel-button{width:44px;height:44px}
+  body[data-product] .gallery{touch-action:pan-x pan-y;scroll-padding-inline:2px}
+  body[data-product] .shot.portrait{width:min(76vw,310px)}
+  body[data-product] .shot.landscape{width:min(82vw,520px)}
+  body[data-product] .faq-list summary{padding-block:20px;font-size:16px}
+  body[data-product] .closing{padding-inline:18px}
+  .native-app{max-width:440px;border-radius:22px}
+  .native-app select,.native-app input{font-size:16px;min-height:44px}
+  .native-app button{min-height:44px}
+  .native-header{padding:20px 16px 14px;gap:10px}
+  .native-header h3{font-size:25px}
+  .native-header img{width:54px;height:54px;flex-shrink:0}
+  .native-app .native-nav{font-size:11px;gap:0}
+  .native-app .native-nav>span>span{padding-inline:10px}
+  .native-bloom .part-button{width:clamp(92px,28vw,112px);height:112px}
+  .native-bloom .split-parts{gap:14px}
+  .native-bloom .native-tabs{flex-wrap:wrap}
+  .native-stories .native-reader{min-height:570px}
+  .native-reader .reader-top{padding:12px;gap:6px}
+  .native-reader .reader-bubble{font-size:10px;padding:8px}
+  .native-reader .reader-title-bubble{max-width:165px;padding:8px}
+  .native-reader .reader-title-bubble strong{font-size:12px}
+  .native-reader .reader-overlay{padding:18px 12px 12px}
+  .native-reader .reader-overlay>[data-story-text]{font-size:16px;line-height:1.55;padding:14px;min-height:0}
+  .native-reader [data-story-prev],.native-reader [data-story-next]{width:44px;flex-shrink:0}
+  .native-city .native-resources{gap:3px;padding-inline:8px}
+  .native-city .native-resources img{width:23px;height:26px}
+  .native-city .native-nav{font-size:10px}
+  .native-city .city-palette{flex-wrap:wrap}
+  .native-neon .neon-controls{flex-wrap:wrap}
+  .native-neon .neon-jump{min-height:52px}
+  /* Portfolio: content first, compact mascot, and swipeable uncut screenshots. */
+  body:not([data-product]) header{gap:8px;min-height:76px}
+  body:not([data-product]) .brand{font-size:13px;gap:6px}
+  body:not([data-product]) .brand-mark{width:30px;height:30px;flex-shrink:0}
+  body:not([data-product]) .brand-mark img{width:30px;height:30px}
+  body:not([data-product]) .nav-links{display:none}
+  body:not([data-product]) .header-tools{gap:0;flex-shrink:0}
+  body:not([data-product]) .language-switch{width:100px;height:48px}
+  body:not([data-product]) .language-switch:before{width:45px;height:38px;transform:translateX(calc(var(--side)*45px))}
+  body:not([data-product]) .language-switch button{height:40px;min-width:44px}
+  body:not([data-product]) .hero{grid-template-columns:minmax(0,1fr);min-height:0;padding:24px 0 44px;gap:30px}
+  body:not([data-product]) .visual{order:2;width:min(245px,70vw);margin-inline:auto}
+  body:not([data-product]) h1{font-size:clamp(38px,11.5vw,64px);line-height:1.08;letter-spacing:-.055em}
+  body:not([data-product]) .eyebrow{font-size:10px;letter-spacing:.12em;gap:8px}
+  body:not([data-product]) .eyebrow:before{width:22px;flex-shrink:0}
+  body:not([data-product]) .hero-actions{margin-top:24px;gap:10px}
+  body:not([data-product]) .hero-cta{justify-content:center;flex:1 1 140px}
+  body:not([data-product]) .section-top{grid-template-columns:1fr;gap:18px}
+  body:not([data-product]) .section-top h2,body:not([data-product]) .values h2{font-size:clamp(32px,8.5vw,46px)}
+  body:not([data-product]) .showcase{padding:58px 0 64px}
+  body:not([data-product]) .app-card,body:not([data-product]) .app-card.wide,body:not([data-product]) .app-card.feature{grid-column:1/-1;min-height:0;padding:20px;border-radius:24px}
+  body:not([data-product]) .app-pair{grid-template-columns:minmax(0,1fr)}
+  body:not([data-product]) .app-pair .app-card{grid-column:1}
+  body:not([data-product]) .app-main{grid-template-columns:64px minmax(0,1fr);display:grid;gap:14px;align-items:start;margin:26px 0 20px}
+  body:not([data-product]) .app-icon-frame{width:64px;height:64px;margin:0;border-radius:20px}
+  body:not([data-product]) .app-icon{border-radius:15px}
+  body:not([data-product]) .app-card h3{font-size:clamp(23px,6.5vw,30px)}
+  body:not([data-product]) .app-main p{grid-column:1/-1;font-size:14px}
+  body:not([data-product]) .app-main>div:not(.app-icon-frame){display:contents}
+  body:not([data-product]) .app-main h3{grid-column:2;align-self:center}
+  body:not([data-product]) .app-gallery{display:flex;height:auto;overflow-x:auto;scroll-snap-type:x mandatory;overscroll-behavior-inline:contain;scrollbar-width:thin;gap:10px;padding:9px;touch-action:pan-x pan-y}
+  body:not([data-product]) .app-gallery .shot{flex:0 0 78%;scroll-snap-align:start;aspect-ratio:560/996}
+  body:not([data-product]) .stories .app-gallery .shot{flex-basis:94%;aspect-ratio:16/9}
+  body:not([data-product]) .store-links{flex-wrap:wrap;gap:10px}
+  body:not([data-product]) .store-link{flex:1 1 140px;min-height:48px;justify-content:center}
+  body:not([data-product]) .filter{min-height:44px}
+  body:not([data-product]) .value-grid{grid-template-columns:1fr}
+  body:not([data-product]) .project-pages{padding:18px;margin-bottom:60px}
+  body:not([data-product]) .project-page-links a{min-height:44px;display:flex;align-items:center;line-height:1.4}
+}
+@media(max-width:360px){
+  .shell{width:calc(100% - 28px)}
+  body[data-product] .site-header{padding-inline:12px}
+  body[data-product] .brand{font-size:11px}
+  body:not([data-product]) .brand{font-size:12px}
+  body:not([data-product]) .app-main{grid-template-columns:54px minmax(0,1fr);gap:12px}
+  body:not([data-product]) .app-icon-frame{width:54px;height:54px}
+  body:not([data-product]) .card-head{gap:8px;flex-wrap:wrap}
+  .native-reader .reader-title-bubble{max-width:140px}
+}
+@media(max-height:500px) and (orientation:landscape){body[data-product] .site-header{position:relative}.page-atmosphere{opacity:.65}}
