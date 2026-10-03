@@ -3,6 +3,20 @@
   const reduced = matchMedia('(prefers-reduced-motion: reduce)');
   const fine = matchMedia('(any-pointer: fine)');
   const theme = document.body.dataset.product;
+  const motifs = {stories:'✦',keys:['木','氵','口','日'],bloom:'✿',neon:['+','◇','⌁'],food:'❧',dokupit:'✓',muropolis:'paw'};
+  if (motifs[theme]) {
+    const background = document.createElement('div');
+    background.className = 'page-atmosphere';background.setAttribute('aria-hidden','true');
+    for (let i=0;i<12;i++) {
+      const motif=document.createElement('span');motif.className='ambient-motif';
+      const symbols=motifs[theme];
+      if(theme==='muropolis') motif.innerHTML='<svg viewBox="0 0 32 32"><ellipse cx="16" cy="22" rx="8" ry="6"/><ellipse cx="6" cy="14" rx="3" ry="4"/><ellipse cx="12" cy="7" rx="3" ry="4"/><ellipse cx="21" cy="7" rx="3" ry="4"/><ellipse cx="27" cy="14" rx="3" ry="4"/></svg>';
+      else motif.textContent=Array.isArray(symbols)?symbols[i%symbols.length]:symbols;
+      motif.style.cssText=`--x:${4+(i*29)%91}%;--y:${6+(i*23)%88}%;--size:${30+(i*13)%40}px;--duration:${15+i%5*3}s;--delay:-${i*3}s;--angle:${i*19%65-32}deg`;
+      background.append(motif);
+    }
+    document.body.prepend(background);
+  }
   const palettes = {stories: ['#ffd97a','#c9ffaf'], muropolis: ['#ad7857','#bd8b69'], keys: ['#c8523e','#e8ad53'], bloom: ['#dc8e9c','#65aa82'], neon: ['#46edff','#cf7dff'], food: ['#81af74','#e49f65'], dokupit: ['#65a891','#df9c78']};
   if (!palettes[theme] || reduced.matches || !fine.matches) return;
   const canvas = document.createElement('canvas');

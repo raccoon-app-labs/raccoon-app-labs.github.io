@@ -1,0 +1,33 @@
+/* A shared evening brightness, with a distinct palette for each app. */
+body[data-product]{--paper:#111725;--ink:#f0f1f7;--muted:#b2b8ca;--line:#ffffff20;--card:#1b2333;--tint:#253043;color:var(--ink);color-scheme:dark;isolation:isolate;background:var(--paper)}
+body.product-stories{--paper:#111626;--ink:#fff3df;--muted:#c1bbcf;--accent:#efc580;--card:#202139;--tint:#302a46;--glow:#785baa}
+body.product-keys{--paper:#171522;--ink:#fff0e8;--muted:#c8b8bb;--accent:#f29a7f;--card:#27212e;--tint:#392b35;--glow:#ba6051}
+body.product-bloom{--paper:#121b22;--ink:#ecf6ed;--muted:#b2c5be;--accent:#8dd6ad;--card:#1e2b30;--tint:#293c38;--glow:#539d81}
+body.product-muropolis{--paper:#151c24;--ink:#f8f0dd;--muted:#bfc5b8;--accent:#a3d5b0;--card:#242e33;--tint:#354038;--glow:#91aa70}
+body.product-neon{--paper:#101626;--ink:#e8faff;--muted:#b1bdd4;--accent:#76efec;--card:#1b2337;--tint:#203448;--glow:#536bc3}
+body.product-food{--paper:#1b1822;--ink:#fff0e3;--muted:#cbbeb4;--accent:#eeb08b;--card:#2d2630;--tint:#3d3035;--glow:#ac775c}
+body.product-dokupit{--paper:#151b25;--ink:#edf7f4;--muted:#b5c7c5;--accent:#8bd5c0;--card:#232e38;--tint:#2c3d42;--glow:#579b94}
+body[data-product] main,body[data-product] footer{position:relative;z-index:1}
+body[data-product] .site-header{background:var(--paper);box-shadow:0 8px 35px #00000018}
+body[data-product] .hero-scene:before{background:radial-gradient(ellipse,var(--tint),transparent 75%);border-color:var(--line)}
+body.product-keys .hero-scene:before{background:repeating-linear-gradient(90deg,#f29a7f05 0 49px,#f29a7f18 49px 50px),repeating-linear-gradient(0deg,#f29a7f05 0 49px,#f29a7f18 49px 50px);border:1px solid #f29a7f15;border-radius:22px}
+body.product-bloom .hero-scene:before{background:radial-gradient(ellipse,#36664b55,transparent 70%);border:1px dashed #8dd6ad30}
+body.product-muropolis .hero-scene:before{background:radial-gradient(ellipse,#859b4c30,transparent 72%)}
+body.product-neon .hero-scene:before{background:linear-gradient(135deg,#65f4df0d,#c048fc18);border:1px solid #68f4e036}
+/* Native demos and store screenshots remain faithful to the actual apps. */
+.native-app{color-scheme:light;--muted:#716f68}
+.native-app.native-neon{color-scheme:dark;--muted:#9ba9c2}
+.page-atmosphere{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden;contain:strict;background:radial-gradient(ellipse at 85% 10%,color-mix(in srgb,var(--glow) 12%,transparent),transparent 55%),radial-gradient(ellipse at 5% 80%,color-mix(in srgb,var(--glow) 7%,transparent),transparent 50%)}
+.ambient-motif{position:absolute;left:var(--x);top:var(--y);width:var(--size);height:var(--size);color:var(--accent);opacity:.09;display:grid;place-items:center;font-family:Georgia,'SimSun',serif;font-size:var(--size);line-height:1;animation:world-drift var(--duration) ease-in-out infinite;animation-delay:var(--delay);transform:rotate(var(--angle));user-select:none}
+.ambient-motif svg{width:100%;height:100%;fill:currentColor}
+.product-stories .ambient-motif{font-size:18px;filter:drop-shadow(0 0 7px #efc58088);animation-name:world-firefly;opacity:.25}
+.product-bloom .ambient-motif{animation-name:world-petal;opacity:.11}
+.product-neon .page-atmosphere:before{content:'';position:absolute;inset:0;background-image:linear-gradient(#76efec06 1px,transparent 1px),linear-gradient(90deg,#76efec06 1px,transparent 1px);background-size:70px 70px;mask-image:linear-gradient(transparent,#0008,transparent)}
+.product-neon .ambient-motif{font-family:monospace;color:#76efec;animation-name:world-neon;opacity:.12}
+.product-dokupit .ambient-motif{font-family:system-ui;border:1px solid #8bd5c035;border-radius:12px;font-size:calc(var(--size)*.55)}
+@keyframes world-drift{0%,100%{transform:translate3d(0,0,0) rotate(var(--angle));opacity:.065}50%{transform:translate3d(16px,-24px,0) rotate(calc(var(--angle) + 12deg));opacity:.13}}
+@keyframes world-firefly{0%,100%{transform:translate3d(0,0,0);opacity:.08}35%{opacity:.35}50%{transform:translate3d(25px,-30px,0);opacity:.2}75%{opacity:.12}}
+@keyframes world-petal{0%,100%{transform:translate3d(0,0,0) rotate(var(--angle));opacity:.06}50%{transform:translate3d(25px,35px,0) rotate(calc(var(--angle) + 60deg));opacity:.14}}
+@keyframes world-neon{0%,100%{transform:translate3d(0,0,0);opacity:.05}50%{transform:translate3d(0,-30px,0);opacity:.17}}
+@media(max-width:760px){.ambient-motif:nth-child(n+7){display:none}.ambient-motif{max-width:45px;max-height:45px}}
+@media(prefers-reduced-motion:reduce){.ambient-motif{animation:none!important;opacity:.07}}
