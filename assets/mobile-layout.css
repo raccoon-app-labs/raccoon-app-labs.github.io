@@ -1,4 +1,6 @@
 /* Shared phone layout, loaded last on the portfolio and every product page. */
+.store-logo{display:block;width:28px;height:28px;flex:0 0 28px;object-fit:contain}
+.app-card .store-logo{width:24px;height:24px;flex-basis:24px}
 @media(max-width:760px){
   html{scroll-padding-top:82px;text-size-adjust:100%;-webkit-text-size-adjust:100%}
   body{min-width:320px}
