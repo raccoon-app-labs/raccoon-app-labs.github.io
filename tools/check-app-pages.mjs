@@ -12,6 +12,8 @@ for(const a of apps)for(const lang of ['ru','en']){
   check(html.includes('hreflang="en"')&&html.includes('hreflang="ru"'),'alternates');
   try{JSON.parse(html.match(/<script type="application\/ld\+json">(.*?)<\/script>/s)[1]);}catch{errors.push(`${file}: invalid JSON-LD`);}
   for(const match of html.matchAll(/(?:src|href)="(\/assets\/[^"?]+)/g))check(fs.existsSync('.'+match[1]),`missing ${match[1]}`);
+  const screenshots=[...html.matchAll(/src="(\/assets\/screens\/[^"?]+)/g)].map(match=>match[1]);
+  check(screenshots.length>0&&screenshots.every(src=>src.endsWith('-hq.webp')),'use full-resolution screenshots, not store thumbnails');
   const count=lang==='en'&&a.enCount?a.enCount:a.ruCount;
   check((html.match(/<figure class="shot /g)||[]).length===count,'gallery count');
   pages++;
