@@ -67,15 +67,15 @@
     const now=performance.now(), point={x:e.clientX,y:e.clientY};
     if(!previous){previous=point;return;}
     const dx=point.x-previous.x,dy=point.y-previous.y,distance=Math.hypot(dx,dy);
-    const spacing=theme==='muropolis'?25:theme==='neon'?14:theme==='bloom'?35:22;
+    const spacing=theme==='muropolis'?25:theme==='neon'?14:theme==='bloom'?35:theme==='food'?26+Math.random()*18:22;
     if(distance<spacing||now-lastSpawn<22)return;
     // Place impressions along the actual pointer path, alternating left and right paws.
     const angle=Math.atan2(dy,dx), count=Math.min(5,Math.floor(distance/spacing));
     for(let i=1;i<=count;i++){
       const fraction=i/count,side=theme==='muropolis'?(step++%2?5:-5):0;
-      const scatterRange=theme==='bloom'?90:theme==='stories'?38:0;
+      const scatterRange=theme==='bloom'?90:theme==='food'?100:theme==='stories'?38:0;
       const scatterX=(Math.random()-.5)*scatterRange,scatterY=(Math.random()-.5)*scatterRange;
-      particles.push({x:previous.x+dx*fraction-Math.sin(angle)*side+scatterX,y:previous.y+dy*fraction+Math.cos(angle)*side+scatterY,born:now,life:theme==='stories'?1300+Math.random()*700:theme==='bloom'?1100+Math.random()*800:theme==='neon'?650:1200,angle:theme==='muropolis'?angle+Math.PI/2:theme==='bloom'?(Math.random()-.5)*.3:angle,size:theme==='muropolis'?1.15:theme==='stories'?.55+Math.random()*1.7:theme==='bloom'?.7+Math.random()*.55:.8+Math.random()*.35,spin:(Math.random()-.5)*(theme==='bloom'?.3:2),seed:Math.random()*6,color:palettes[theme][Math.floor(Math.random()*2)],word:theme==='bloom'?bloomWords[Math.floor(Math.random()*bloomWords.length)]:null});
+      particles.push({x:previous.x+dx*fraction-Math.sin(angle)*side+scatterX,y:previous.y+dy*fraction+Math.cos(angle)*side+scatterY,born:now,life:theme==='stories'?1300+Math.random()*700:theme==='bloom'?1100+Math.random()*800:theme==='food'?950+Math.random()*850:theme==='neon'?650:1200,angle:theme==='muropolis'?angle+Math.PI/2:theme==='bloom'?(Math.random()-.5)*.3:theme==='food'?Math.random()*Math.PI*2:angle,size:theme==='muropolis'?1.15:theme==='stories'?.55+Math.random()*1.7:theme==='bloom'?.7+Math.random()*.55:theme==='food'?.55+Math.random()*.85:.8+Math.random()*.35,spin:(Math.random()-.5)*(theme==='bloom'?.3:2),seed:Math.random()*6,color:palettes[theme][Math.floor(Math.random()*2)],word:theme==='bloom'?bloomWords[Math.floor(Math.random()*bloomWords.length)]:null});
     }
     particles=particles.slice(-64);previous=point;lastSpawn=now;
     if(!frame)frame=requestAnimationFrame(draw);
