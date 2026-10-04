@@ -61,24 +61,62 @@
     $('[data-flip-card]').remove();$('.word-example').remove();unfold(false);
   }
   if ($('.story-book')) {
+    // StoriesRu / StoriesEn story 1, pages 1–3. SlideMediaConfig maps page N to slide_s1_pN.
     const pages=en?[
-      'In a mountain land lived a little dragon named Julia with emerald scales and funny little wings. All dragons could breathe fire — all except her.',
-      '“Hey, Julia-no-fire! You’re not a real dragon!” the others laughed. Julia hid behind a rock and felt sad.',
-      'One day Julia saw a frog stuck in a crack. She blew a stream of cold air — and the frog flew free.'
+      'In a faraway forest lived a small white bunny named Tim. Every evening he ran to the meadow and gazed at the stars for hours.',
+      'One night a little star trembled and slowly drifted down to earth, leaving a golden trail behind it.',
+      'The star lay in the tall grass. It was tiny and barely glowing. “I don’t know how to get back home...”'
     ]:[
-      'В горной стране жила дракончик Юля с изумрудной чешуёй и смешными крылышками. Все драконы умели дышать огнём — все, кроме неё.',
-      '«Эй, Юля-без-огня! Ты не настоящий дракон!» — смеялись другие. Юля пряталась за камень и грустила.',
-      'Однажды Юля увидела лягушку, застрявшую в расщелине. Она выдула струю холодного воздуха — и лягушка вылетела на свободу.'
-    ];let index=0,speaking=false;
-    const prev=$('[data-story-prev]'),next=$('[data-story-next]'),listen=$('[data-story-listen]'),text=$('[data-story-text]');
+      'В далёком лесу жил маленький зайчик по имени Тим. Каждый вечер он выбегал на полянку и часами смотрел на звёзды.',
+      'Однажды ночью одна звёздочка задрожала и медленно поплыла вниз к земле, оставляя за собой золотой след.',
+      'Звёздочка лежала в высокой траве. Она была совсем маленькой и едва светилась. «Я не знаю, как вернуться домой...»'
+    ];
+    const frames=pages.map((_,i)=>'/assets/demo/bunny-page-'+(i+1)+'.webp');
+    const captions=en?['The bunny gazes at the moon','A star falls with a golden trail','The bunny finds the star in the grass']:['Зайчик смотрит на луну','Звёздочка падает с золотым следом','Зайчик находит звёздочку в траве'];
+    let index=0,speaking=false,generation=0,active=0,transitions=[];
+    const prev=$('[data-story-prev]'),next=$('[data-story-next]'),listen=$('[data-story-listen]'),text=$('[data-story-text]'),art=$('.reader-art'),reader=$('.story-book');
+    const incoming=art.cloneNode();incoming.removeAttribute('id');incoming.style.opacity='0';incoming.setAttribute('aria-hidden','true');art.after(incoming);
+    const images=[art,incoming];
+    // Warm the next frames. The previous image stays visible until the new bitmap is decoded.
+    const prepared=frames.map(src=>{const image=new Image();image.src=src;return image.decode().catch(()=>null);});
     const stop=()=>{if('speechSynthesis'in window)speechSynthesis.cancel();speaking=false;listen.textContent=t('▶ Послушать','▶ Listen');};
-    function turn(dir){stop();index=Math.max(0,Math.min(pages.length-1,index+dir));text.textContent=pages[index];$('[data-story-count]').textContent=`${index+1} / 3`;$$('.reader-dots i').forEach((d,i)=>d.classList.toggle('active',i===index));prev.disabled=index===0;next.disabled=index===pages.length-1;motion($('.reader-title-bubble'),[{opacity:.9,transform:`translateX(${14*dir}px)`},{opacity:1,transform:'translateX(0)'}],280);motion(text,[{opacity:0,transform:`translate(${14*dir}px,6px)`},{opacity:1,transform:'translate(0,0)'}],300,{delay:70});}
+    const decelerateFrames=(offsetX,offsetY,opacity)=>Array.from({length:31},(_,i)=>{const p=i/30,eased=1-(1-p)*(1-p);return{offset:p,opacity:opacity+(1-opacity)*eased,transform:'translate('+offsetX*(1-eased)+'px,'+offsetY*(1-eased)+'px)'};});
+    async function turn(dir){
+      const target=Math.max(0,Math.min(pages.length-1,index+dir));if(dir&&target===index)return;
+      stop();index=target;const revision=++generation;
+      prev.disabled=index===0;next.disabled=index===pages.length-1;
+      const oldImage=images[active],newImage=images[1-active];
+      await prepared[target];if(revision!==generation)return;
+      newImage.src=frames[target];newImage.alt=captions[target];
+      try{await newImage.decode();}catch{if(revision===generation)$('[data-story-status]').textContent=t('Не удалось загрузить иллюстрацию. Попробуйте ещё раз.','The illustration could not load. Please try again.');return;}
+      if(revision!==generation)return;
+      transitions.forEach(a=>a?.cancel());transitions=[];
+      images.forEach(img=>img.style.opacity='0');
+      const sameFrame=oldImage.getAttribute('src')===frames[target];
+      oldImage.style.opacity='1';oldImage.setAttribute('aria-hidden','true');
+      oldImage.style.zIndex='0';newImage.style.zIndex='1';newImage.style.opacity='1';newImage.removeAttribute('aria-hidden');active=1-active;
+      text.textContent=pages[target];$('[data-story-count]').textContent=(target+1)+' / 3';
+      $$('.reader-dots i').forEach((d,i)=>d.classList.toggle('active',i===target));
+      if(!sameFrame&&!reduced.matches){
+        // RemoteImageLoader.crossfadeTo(): linear 240ms, no moving/scaling of full-bleed media.
+        const show=motion(newImage,[{opacity:0},{opacity:1}],240,{easing:'linear'});
+        transitions.push(show);show.onfinish=()=>{if(revision===generation)oldImage.style.opacity='0';};
+      }else oldImage.style.opacity='0';
+      if(dir){
+        transitions.push(motion($('.reader-title-bubble'),decelerateFrames(14*dir,0,.9),280,{easing:'linear'}));
+        transitions.push(motion(text,decelerateFrames(14*dir,6,0),300,{delay:70,easing:'linear',fill:'backwards'}));
+      }else transitions.push(motion(newImage,[{opacity:0},{opacity:1}],220,{easing:'ease-in-out'}));
+    }
     prev.addEventListener('click',()=>turn(-1));next.addEventListener('click',()=>turn(1));turn(0);
-    $('[data-story-status]').textContent=t('Первые 3 страницы · иллюстрация обложки · голос браузера','First 3 pages · cover illustration · browser voice');
+    $('[data-story-status]').textContent=t('Первые 3 страницы «Лунного зайчика» · голос браузера','First 3 pages of The Moon Bunny · browser voice');
     $('[data-story-favorite]').addEventListener('click',e=>{const b=e.currentTarget,selected=b.getAttribute('aria-pressed')!=='true';b.setAttribute('aria-pressed',String(selected));b.textContent=selected?'★':'☆';motion(b,[{transform:'scale(1)'},{transform:'scale(1.08)'},{transform:'scale(1)'}],250);});
     listen.addEventListener('click',()=>{if(!('speechSynthesis'in window)){$('[data-story-status]').textContent=t('Озвучка недоступна в этом браузере','Speech is unavailable in this browser');return;}if(speaking){stop();return;}const voice=new SpeechSynthesisUtterance(pages[index]);voice.lang=en?'en-US':'ru-RU';voice.rate=.9;voice.onend=voice.onerror=stop;speaking=true;listen.textContent=t('■ Остановить','■ Stop');speechSynthesis.speak(voice);});
-    const art=$('.reader-art');let start;art.addEventListener('pointerdown',e=>start=e.clientX);art.addEventListener('pointerup',e=>{if(start!==undefined&&Math.abs(e.clientX-start)>40)turn(e.clientX<start?1:-1);start=undefined;});art.addEventListener('pointercancel',()=>start=undefined);
-    window.addEventListener('pagehide',stop);document.addEventListener('visibilitychange',()=>{if(document.hidden)stop();});
+    let start;
+    reader.addEventListener('pointerdown',e=>{if(e.target.closest('button,.reader-overlay,.reader-top'))return;start=e.clientX;});
+    reader.addEventListener('pointerup',e=>{if(start!==undefined&&Math.abs(e.clientX-start)>40)turn(e.clientX<start?1:-1);start=undefined;});
+    reader.addEventListener('pointercancel',()=>start=undefined);
+    window.addEventListener('pagehide',()=>{++generation;stop();transitions.forEach(a=>a?.cancel());});
+    document.addEventListener('visibilitychange',()=>{if(document.hidden)stop();});
   }
   if ($('.meal-lab')) {
     const sheet=$('.meal-picker'),slots=$$('[data-meal-slot]'), meals=new Map(),titles={omelet:t('Омлет с помидорами','Tomato omelet'),pasta:t('Паста с помидорами','Tomato pasta'),salad:t('Салат с яйцом','Egg salad')};
