@@ -167,26 +167,4 @@
     $$('[data-city-tool]').forEach(b=>b.addEventListener('click',()=>{tool=b.dataset.cityTool;$$('[data-city-tool]').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));}));$('[data-city-reset]').addEventListener('click',()=>{clearTimeout(holdTimer);objects.forEach(x=>x.el.remove());objects=[];drag=null;action.hidden=true;});
     window.addEventListener('pagehide',()=>clearTimeout(holdTimer));
   }
-  if ($('.neon-lab')) {
-    // player.gd constants scaled uniformly .45 to this 600px browser arena.
-    const scale=.45,G=2100*scale,JX=900*scale,JY=-930*scale,THRUST=1400*scale,SLIDE=120*scale;
-    const canvas=$('.neon-canvas'),ctx=canvas.getContext('2d'),bg=new Image(),wall=new Image();bg.src='/assets/demo/neon-background.png';wall.src='/assets/demo/neon-wall.png';
-    let x=48,y=500,vx=0,vy=0,onWall=true,side=-1,launchSide=-1,holding=false,thrustTime=0,redirects=0,rotation=0,spin=0,camera=0,height=0,started=false,dead=false,last=0,frame=0,visible=true,trail=[];
-    const status=$('[data-neon-status]');
-    function draw(){ctx.clearRect(0,0,600,700);ctx.fillStyle='#080e22';ctx.fillRect(0,0,600,700);if(bg.naturalWidth){const s=Math.max(600/bg.naturalWidth,700/bg.naturalHeight);ctx.drawImage(bg,(600-bg.naturalWidth*s)/2,(700-bg.naturalHeight*s)/2,bg.naturalWidth*s,bg.naturalHeight*s);}if(wall.naturalWidth){ctx.drawImage(wall,14,80,18,620);ctx.drawImage(wall,568,80,18,620);}ctx.fillStyle='#9980ff';ctx.fillRect(60,95,480*Math.max(0,1-thrustTime),4);
-      trail.forEach((p,i)=>{const a=(1-i/trail.length)*.55;ctx.fillStyle=`rgba(0,242,255,${a})`;ctx.beginPath();ctx.arc(p.x,p.y-camera,22*scale*(1-i/trail.length),0,Math.PI*2);ctx.fill();});
-      ctx.save();ctx.translate(x,y-camera);ctx.rotate(rotation);const r=34*scale;
-      const circle=(px,py,radius,color)=>{ctx.fillStyle=color;ctx.beginPath();ctx.arc(px,py,radius,0,Math.PI*2);ctx.fill();};
-      circle(0,0,r*1.24,'#00f2ff09');circle(0,0,r*1.075,'#004447f5');circle(0,0,r,'#00cbd6f5');circle(r*.16,r*.18,r*.72,'#0044471a');circle(-r*.30,-r*.34,r*.27,'#ffffff3b');ctx.strokeStyle='#38f5ffeb';ctx.lineWidth=Math.max(2,r*.07);ctx.beginPath();ctx.arc(0,0,r*1.015,.1,Math.PI*2-.1);ctx.stroke();const eye=r*.68;circle(eye,r*.28,r*.31,'#f5fcff');circle(eye+r*.075,r*.255,r*.115,'#02040a');circle(eye+r*.1,r*.215,r*.035,'#ffffffc2');ctx.restore();
-      if(onWall){ctx.strokeStyle='#00f2ffcc';ctx.lineWidth=2;ctx.beginPath();ctx.arc(x,y-camera,52*scale,-Math.PI/2-.6,-Math.PI/2+.6);ctx.stroke();}if(dead){ctx.fillStyle='#080e22bb';ctx.fillRect(0,0,600,700);ctx.fillStyle='#c9f9ff';ctx.font='bold 28px sans-serif';ctx.textAlign='center';ctx.fillText(t('ЗАБЕГ ЗАВЕРШЁН','RUN COMPLETE'),300,330);ctx.textAlign='start';}}
-    function tick(now){const dt=Math.min((now-last)/1000||.016,.033);last=now;if(started&&!dead){if(onWall){vx=0;vy+=(SLIDE-vy)*Math.min(1,dt*12);}else{vy+=G*dt;if(holding&&thrustTime<1){vy-=THRUST*dt;thrustTime=Math.min(1,thrustTime+dt);spin+=(4-spin)*Math.min(1,dt*10);}x+=vx*dt;rotation+=spin*dt;trail.unshift({x,y});trail=trail.slice(0,18);}y+=vy*dt;
-        if(!onWall&&(x<=48||x>=552)){side=x<=48?-1:1;x=side<0?48:552;onWall=true;vx=0;vy=Math.max(-180*scale,Math.min(SLIDE,vy*.45));thrustTime=0;redirects=0;trail=[];status.textContent=t('Стена поймана. Тап — оттолкнуться.','Wall caught. Tap to kick off.');}
-        height=Math.max(height,500-y);camera=Math.min(camera,y-330);$('[data-neon-score]').textContent=`${Math.max(0,Math.floor(height/scale/100))} m`;if(y-camera>680){dead=true;holding=false;status.textContent=t('Падение. Нажмите ↺ для нового забега.','You fell. Tap ↺ for a new run.');}}
-      draw();if(visible&&!document.hidden&&started&&!dead)frame=requestAnimationFrame(tick);}
-    function jump(){if(dead)return;started=true;if(onWall){launchSide=side;vx=-side*JX;vy=JY;x+=-side*16*scale;onWall=false;redirects=1;thrustTime=0;spin=18*Math.sign(vx);}else if(redirects>0){vx=launchSide*JX;vy=JY;redirects=0;spin=12*Math.sign(vx);}holding=true;last=performance.now();cancelAnimationFrame(frame);frame=requestAnimationFrame(tick);}
-    [canvas,$('[data-neon-jump]')].forEach(el=>{el.addEventListener('pointerdown',e=>{e.preventDefault();el.setPointerCapture(e.pointerId);jump();});['pointerup','pointercancel','lostpointercapture'].forEach(n=>el.addEventListener(n,()=>holding=false));el.addEventListener('keydown',e=>{if(['Space','Enter'].includes(e.code)&&!e.repeat){e.preventDefault();jump();}});el.addEventListener('keyup',e=>{if(['Space','Enter'].includes(e.code))holding=false;});});
-    $('[data-neon-reset]').addEventListener('click',()=>{cancelAnimationFrame(frame);x=48;y=500;vx=vy=rotation=spin=camera=height=thrustTime=0;side=launchSide=-1;onWall=true;holding=started=dead=false;redirects=0;trail=[];$('[data-neon-score]').textContent='0 m';status.textContent=t('Тап — прыжок · удержание — тяга · второй тап — разворот','Tap to jump · hold for thrust · tap again to turn back');draw();});
-    function resume(){cancelAnimationFrame(frame);holding=false;if(visible&&!document.hidden&&started&&!dead){last=performance.now();frame=requestAnimationFrame(tick);}}
-    new IntersectionObserver(e=>{visible=e[0].isIntersecting;resume();}).observe(canvas);document.addEventListener('visibilitychange',resume);window.addEventListener('pagehide',()=>cancelAnimationFrame(frame));bg.onload=wall.onload=draw;draw();
-  }
 })();
