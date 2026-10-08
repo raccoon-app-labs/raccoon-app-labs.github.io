@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#123e34">
+  <meta name="referrer" content="no-referrer">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src https://functions.yandexcloud.net/d4eqa0fgcps7prk24iv8; base-uri 'none'; form-action 'self'; object-src 'none'">
+  <meta name="description" content="Hanzi Bloom Plus на один календарный месяц: опубликованные уроки HSK 1–3 без рекламных пауз для открытия урока. Без автопродления.">
+  <link rel="icon" href="/assets/apps/bloom-icon.webp">
+  <link rel="canonical" href="https://raccoon-app-labs.github.io/apps/hanzi-bloom/plus/checkout/">
+  <link rel="stylesheet" href="style.css">
+  <script src="checkout.js" defer></script>
+  <title>Открыть Plus · Hanzi Bloom</title>
+</head>
+<body>
+  <header><a class="brand" href="../"><img src="/assets/apps/bloom-icon.webp" width="36" height="36" alt="">Hanzi Bloom <span>PLUS</span></a><a href="../#pricing">Все тарифы</a></header>
+  <main>
+    <section class="garden" aria-labelledby="product-title">
+      <span class="eyebrow">Чуть больше места для роста</span>
+      <h1 id="product-title">Пусть знания<br><em>расцветают.</em></h1>
+      <div class="garden-art" aria-hidden="true"><div class="halo"></div><img src="/assets/demo/bao.webp" width="320" height="320" alt=""><span class="spark one">✦</span><span class="spark two">✦</span><span class="spark three">✧</span></div>
+      <div class="benefits"><span>HSK 1–3</span><span>Без рекламы для открытия урока</span></div>
+      <p class="garden-note">Все опубликованные уроки. HSK 4–6 готовятся.</p>
+    </section>
+    <section class="checkout" aria-labelledby="step-title">
+      <div class="plan"><div><span class="eyebrow">Hanzi Bloom Plus</span><strong>Один календарный месяц</strong></div><div class="price">$5.99</div></div>
+      <p class="renewal">Одна оплата · без автопродления</p>
+      <ol class="steps" aria-label="Шаги покупки"><li id="step-email" aria-current="step"><span>1</span>Почта</li><li id="step-code"><span>2</span>Код</li><li id="step-plus"><span>3</span>Plus</li></ol>
+      <p id="availability" class="notice" role="status">Проверяем доступность оплаты…</p>
+      <h2 id="step-title" tabindex="-1">Куда посадим Plus?</h2>
+      <p id="step-description">Укажи почту, с которой входишь в приложение.</p>
+      <form id="email-form">
+        <label for="email">Почта аккаунта</label>
+        <input id="email" type="email" autocomplete="email" inputmode="email" required maxlength="254" placeholder="you@example.com">
+        <button type="submit" id="send-code">Получить код</button>
+        <p class="fineprint">Только код для входа. Без рекламной рассылки.</p>
+        <p class="fineprint">Как используем почту — в <a href="../privacy/">политике конфиденциальности</a>.</p>
+      </form>
+      <form id="code-form" hidden>
+        <label for="code">Код из последнего письма</label>
+        <input id="code" class="code" type="text" autocomplete="one-time-code" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" required placeholder="000000">
+        <button type="submit">Продолжить</button>
+        <div class="code-actions"><button type="button" id="change-email" class="text-button">Другая почта</button><button type="button" id="resend" class="text-button" disabled>Новый код</button></div>
+      </form>
+      <div id="account" hidden>
+        <p id="account-email" class="account-email"></p>
+        <div id="purchase-panel">
+          <label class="agreement"><input id="terms" type="checkbox"><span>Принимаю <a href="../offer/" target="_blank" rel="noopener noreferrer">оферту</a> и ознакомилась с <a id="privacy-link" href="../privacy/" target="_blank" rel="noopener noreferrer">политикой конфиденциальности</a>.</span></label>
+          <button id="pay" type="button" disabled>Перейти к оплате $5.99</button>
+          <p class="fineprint">Защищённая платёжная страница Lava. Данные карты вводятся там.</p>
+        </div>
+        <div id="order-panel" hidden><p id="order-message" class="order-message"></p><a id="continue-payment" class="button" hidden>Продолжить оплату</a></div>
+        <div id="plus-result" class="plus-result" hidden><span aria-hidden="true">✿</span><div><strong id="plus-heading"></strong><p id="plus-description"></p></div></div>
+        <button id="check-plus" type="button" class="secondary">Проверить мой Plus</button>
+        <button id="new-order" type="button" class="secondary" hidden>Оформить новую покупку</button>
+        <button id="logout" type="button" class="text-button">Выйти из аккаунта</button>
+      </div>
+      <p id="message" class="message" role="status" aria-live="polite"></p>
+      <noscript>Для входа и покупки нужен JavaScript. По вопросам доступа: raccoon.app.labs@gmail.com.</noscript>
+    </section>
+  </main>
+  <footer><a href="../offer/">Оферта</a><a href="../privacy/">Конфиденциальность</a><a href="mailto:raccoon.app.labs@gmail.com">Помощь с доступом</a><span>© 2026 Raccoon App Labs</span></footer>
+</body>
+</html>
