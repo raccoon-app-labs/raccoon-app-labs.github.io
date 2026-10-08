@@ -14,6 +14,7 @@
   function message(text, error = false) { el('message').textContent = text; el('message').classList.toggle('error', error); }
   function controls() {
     for (const button of document.querySelectorAll('button')) button.disabled = busy;
+    el('send-code').disabled = busy || !catalog;
     el('pay').disabled = busy || !catalog?.checkoutEnabled || !el('terms').checked || !!state.requestId;
     el('resend').disabled = busy || Date.now() < resendAt;
   }
@@ -168,7 +169,7 @@
         || catalog.plan.currency !== 'USD' || catalog.plan.amountMinor !== 599 || catalog.plan.months !== 1
         || catalog.autoRenew !== false || catalog.termsVersion !== '2026-10-08') throw new Failure(503);
       el('availability').textContent = catalog.checkoutEnabled ? 'Оплата доступна · $5.99 за календарный месяц' : 'Оплата скоро. Уже купленный Plus можно проверить ниже.';
-    } catch { catalog = null; el('availability').textContent = 'Оплата пока недоступна. Попробуй вернуться чуть позже.'; }
+    } catch { catalog = null; el('availability').textContent = 'Вход и оплата пока недоступны. Попробуй вернуться чуть позже.'; }
     if (state.token) { const account = await call('/v1/me'); state.email = account.email; save(); view('account'); await refresh(); }
     else view('email');
   });
