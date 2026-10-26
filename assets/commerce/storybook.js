@@ -13,6 +13,9 @@
     const p=isReduced()?1:clamp((scrollY-start)/range);
     if(Math.abs(p-last)<.0002)return;last=p;
     stage.style.setProperty('--book-open',ease(p).toFixed(5));
+    // Make room before the cover reaches its widest projected silhouette.
+    // Tying scale to the cover angle alone clips the halfway-open back cover.
+    stage.style.setProperty('--book-fit',ease(p/.44).toFixed(5));
     stage.style.setProperty('--cover-turn',ease(p/.66).toFixed(5));
     stage.style.setProperty('--leaf-one',ease((p-.22)/.67).toFixed(5));
     stage.style.setProperty('--leaf-two',ease((p-.4)/.6).toFixed(5));
