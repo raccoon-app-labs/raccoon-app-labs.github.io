@@ -68,7 +68,7 @@
 .magic-primary:hover:enabled,.magic-primary[href]:hover{transform:translateY(-2px);box-shadow:0 10px 26px #edc58324}
 .magic-primary:hover:before{transform:translateX(80%)}
 .magic-primary:disabled{background:#b1a0b7;border-color:#b1a0b7;box-shadow:none}
-.magic-primary:disabled span:last-child{animation:magic-orbit-spin 1.8s linear infinite}
+.magic-primary[aria-busy=true] span:last-child{animation:magic-orbit-spin 1.8s linear infinite}
 .magic-bottom .magic-primary{min-width:220px}
 .magic-footer{display:flex;align-items:center;gap:10px;border-top:1px solid var(--magic-line);padding:18px 32px;color:#a99bb9;font-size:10px;line-height:1.6}
 .magic-footer>span{font-size:21px;color:var(--magic-gold)}
@@ -156,5 +156,6 @@
   .magic-footer{padding:16px 20px;font-size:9px;gap:8px}.magic-error{margin:0 20px 20px}.magic-lead{font-size:13px}.magic-shell[data-step] .magic-content{padding-left:20px;padding-right:20px}
 }
 @media(max-width:370px){.magic-books{grid-template-columns:repeat(2,minmax(0,1fr))}.magic-provider-mark{display:none}.magic-progress span{font-size:8px}.magic-progress b{width:18px;height:18px}}
+@media(max-width:480px){.magic-books{grid-template-columns:repeat(2,minmax(0,1fr));gap:18px 14px}.magic-book>strong{font-size:12px}.magic-book>span:last-child{font-size:10px}}
 @media(prefers-reduced-motion:reduce){.magic-checkout *,.magic-checkout *:before{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
 html[data-motion=reduced] .magic-checkout *,html[data-motion=reduced] .magic-checkout *:before{animation:none!important;transition:none!important}

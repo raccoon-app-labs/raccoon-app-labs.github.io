@@ -1,4 +1,4 @@
-import {API_BASE, ShopError, validateOffer, purchasableStories, purchaseRequest, confirmationUrl, createApi} from './story-checkout-core.mjs?v=20261026';
+import {API_BASE, ShopError, validateOffer, purchasableStories, purchaseRequest, confirmationUrl, createApi} from './story-checkout-core.mjs?v=1bf19313396a';
 
 const root = document.documentElement;
 const sourcePanel = document.querySelector('#stories-panel') || document.querySelector('.commerce-stories');
@@ -56,7 +56,7 @@ function install() {
     rate_limited:['Слишком много попыток. Подождите немного и попробуйте снова.','Too many attempts. Wait a little and try again.']
   };
   function errorText() { const code = error === 'try_later' ? 'rate_limited' : error; return errors[code] ? t(...errors[code]) : t('Не удалось выполнить действие. Попробуйте ещё раз.','Something went wrong. Please try again.'); }
-  function primary(label, attrs = '') { return `<button class="magic-primary" ${attrs} ${busy ? 'disabled' : ''}><span>${label}</span><span aria-hidden="true">${busy ? '◌' : '↗'}</span></button>`; }
+  function primary(label, attrs = '') { return `<button class="magic-primary" aria-busy="${busy}" ${attrs} ${busy ? 'disabled' : ''}><span>${label}</span><span aria-hidden="true">${busy ? '◌' : '↗'}</span></button>`; }
   function providers() {
     return `<fieldset class="magic-providers"><legend>${t('Через что оплатить','Payment method')}</legend><label class="magic-provider"><input type="radio" name="magic-provider" value="robokassa" checked><span class="magic-provider-mark" aria-hidden="true">R</span><span><strong>Robokassa</strong><small>${t('Для России','For Russia')}</small></span><span class="magic-provider-check" aria-hidden="true">✓</span></label><label class="magic-provider magic-provider-soon"><input type="radio" name="magic-provider" value="lava" disabled><span class="magic-provider-mark" aria-hidden="true">L</span><span><strong>Lava.top</strong><small>${t('Для всех','For everyone')}</small></span><span class="magic-soon">${t('Скоро','Coming soon')}</span></label></fieldset>`;
   }
@@ -108,6 +108,7 @@ function install() {
     if (step === 'code') return `<div class="magic-envelope" aria-hidden="true">✉<span>✦</span></div><h1 id="magic-checkout-title" tabindex="-1">${t('Вам волшебное письмо','A little magic in your inbox')}</h1><p class="magic-lead">${t('Введите 6 цифр из письма на','Enter the 6-digit code sent to')} <strong>${escape(email)}</strong></p><form data-code-form class="magic-form"><label for="magic-code">${t('Код из письма','Email code')}</label><input id="magic-code" class="magic-code" name="code" type="text" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" minlength="6" maxlength="6" placeholder="······" required ${busy ? 'disabled' : ''}>${primary(t('Войти и продолжить','Sign in and continue'))}</form><div class="magic-inline-actions"><button class="magic-text-button" data-action="resend" disabled></button><button class="magic-text-button" data-action="email">${t('Другая почта','Use another email')}</button></div>`;
     if (step === 'review') return `<p class="magic-eyebrow">${t('ПОЧТИ В ВАШЕЙ БИБЛИОТЕКЕ','ALMOST IN YOUR LIBRARY')}</p><h1 id="magic-checkout-title" tabindex="-1">${t('Остался один шаг','Just one more step')}</h1>${summary()}<div class="magic-account"><span>✉ ${escape(session.email)}</span><button class="magic-text-button" data-action="logout">${t('Сменить','Change')}</button></div>${providers()}<form data-review-form class="magic-form"><label class="magic-consent"><input type="checkbox" name="consent" required><span>${offer.autoRenew && product === 'premium' ? t('Согласен с ежемесячным автопродлением и','I agree to monthly automatic renewal and the') : t('Принимаю','I accept the')} <a href="${API_BASE}/legal/premium-terms.html" target="_blank" rel="noopener noreferrer">${t('условия покупки','purchase terms')}</a> ${t('и','and')} <a href="${API_BASE}/legal/privacy.html" target="_blank" rel="noopener noreferrer">${t('политику конфиденциальности','privacy policy')}</a>. ${product === 'book' || !offer.autoRenew ? t('Один платёж, без автопродления.','One payment, no automatic renewal.') : `${price(offer.amount)} ${t('каждый календарный месяц.','each calendar month.')}`}</span></label>${primary(`${t('Оплатить','Pay')} ${price(product === 'book' ? offer.bookAmount : offer.amount)}`)}<p class="magic-caption">${t('Оплата откроется на защищённой странице Robokassa. Данные карты здесь не вводятся.','Payment opens on Robokassa’s secure page. No card details are entered here.')}</p></form><button class="magic-text-button" data-action="choose">← ${t('Изменить выбор','Change selection')}</button>`;
     if (step === 'pending') {
+      if (pending?.status === 'REVIEW') return `<div class="magic-payment-orb" aria-hidden="true">✧</div><h1 id="magic-checkout-title" tabindex="-1">${t('Уточняем статус оплаты','Reviewing your payment')}</h1><p class="magic-lead">${t('Сервер уточняет результат этого платежа. Не оплачивайте повторно. Если ожидание затянулось, напишите в поддержку.','The server is reviewing this payment. Please do not pay again. Contact support if it takes too long.')}</p><button class="magic-text-button" data-action="check">${t('Проверить оплату','Check payment')}</button>`;
       const url = confirmationUrl(pending?.confirmationUrl);
       return `<div class="magic-payment-orb" aria-hidden="true">✦</div><p class="magic-eyebrow">${t('ВАШЕ ЧУДО ЖДЁТ','YOUR MAGIC IS WAITING')}</p><h1 id="magic-checkout-title" tabindex="-1">${t('Продолжим в Robokassa','Continue with Robokassa')}</h1><p class="magic-lead">${t('Завершите оплату в новой вкладке. Эта страница проверит результат на сервере.','Complete payment in a new tab. This page will check the result with the server.')}</p><p class="magic-caption">${escape(session?.email)}</p>${pending?.type === 'BOOK' ? `<p class="magic-caption">${escape(stories.find(s => s.id === pending.storyId)?.title || t('Покупка книги','Book purchase'))}</p>` : ''}${url ? `<a class="magic-primary" href="${escape(url)}" target="_blank" rel="noopener noreferrer" data-open-payment><span>${t('Перейти к оплате','Open payment')}</span><span aria-hidden="true">↗</span></a>` : ''}<div class="magic-payment-status" role="status"><span class="magic-status-dot"></span>${t('Ожидаем подтверждение оплаты','Waiting for payment confirmation')}</div>${notice ? `<p class="magic-notice">${escape(notice)}</p>` : ''}<div class="magic-inline-actions"><button class="magic-text-button" data-action="check" ${busy ? 'disabled' : ''}>${t('Проверить оплату','Check payment')}</button><button class="magic-text-button" data-action="abandon" ${busy ? 'disabled' : ''}>${t('Отменить этот счёт','Cancel this invoice')}</button></div>`;
     }
@@ -174,12 +175,24 @@ function install() {
   }
   async function restorePending() {
     try {
+      if (pending?.paymentId) {
+        try {
+          const saved = await api(`/api/payments/${encodeURIComponent(pending.paymentId)}`,{authenticated:true});
+          if (saved.status === 'succeeded') { pending = null; write(pendingKey,null); step = 'success'; return true; }
+          if (!['canceled','REFUNDED'].includes(saved.status)) {
+            pending = {...pending,...saved}; write(pendingKey,pending); step = 'pending';
+            if (saved.status !== 'REVIEW') schedulePoll();
+            return true;
+          }
+        } catch (caught) { if (caught.code !== 'payment_not_found' && caught.status !== 404) throw caught; }
+        pending = null; write(pendingKey,null);
+      }
       const value = await api('/api/payments/pending',{authenticated:true});
-      if (['succeeded','canceled','REFUNDED','REVIEW'].includes(value.status)) {
+      if (['succeeded','canceled','REFUNDED'].includes(value.status)) {
         if (value.status === 'succeeded') { pending = null; write(pendingKey,null); step = 'success'; return true; }
         pending = null; write(pendingKey,null); return false;
       }
-      pending = value; write(pendingKey,value); step = 'pending'; schedulePoll(); return true;
+      pending = value; write(pendingKey,value); step = 'pending'; if (value.status !== 'REVIEW') schedulePoll(); return true;
     } catch (caught) { if (caught.code === 'payment_not_found' || caught.status === 404) { pending = null; write(pendingKey,null); return false; } throw caught; }
   }
   async function reviewAccount() {
