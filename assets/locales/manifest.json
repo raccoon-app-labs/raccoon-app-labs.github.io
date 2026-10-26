@@ -17,12 +17,6 @@
     "original": "ru",
     "style": "portfolio"
   },
-  "apps/hanzi-bloom/plus/checkout/index.html": {
-    "bundle": "p-83e65d139089.js",
-    "messages": 65,
-    "original": "ru",
-    "style": "legal"
-  },
   "apps/hanzi-bloom/plus/index.html": {
     "bundle": "p-10db06d6d6f0.js",
     "messages": 92,
