@@ -1,0 +1,82 @@
+{
+  "apps/dokupit/shop/index.html": {
+    "world": "dokupit",
+    "context": "shop"
+  },
+  "apps/hanzi-bloom/plus/checkout/index.html": {
+    "world": "hanzi",
+    "context": "legal"
+  },
+  "apps/hanzi-bloom/plus/index.html": {
+    "world": "hanzi",
+    "context": "shop"
+  },
+  "apps/hanzi-bloom/plus/offer/archive-2026-10-08.html": {
+    "world": "hanzi",
+    "context": "legal"
+  },
+  "apps/hanzi-bloom/plus/offer/archive-2026-10-16.html": {
+    "world": "hanzi",
+    "context": "legal"
+  },
+  "apps/hanzi-bloom/plus/offer/index.html": {
+    "world": "hanzi",
+    "context": "legal"
+  },
+  "apps/hanzi-bloom/plus/privacy/archive-2026-10-08.html": {
+    "world": "hanzi",
+    "context": "legal"
+  },
+  "apps/hanzi-bloom/plus/privacy/archive-2026-10-16.html": {
+    "world": "hanzi",
+    "context": "legal"
+  },
+  "apps/hanzi-bloom/plus/privacy/index.html": {
+    "world": "hanzi",
+    "context": "legal"
+  },
+  "apps/magical-stories/shop/index.html": {
+    "world": "stories",
+    "context": "shop"
+  },
+  "apps/muropolis/shop/index.html": {
+    "world": "muropolis",
+    "context": "shop"
+  },
+  "apps/neon-cyber-wall-kicker/shop/index.html": {
+    "world": "neon",
+    "context": "shop"
+  },
+  "apps/neon-cyber-wall-kicker/shop/offer/index.html": {
+    "world": "neon",
+    "context": "legal"
+  },
+  "apps/neon-cyber-wall-kicker/shop/privacy/index.html": {
+    "world": "neon",
+    "context": "legal"
+  },
+  "apps/what-to-eat/shop/index.html": {
+    "world": "food",
+    "context": "shop"
+  },
+  "en/apps/hanzi-bloom/plus/checkout/index.html": {
+    "world": "hanzi",
+    "context": "checkout"
+  },
+  "en/apps/hanzi-bloom/plus/index.html": {
+    "world": "hanzi",
+    "context": "shop"
+  },
+  "en/apps/hanzi-bloom/plus/offer/index.html": {
+    "world": "hanzi",
+    "context": "legal"
+  },
+  "en/apps/hanzi-bloom/plus/privacy/index.html": {
+    "world": "hanzi",
+    "context": "legal"
+  },
+  "plus/index.html": {
+    "world": "hanzi",
+    "context": "shop"
+  }
+}
