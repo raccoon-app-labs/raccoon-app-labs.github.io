@@ -127,8 +127,8 @@ tabs.forEach((tab, index) => {
   tab.addEventListener('keydown', event => {
     if (event.altKey || event.ctrlKey || event.metaKey) return;
     let next;
-    if (event.key === 'ArrowRight') next = (index + 1) % tabs.length;
-    else if (event.key === 'ArrowLeft') next = (index - 1 + tabs.length) % tabs.length;
+    if (event.key === 'ArrowRight') next = (index + (document.dir === 'rtl' ? -1 : 1) + tabs.length) % tabs.length;
+    else if (event.key === 'ArrowLeft') next = (index + (document.dir === 'rtl' ? 1 : -1) + tabs.length) % tabs.length;
     else if (event.key === 'Home') next = 0;
     else if (event.key === 'End') next = tabs.length - 1;
     if (next !== undefined) { event.preventDefault(); tabs[next].focus(); selectApp(tabs[next].dataset.appTab); }
@@ -191,3 +191,5 @@ const requested = new URLSearchParams(location.search).get('app');
 selectApp(Object.hasOwn(apps, requested) ? requested : 'bloom', {updateUrl:false, announce:false});
 syncMotion();
 animateScene();
+
+window.addEventListener('hanzi:languagechange', moveMarker);

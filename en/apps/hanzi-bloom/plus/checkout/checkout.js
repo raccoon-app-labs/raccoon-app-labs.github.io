@@ -33,8 +33,15 @@
   class Failure extends Error { constructor(status) { super('Request failed'); this.status = status; } }
   const save = () => { try { sessionStorage.setItem(STORAGE, JSON.stringify(state)); } catch { throw new Failure(507); } };
   function message(text, error = false) { el('message').textContent = text; el('message').classList.toggle('error', error); }
+  function expiryDescription() {
+    const timestamp = Number(el('plus-description').dataset.expiresAt);
+    if (!timestamp) return;
+    el('plus-description').textContent = 'Until ' + new Date(timestamp * 1000).toLocaleDateString(document.documentElement.lang || 'en-GB')
+      + '. Open Hanzi Bloom or Hanzi Keys, sign in to your international account with this email and check your Plus.';
+  }
+  window.addEventListener('hanzi:languagechange', expiryDescription);
   function controls() {
-    for (const button of document.querySelectorAll('button')) button.disabled = busy;
+    for (const button of document.querySelectorAll('button:not([data-language-control])')) button.disabled = busy;
     el('send-code').disabled = busy || !catalog;
     el('pay').disabled = busy || !catalog?.checkoutEnabled || !el('terms').checked || !!state.requestId;
     el('resend').disabled = busy || Date.now() < resendAt;
@@ -51,6 +58,11 @@
       code:'Enter the six digits from your latest email.', account:'This email connects your Plus in both apps.'}[stage];
     if (stage === 'account') el('account-email').textContent = state.email;
     else { el('plus-result').hidden = true; el('order-panel').hidden = true; }
+  }
+  function clearReturnParameters() {
+    const url = new URL(location.href);
+    url.searchParams.delete('invoiceId'); url.searchParams.delete('status');
+    history.replaceState(null, '', url.pathname + url.search + url.hash);
   }
   async function run(action) {
     if (busy) return;
@@ -116,11 +128,13 @@
       && Number.isFinite(plus.expiresAt) && plus.expiresAt * 1000 > Date.now();
     el('plus-result').hidden = false;
     el('plus-heading').textContent = active ? 'Your Plus is in bloom!' : plus.reviewRequired ? 'Support needs to check this payment' : 'Plus is not active yet';
+    el('plus-description').dataset.expiresAt = active ? String(plus.expiresAt) : '';
     el('plus-description').textContent = active
       ? 'Until ' + new Date(plus.expiresAt * 1000).toLocaleDateString('en-GB')
         + '. Open Hanzi Bloom or Hanzi Keys, sign in to your international account with this email and check your Plus.'
       : plus.reviewRequired ? 'Contact raccoon.app.labs@gmail.com with your order number.'
       : 'Paid access appears after the payment is confirmed. Your learning progress stays with you.';
+    expiryDescription();
     if (plus.reviewRequired) { el('purchase-panel').hidden = true; el('continue-payment').hidden = true; el('new-order').hidden = true; }
     else if (!state.order && !state.requestId) el('purchase-panel').hidden = false;
     message('Account access checked.');
@@ -151,12 +165,12 @@
     if (!['paid', 'failed'].includes(state.order?.status)) return;
     delete state.requestId; delete state.order;
     try { save(); } catch { message('Could not save your session.', true); return; }
-    history.replaceState(null, '', location.pathname); returnContract = null; el('terms').checked = false;
+    clearReturnParameters(); returnContract = null; el('terms').checked = false;
     el('order-panel').hidden = true; el('purchase-panel').hidden = false; controls();
   });
   el('logout').addEventListener('click', () => run(async () => {
     const token = state.token; state = {}; sessionStorage.removeItem(STORAGE); el('terms').checked = false;
-    view('email'); history.replaceState(null, '', location.pathname); returnContract = null;
+    view('email'); clearReturnParameters(); returnContract = null;
     try { await call('/v1/auth/logout', {}, token); message('You are signed out.'); }
     catch { message('Signed out on this device. The server has not yet confirmed the session ended.', true); }
   }));
