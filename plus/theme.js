@@ -4,6 +4,14 @@
   const root = document.documentElement;
   const key = 'hanzi-plus-theme';
   const system = matchMedia('(prefers-color-scheme: dark)');
+  const worlds = ['studio','bloom','keys','stories','muropolis','neon','food','dokupit'];
+  const viewWorld = () => {
+    const requested = new URLSearchParams(location.search).get('app');
+    if (root.dataset.siteTheme === 'hub') return ['bloom','keys','stories','neon'].includes(requested) ? requested : 'bloom';
+    if (root.dataset.siteWorld === 'bloom' && /\/plus\//.test(location.pathname) && requested === 'keys') return 'keys';
+    return root.dataset.siteWorld || 'bloom';
+  };
+  if (root.hasAttribute('data-site-theme')) root.dataset.siteWorld = viewWorld();
   const valid = value => value === 'dark' || value === 'light';
   let choice = null, button, label;
   try { const saved = localStorage.getItem(key); if (valid(saved)) choice = saved; } catch {}
@@ -27,7 +35,9 @@
     root.dataset.theme = mode;
     let meta = document.querySelector('meta[name="theme-color"]');
     if (!meta) { meta = document.createElement('meta'); meta.name = 'theme-color'; document.head.append(meta); }
-    meta.content = mode === 'dark' ? '#0d1d24' : '#f5f3ea';
+    meta.content = root.hasAttribute('data-site-theme')
+      ? getComputedStyle(root).getPropertyValue('--theme-bg').trim()
+      : mode === 'dark' ? '#0d1d24' : '#f5f3ea';
     refresh();
   }
   apply(choice || (system.matches ? 'dark' : 'light'));
@@ -37,8 +47,18 @@
     choice = valid(event.newValue) ? event.newValue : null;
     apply(choice || (system.matches ? 'dark' : 'light'));
   });
+  window.addEventListener('raccoon:appchange', event => {
+    if (!root.hasAttribute('data-site-theme') || !worlds.includes(event.detail?.app)) return;
+    root.dataset.siteWorld = event.detail.app;
+    apply(root.dataset.theme);
+  });
   function mount() {
-    const header = document.querySelector('header');
+    let header = document.querySelector(root.hasAttribute('data-site-theme') ? 'header:not(.magic-header)' : 'header');
+    if (!header && root.hasAttribute('data-site-theme')) {
+      header=document.createElement('header');header.className='site-appearance-header';
+      const home=document.createElement('a');home.href='/';home.textContent='Raccoon App Labs';header.append(home);
+      document.body.prepend(header);
+    }
     if (!header || document.querySelector('.payment-theme-toggle')) return;
     button = document.createElement('button');
     button.type = 'button'; button.className = 'payment-theme-toggle'; button.dataset.noL10n = '';
@@ -55,7 +75,8 @@
     const moon = document.createElementNS(icon.namespaceURI, 'path'); moon.classList.add('theme-moon');
     moon.setAttribute('d', 'M20 14.2A8.4 8.4 0 0 1 9.8 4a8.4 8.4 0 1 0 10.2 10.2Z');
     icon.append(sun, moon); label = document.createElement('span'); button.append(icon, label);
-    let tools = header.querySelector('.language-utility');
+    let tools = root.hasAttribute('data-site-theme') && !root.hasAttribute('data-payment-page')
+      ? header.querySelector('.header-tools,nav,.language-utility') : header.querySelector('.language-utility');
     if (!tools) {
       tools = document.createElement('div'); tools.className = 'payment-theme-tools';
       [...header.children].filter(node => node.matches('a:not(:first-child), nav')).forEach(node => tools.append(node));
@@ -67,6 +88,17 @@
       try { localStorage.setItem(key, choice); } catch {}
       apply(choice);
     });
+    if (root.hasAttribute('data-site-theme')) {
+      // A modal makes its outside header inert. Keep the same single switch
+      // usable inside the Stories checkout, then return it when the dialog closes.
+      const placeControl = () => {
+        const modalHeader=document.querySelector('dialog.magic-checkout[open] .magic-header');
+        const target=modalHeader || tools;
+        if (button.parentElement!==target) target.insertBefore(button,modalHeader?.querySelector('.magic-close') || null);
+      };
+      new MutationObserver(placeControl).observe(document.body,{subtree:true,childList:true,attributes:true,attributeFilter:['open']});
+      placeControl();
+    }
     new MutationObserver(refresh).observe(root, {attributes:true, attributeFilter:['lang']});
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', mount, {once:true});
