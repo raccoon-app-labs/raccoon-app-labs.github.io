@@ -43,7 +43,7 @@ export function installStoreEffects({reducedMotion, finePointer}) {
   function addPiece(x, y, {burst = false, angle = 0, index = 0} = {}) {
     if (pieces.length >= 72) pieces.shift();
     const speed = burst ? 22 + Math.random() * 30 : 7 + Math.random() * 12;
-    pieces.push({x, y, start:performance.now(), duration:burst ? 560 : 440,
+    pieces.push({x, y, start:performance.now(), duration:burst ? 620 : 760,
       vx:Math.cos(angle) * speed, vy:Math.sin(angle) * speed - (burst ? 13 : 8),
       size:burst ? 3 + Math.random() * 3 : 3 + Math.random() * 3,
       angle:angle + Math.PI / 4, spin:(Math.random() - .5) * 2,
@@ -78,7 +78,7 @@ export function installStoreEffects({reducedMotion, finePointer}) {
       context.translate(p.x + p.vx * travel, p.y + p.vy * travel + progress * progress * 12);
       context.rotate(p.angle + p.spin * progress);
       context.scale(1 - progress * .6, 1 - progress * .6);
-      context.globalAlpha = Math.min(1, progress * 10) * (1 - progress) * .8;
+      context.globalAlpha = Math.min(1, progress * 10) * (1 - progress) * .9;
       context.fillStyle = p.color;
       context.beginPath();
       if (p.shape === 0) {
