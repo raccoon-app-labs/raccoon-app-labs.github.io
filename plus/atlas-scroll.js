@@ -60,7 +60,9 @@
     let top=0;for(let node=scene;node;node=node.offsetParent)top+=node.offsetTop;
     const nav=document.querySelector('.app-nav')?.offsetHeight||0;
     start=Math.max(0,top-innerHeight*.62);
-    range=Math.max(180,top-nav+scene.offsetHeight*(root.dataset.app==='bloom'?.03:.16)-start);
+    const gardenView=root.dataset.app==='bloom';
+    // Finish flowering while the whole crown is still below the sticky tabs.
+    range=Math.max(gardenView?100:180,top-nav+scene.offsetHeight*(gardenView?-.06:.16)-start);
     scene.dataset.atlasStart=start.toFixed(2);scene.dataset.atlasRange=range.toFixed(2);
     last=-1;draw();
   }
