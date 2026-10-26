@@ -27,12 +27,12 @@
   function dirty(){for(const run of runs)run.dirty=true;clearSparks();queue();}
   function settle(){clearTimeout(settleTimer);settleTimer=setTimeout(dirty,520);}
   function layerFor(parent){
-    const host=parent.closest('.commerce-stories .offer-card,dialog,[popover]') || document.body;
+    const host=parent.closest('.commerce-stories .offer-card,.magic-book-art,dialog,[popover]') || document.body;
     let layer=layers.get(host);
     if(!layer?.node.isConnected){
       const node=document.createElement('div');node.className='story-magic-layer';
       node.setAttribute('aria-hidden','true');node.setAttribute('inert','');node.dataset.noL10n='';
-      const local=host.matches('.commerce-stories .offer-card');
+      const local=host.matches('.commerce-stories .offer-card,.magic-book-art');
       if(local)node.classList.add('story-magic-layer-local');
       else if(host===document.body)node.classList.add('story-magic-layer-page');
       host.append(node);layer={host,node,local};layers.set(host,layer);

@@ -1,4 +1,5 @@
 import {API_BASE, ShopError, validateOffer, purchasableStories, purchaseRequest, confirmationUrl, createApi} from './story-checkout-core.mjs?v=c47f6d210c03';
+import {installBookCoverTilt} from './story-book-tilt.mjs?v=47c79cfb7795';
 
 const root = document.documentElement;
 const sourcePanel = document.querySelector('#stories-panel') || document.querySelector('.commerce-stories');
@@ -26,10 +27,12 @@ function install() {
   const dialog = document.createElement('dialog');
   dialog.className = 'magic-checkout'; dialog.dataset.noL10n = ''; dialog.setAttribute('aria-labelledby', 'magic-checkout-title');
   document.body.append(dialog);
+  const coverTilt = installBookCoverTilt(dialog);
 
   function clearTimers() { clearTimeout(pollTimer); clearInterval(resendTimer); }
   function close() {
     if (closing) return;
+    coverTilt.reset();
     closing = true; generation++; clearTimers();
     const finish = () => { dialog.close(); root.classList.remove('magic-checkout-open'); closing = false; returnFocus?.focus({preventScroll:true}); };
     if (reduced()) finish();
@@ -67,6 +70,7 @@ function install() {
     return `<div class="magic-summary">${product === 'book' && selected?.cover ? `<img src="${escape(selected.cover)}" alt="" width="56" height="72">` : '<span class="magic-summary-star" aria-hidden="true">✦</span>'}<div><strong>${escape(product === 'book' ? selected?.title : t('Месяц Premium','One month of Premium'))}</strong><small>${product === 'book' ? t('Ваша навсегда · один платёж','Yours forever · one payment') : offer?.autoRenew ? t('Ежемесячная подписка','Monthly subscription') : t('Календарный месяц · без автопродления','One calendar month · no automatic renewal')}</small></div><b>${offer ? price(product === 'book' ? offer.bookAmount : offer.amount) : '…'}</b></div>`;
   }
   function render({animate = false, focus = false} = {}) {
+    coverTilt.reset();
     clearInterval(resendTimer);
     const stage = ({email:1, code:1, review:2, pending:2, success:2, owned:2})[step] || 0;
     dialog.innerHTML = `<div class="magic-shell" data-step="${step}" lang="${ru() ? 'ru' : 'en'}"><header class="magic-header"><a class="magic-shop-brand" href="/plus/?app=stories"><img src="/assets/apps/stories-icon.webp" alt="" width="34" height="34"><span>${t('Волшебные истории','Magical Stories')}<small>${t('Маленький магазин чудес','A little shop of wonders')}</small></span></a><button class="magic-close" data-action="close" aria-label="${t('Закрыть','Close')}">×</button></header><div class="magic-progress" aria-label="${t('Этапы покупки','Purchase steps')}">${[t('Выбираем чудо','Choose your magic'),t('Ваша почта','Your email'),t('Забираем с собой','Make it yours')].map((label, i) => `<span ${i === stage ? 'aria-current="step"' : ''}><b>${String(i+1).padStart(2,'0')}</b>${label}</span>`).join('')}</div><div class="magic-content">${content()}</div><p class="magic-error" role="alert" ${error ? '' : 'hidden'}>${error ? escape(errorText()) : ''}</p><footer class="magic-footer"><span aria-hidden="true">✧</span>${t('Покупка привязана к вашей почте и появится в приложении.','Your purchase is linked to your email and will appear in the app.')}<a href="mailto:raccoon.app.labs@gmail.com">${t('Помощь','Help')}</a></footer></div>`;
@@ -85,9 +89,10 @@ function install() {
       dialog.querySelectorAll('[data-story-id]').forEach(node => node.setAttribute('aria-pressed', String(node === button)));
       const selection = dialog.querySelector('.magic-selection'); if (selection) selection.textContent = selected.title;
       dialog.querySelector('[data-action="continue"]').disabled = !offer?.available;
-      if (!reduced()) button.animate([{transform:'translateY(-4px) rotate(-2deg)'},{transform:'translateY(-7px) rotate(1deg)'},{transform:'translateY(-4px) rotate(0)'}], {duration:400, easing:'ease-out'});
+      if (!reduced()) button.animate([{backgroundColor:'#edc58324'},{backgroundColor:'#edc5830b'}], {duration:400, easing:'ease-out'});
     }));
     dialog.querySelector('[data-book-search]')?.addEventListener('input', event => {
+      coverTilt.reset();
       const query = event.target.value.trim().toLocaleLowerCase(); let count = 0;
       dialog.querySelectorAll('[data-story-id]').forEach(node => { node.hidden = !node.dataset.search.includes(query); if (!node.hidden) count++; });
       dialog.querySelector('[data-search-empty]').hidden = count !== 0;
