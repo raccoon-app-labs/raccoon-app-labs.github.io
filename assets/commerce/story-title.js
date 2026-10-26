@@ -20,12 +20,14 @@
   function dirty(){for(const run of runs)run.dirty=true;clearSparks();queue();}
   function settle(){clearTimeout(settleTimer);settleTimer=setTimeout(dirty,520);}
   function layerFor(parent){
-    const host=parent.closest('dialog,[popover]') || document.body;
+    const host=parent.closest('.commerce-stories .offer-card,dialog,[popover]') || document.body;
     let layer=layers.get(host);
     if(!layer?.node.isConnected){
       const node=document.createElement('div');node.className='story-magic-layer';
       node.setAttribute('aria-hidden','true');node.setAttribute('inert','');node.dataset.noL10n='';
-      host.append(node);layer={host,node};layers.set(host,layer);
+      const local=host.matches('.commerce-stories .offer-card');
+      if(local)node.classList.add('story-magic-layer-local');
+      host.append(node);layer={host,node,local};layers.set(host,layer);
     }
     return layer;
   }
@@ -107,6 +109,27 @@
       {duration:850+Math.random()*350,easing:'cubic-bezier(.2,.65,.3,1)'});
     const item={node,animation};sparks.add(item);const remove=()=>{node.remove();sparks.delete(item);};animation.finished.then(remove,remove);
   }
+  function buildLocal(plans){
+    const waiting=plans.filter(({run,layer})=>layer.local && (run.dirty || !run.localGeometry));
+    const hosts=new Map();
+    // Measure paper coordinates only when layout changes, never from a tilted bounding box.
+    // Restoring the transform in this same frame keeps native text and its copies on one surface.
+    for(const {layer} of waiting)if(!hosts.has(layer.host)){
+      hosts.set(layer.host,{value:layer.host.style.getPropertyValue('transform'),priority:layer.host.style.getPropertyPriority('transform')});
+      layer.host.style.setProperty('transform','none','important');
+    }
+    try{
+      for(const {run,layer} of waiting){
+        const bounds=run.parent.getBoundingClientRect(),layerBounds=layer.node.getBoundingClientRect();
+        try{
+          build(run,bounds,layerBounds);
+          run.localGeometry={x:bounds.left-layerBounds.left,y:bounds.top-layerBounds.top,width:bounds.width,height:bounds.height};
+        }catch{restore(run);run.cells=[];run.dirty=false;}
+      }
+    }finally{
+      for(const [host,saved] of hosts)if(saved.value)host.style.setProperty('transform',saved.value,saved.priority);else host.style.removeProperty('transform');
+    }
+  }
   function draw(now){
     frame=0;clean();if(!enabled()){pause();return;}
     if(lastTime && now-lastTime<1000/36){queue();return;}
@@ -125,26 +148,28 @@
       let layerBounds=layerRects.get(layer);if(!layerBounds){layerBounds=layer.node.getBoundingClientRect();layerRects.set(layer,layerBounds);}
       plans.push({run,bounds,layer,layerBounds,navBottom:belowNav && nav?nav.bottom:0});
     }
+    buildLocal(plans);
     let nearest=null,best=0,total=0;
     for(const plan of plans){
       const {run,bounds,layerBounds}=plan;
-      if(run.dirty)try{build(run,bounds,layerBounds);}catch{restore(run);run.cells=[];run.dirty=false;}
+      if(run.dirty && !plan.layer.local)try{build(run,bounds,layerBounds);}catch{restore(run);run.cells=[];run.dirty=false;}
       if(!run.cells.length)continue;
       const sx=plan.layer.node.clientWidth?layerBounds.width/plan.layer.node.clientWidth:1;
       const sy=plan.layer.node.clientHeight?layerBounds.height/plan.layer.node.clientHeight:1;if(!sx || !sy)continue;
-      const x=(bounds.left-layerBounds.left)/sx,y=(bounds.top-layerBounds.top)/sy;
+      const local=plan.layer.local?run.localGeometry:null;
+      const x=local?local.x:(bounds.left-layerBounds.left)/sx,y=local?local.y:(bounds.top-layerBounds.top)/sy;
       let left=0,right=root.clientWidth,top=plan.navBottom,bottom=innerHeight;
-      for(const clip of run.clips || []){
+      for(const clip of local?[]:run.clips || []){
         let rect=rects.get(clip.node);if(!rect){rect=clip.node.getBoundingClientRect();rects.set(clip.node,rect);}
         if(clip.x){left=Math.max(left,rect.left);right=Math.min(right,rect.right);}
         if(clip.y){top=Math.max(top,rect.top);bottom=Math.min(bottom,rect.bottom);}
       }
-      if(right<=bounds.left || left>=bounds.right || bottom<=bounds.top || top>=bounds.bottom){restore(run);continue;}
-      Object.assign(run.group.style,{width:bounds.width/sx+'px',height:bounds.height/sy+'px',
-        clipPath:`inset(${Math.max(-32,(top-bounds.top)/sy)}px ${Math.max(-32,(bounds.right-right)/sx)}px ${Math.max(-32,(bounds.bottom-bottom)/sy)}px ${Math.max(-32,(left-bounds.left)/sx)}px)`,
+      if(!local && (right<=bounds.left || left>=bounds.right || bottom<=bounds.top || top>=bounds.bottom)){restore(run);continue;}
+      Object.assign(run.group.style,{width:(local?local.width:bounds.width/sx)+'px',height:(local?local.height:bounds.height/sy)+'px',
+        clipPath:local?'none':`inset(${Math.max(-32,(top-bounds.top)/sy)}px ${Math.max(-32,(bounds.right-right)/sx)}px ${Math.max(-32,(bounds.bottom-bottom)/sy)}px ${Math.max(-32,(left-bounds.left)/sx)}px)`,
         transform:`translate3d(${x.toFixed(2)}px,${y.toFixed(2)}px,0)`});
       run.group.hidden=false;run.source.dataset.painted='true';
-      const px=(pointer.x-bounds.left)/sx,py=(pointer.y-bounds.top)/sy;
+      const px=local?(pointer.x-layerBounds.left)/sx-x:(pointer.x-bounds.left)/sx,py=local?(pointer.y-layerBounds.top)/sy-y:(pointer.y-bounds.top)/sy;
       const time=now/1000,amplitude=clamp(run.size*.032,.22,2.7),radius=clamp(run.size*2.2,48,170),pushLimit=clamp(run.size*.125,.8,8);
       for(const cell of run.cells){
         const dx=cell.left+cell.width/2-px,dy=cell.top+cell.height*.55-py,distance=Math.hypot(dx,dy);
