@@ -11,7 +11,7 @@
   const W=1080,H=1920,R=34,STEP=1/60,START_Y=1500;
   canvas.width=W;canvas.height=H;
   const textures={};
-  for(const [key,file] of Object.entries({wall:'neon-wall-current.png',magenta:'neon-wall-magenta.png',charged:'neon-wall-charged.png',spike:'neon-wall-spike.png',stand:'neon-boy-stand.png',flight:'neon-boy-flight.png',climb:'neon-boy-wall.png',trail:'neon-trail-classic.png',background:'neon-world-01.webp',coin:'neon-coin.png'})){
+  for(const [key,file] of Object.entries({wall:'neon-wall-current.webp',magenta:'neon-wall-magenta.webp',charged:'neon-wall-charged.webp',spike:'neon-wall-spike.webp',stand:'neon-boy-stand.webp',flight:'neon-boy-flight.webp',climb:'neon-boy-wall.webp',trail:'neon-trail-classic.webp',background:'neon-world-01.webp',coin:'neon-coin.webp'})){
     const image=new Image();image.src='/assets/demo/'+file;image.onload=()=>draw();textures[key]=image;
   }
   const spread=x=>540+(x-540)*1.2;
