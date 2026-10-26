@@ -1,7 +1,7 @@
 import {apps} from './catalog.js?v=20261026-fast';
-import {installStoreEffects} from './effects.js?v=20261026-motion3';
+import {installStoreEffects} from './effects.js?v=20261026-night';
 import {installFaqReveals} from './faq.js?v=20261026-fold';
-import {installTicketTear} from './ticket.js?v=20261026-ticket';
+import {installTicketTear} from './ticket.js?v=20261026-night';
 
 const el = id => document.getElementById(id);
 const tabs = [...document.querySelectorAll('[data-app-tab]')];

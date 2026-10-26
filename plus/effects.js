@@ -6,7 +6,7 @@ export function installStoreEffects({reducedMotion, finePointer}) {
   const controls = 'a[href], button, summary';
 
   function colors() {
-    const app = document.documentElement.dataset.app;
+    const app = document.documentElement.dataset.app + ':' + document.documentElement.dataset.theme;
     if (paletteApp !== app) {
       const style = getComputedStyle(document.documentElement);
       palette = ['--accent', '--mint', '--ink'].map(name => style.getPropertyValue(name).trim());
