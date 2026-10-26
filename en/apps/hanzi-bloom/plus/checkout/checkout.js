@@ -4,6 +4,17 @@
   const STORAGE = 'hanzi-plus-global-checkout-v2';
   const APPS = ['com.enotessa.hanzi', 'com.enotessa.chinesekeys'];
   const sourceApp = new URLSearchParams(location.search).get('app') === 'keys' ? APPS[1] : APPS[0];
+  const isKeys = sourceApp === APPS[1];
+  document.documentElement.dataset.app = isKeys ? 'keys' : 'bloom';
+  el('checkout-store-link').href = '/plus/?app=' + (isKeys ? 'keys' : 'bloom');
+  el('checkout-included-link').href = '/plus/?app=' + (isKeys ? 'keys' : 'bloom') + '#included';
+  if (isKeys) {
+    el('checkout-app-icon').src = '/assets/apps/keys-icon.webp';
+    const accent = document.createElement('em'); accent.textContent = 'Big discoveries.';
+    el('product-title').replaceChildren(document.createTextNode('Small pieces.'), document.createElement('br'), accent);
+    const panda = document.querySelector('.garden-art img');
+    panda.src = '/plus/assets/keys-panda.webp'; panda.width = 1536; panda.height = 1024;
+  }
   const configuredApi = document.querySelector('meta[name="hanzi-global-api"]').content;
   let api = null;
   try {
