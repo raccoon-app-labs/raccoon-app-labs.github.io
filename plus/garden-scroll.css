@@ -1,0 +1,34 @@
+/* Bloom grows its own little word garden using the shared native scroll clock. */
+.bloom-garden{display:none;position:absolute;inset:0;pointer-events:none;user-select:none;-webkit-user-select:none;contain:style}
+:root[data-app=bloom] .bloom-garden{display:block}
+:root[data-app=bloom] :is(.atlas-orbits,.atlas-sky){display:none}
+.garden-roots,.garden-blooms,.garden-water{position:absolute;inset:0;pointer-events:none}
+.garden-roots{z-index:-1;color:var(--theme-accent,var(--accent));overflow:clip;border-radius:24px}
+.garden-roots>svg,.garden-water>svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+.garden-stem{fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round;stroke-dasharray:1;stroke-dashoffset:calc(1 - var(--garden-grow,0));opacity:.7}
+.stem-second{stroke-width:1.8;opacity:.48}.stem-third{stroke-width:2;opacity:.6}
+.garden-leaf{fill:color-mix(in srgb,var(--theme-accent,var(--accent)) 32%,var(--theme-mint,var(--mint)));stroke:var(--theme-accent,var(--accent));stroke-width:.7;transform-origin:0 0;transform:rotate(calc(-70deg*(1 - var(--garden-grow,0)))) scale(var(--garden-grow,0));opacity:calc(.85*var(--garden-grow,0))}
+.garden-vein{fill:none;stroke:var(--theme-accent,var(--accent));stroke-width:.8;opacity:var(--garden-grow,0);stroke-dasharray:40;stroke-dashoffset:calc(40 - 40*var(--garden-grow,0))}
+.leaf-1,.leaf-4{fill:color-mix(in srgb,var(--theme-mint,var(--mint)) 72%,var(--theme-surface,var(--paper)))}
+.garden-soil-glow{position:absolute;left:94%;top:94%;width:125px;height:95px;border-radius:50%;background:radial-gradient(ellipse,color-mix(in srgb,var(--theme-accent,var(--accent)) 28%,transparent),transparent 68%);opacity:var(--garden-grow,0);transform:translate(-50%,-50%) scale(calc(.25 + .75*var(--garden-grow,0)))}
+.garden-blooms{z-index:2;overflow:clip;border-radius:24px}
+.garden-flower{--flower:var(--garden-flower-0,0);--petal:var(--theme-mint,var(--mint));position:absolute;left:47%;top:10.4%;width:76px;height:76px;display:grid;place-items:center;opacity:clamp(0,calc(var(--flower)*1.4),1);transform:translate(-50%,-50%) rotate(calc(-25deg*(1 - var(--flower)))) scale(calc(.03 + .97*var(--flower)));transform-origin:50% 75%}
+.garden-flower>svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible;filter:drop-shadow(0 5px 7px #0001)}
+.garden-flower ellipse{fill:var(--petal);stroke:color-mix(in srgb,var(--theme-accent,var(--accent)) 25%,transparent);stroke-width:.7}
+.garden-flower circle{fill:var(--theme-surface,var(--paper));stroke:var(--theme-line,var(--line));stroke-width:1}
+.garden-flower strong{position:relative;color:var(--theme-accent,var(--accent));font:22px/1 Georgia,'SimSun',serif;white-space:nowrap;transform:scale(calc(.85 + .15*var(--flower)))}
+.flower-1{--flower:var(--garden-flower-1,0);--petal:#f3c3b5;left:84%;top:85%;width:69px;height:69px}
+.flower-2{--flower:var(--garden-flower-2,0);--petal:#d6c4ed;left:24%;top:74%;width:72px;height:72px}
+.garden-water{z-index:3;overflow:clip;border-radius:24px;color:#358fa3}
+:root[data-theme=dark] .garden-water{color:#a9ece6}
+.garden-drop{fill:currentColor;opacity:0}
+.garden-butterfly{position:absolute;z-index:2;left:calc(84% - 31%*var(--garden-grow,0));top:calc(80% - 57%*var(--garden-grow,0));width:34px;height:28px;opacity:clamp(0,calc((var(--garden-grow,0) - .15)*1.3),.9);transform:translate(-50%,-50%) rotate(calc(-25deg + 50deg*var(--garden-grow,0)));pointer-events:none}
+.garden-butterfly i{position:absolute;left:1px;top:2px;width:17px;height:22px;border-radius:75% 80% 25% 75%;background:var(--theme-mint,var(--mint));border:1px solid color-mix(in srgb,var(--theme-accent,var(--accent)) 40%,transparent);transform-origin:100% 70%;transform:rotate(-18deg) scaleX(var(--garden-wing,.5))}
+.garden-butterfly i:nth-child(2){left:16px;border-radius:80% 75% 75% 25%;transform-origin:0 70%;transform:rotate(18deg) scaleX(var(--garden-wing,.5));background:#e9c8be}
+.garden-butterfly b{position:absolute;left:16px;top:10px;width:2px;height:17px;border-radius:2px;background:var(--theme-accent,var(--accent))}
+:root[data-app=bloom] #scene.has-atlas-scroll .scene-panda{rotate:calc(-2deg*var(--garden-grow,0))}
+@media(max-width:800px){.garden-flower{width:60px;height:60px}.flower-1{width:51px;height:51px}.flower-2{width:56px;height:56px}.garden-flower strong{font-size:18px}.garden-butterfly{scale:.8}.garden-soil-glow{width:90px;height:70px}}
+@media(max-width:380px){.garden-flower{width:50px;height:50px}.flower-1{width:43px;height:43px}.flower-2{width:48px;height:48px}.garden-flower strong{font-size:15px}}
+:root[data-motion=reduced] .bloom-garden{display:none}
+:root[data-motion=reduced][data-app=bloom] #scene.has-atlas-scroll .scene-panda{rotate:none}
+@media(prefers-reduced-motion:reduce){:root[data-app=bloom] .bloom-garden{display:none}:root[data-app=bloom] #scene.has-atlas-scroll .scene-panda{rotate:none}}
