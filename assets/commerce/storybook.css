@@ -8,7 +8,7 @@
 .story-scroll-track[data-scroll-ready]~*{min-width:0}
 .story-scroll-hero:has([data-scroll-ready]) .story-hero-copy{position:sticky;top:45px}
 .story-scroll-stage .scene-art{perspective:1300px;transform-style:preserve-3d;direction:ltr}
-.scroll-book{position:relative;width:66%;max-width:350px;height:70%;max-height:440px;transform-origin:0 50%;transform-style:preserve-3d;transform:translateX(calc(var(--book-open)*51%)) rotateZ(calc(-8deg + var(--book-open)*10deg)) rotateY(calc(-8deg + var(--book-open)*8deg)) scale(calc(1 - var(--book-open)*.34))}
+.scroll-book{position:relative;width:66%;max-width:350px;height:70%;max-height:440px;transform-origin:0 50%;transform-style:preserve-3d;transform:translateX(calc(var(--cover-turn)*51%)) rotateZ(calc(-8deg + var(--book-open)*10deg)) rotateY(calc(-8deg + var(--book-open)*8deg)) scale(calc(1 - var(--cover-turn)*.34))}
 .book-back-board,.book-paper-stack,.book-right-page,.book-cover,.book-leaf{position:absolute;inset:0;border-radius:4px 17px 17px 4px;transform-style:preserve-3d}
 .book-back-board{inset:-5px -6px -6px -7px;background:#a9855e;border:2px solid #d7b985;box-shadow:10px 22px 38px #08061580;transform:translateZ(-4px)}
 .book-paper-stack{inset:4px -3px -3px 1px;background:repeating-linear-gradient(0deg,#eadab9 0 2px,#b9a37e 2px 3px);border:2px solid #f2dfba;transform:translateZ(-1px)}
