@@ -1,0 +1,11 @@
+/* The original text owns wrapping and accessibility; its twin owns the magic. */
+.commerce-stories .story-title{position:relative;isolation:isolate}
+.story-title[data-title-motion=active]>.story-title-source{color:transparent;text-shadow:none}
+.story-title-source::selection{color:#fff2df;background:#edc58355}
+.story-title-visual{position:absolute;inset:0;pointer-events:none;user-select:none;-webkit-user-select:none;text-align:start;direction:ltr;overflow:visible}
+.story-title-letter{position:absolute;display:block;white-space:pre;font:inherit;letter-spacing:inherit;transform-origin:50% 62%;backface-visibility:hidden;will-change:transform;pointer-events:none}
+.story-title-spark{position:absolute;display:block;color:#ffe3a3;text-shadow:0 0 8px #edc58388,0 0 19px #edc58344;font:12px/1 Georgia,serif;pointer-events:none;user-select:none;will-change:transform,opacity}
+.story-title:not([data-title-motion=active])>.story-title-visual{display:none}
+:root[data-motion=reduced] .story-title>.story-title-source{color:inherit;text-shadow:none}
+:root[data-motion=reduced] .story-title>.story-title-visual{display:none}
+@media(prefers-reduced-motion:reduce){.story-title>.story-title-source{color:inherit!important;text-shadow:none!important}.story-title>.story-title-visual{display:none!important}}
