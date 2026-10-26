@@ -1,10 +1,10 @@
 /* Independent app shops share navigation, with their offers kept separate. */
 :root[data-payment-page=store]{scroll-padding-top:calc(var(--hub-nav-height,110px) + 14px)}
-.app-nav{position:sticky;top:0;z-index:25;background:var(--theme-bg,var(--paper));isolation:isolate}
-.app-tabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));width:min(100%,790px);flex:1;min-width:0}
+.app-nav{position:sticky;top:0;z-index:25;background:var(--theme-bg,var(--paper));isolation:isolate;border:1px solid var(--line);border-radius:26px;padding:5px}
+.app-tabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));width:min(100%,790px);flex:1;min-width:0;border:0;border-radius:20px;padding:0}
 .app-tab{min-width:0;width:100%;white-space:normal;text-align:start;padding:11px 14px;gap:10px;line-height:1.35}
 .app-tab>span{min-width:0;overflow-wrap:anywhere}.app-tab img{flex:none}.app-tab .tab-dot{display:none}
-.tab-marker{top:0;bottom:auto;left:0;transition:transform .45s cubic-bezier(.2,.8,.2,1),width .45s,height .45s,background-color .4s}
+.tab-marker{top:0;bottom:auto;left:0;border-radius:20px;transition:transform .45s cubic-bezier(.2,.8,.2,1),width .45s,height .45s,background-color .4s}
 .nav-note{max-width:130px;line-height:1.5;font-size:10px}
 #hanzi-content[hidden],#stories-panel[hidden]{display:none!important}
 :root[data-app=stories] #hanzi-content,:root[data-app=stories] .account-routes,:root[data-app=stories] #mobile-buybar,:root[data-app=stories] .store-footer a[href*="/hanzi-bloom/plus/"]{display:none!important}
@@ -21,7 +21,7 @@
 :root[data-motion=reduced] .tab-marker{transition:none}
 @media(min-width:761px){.stories-panel .story-scroll-hero:has([data-scroll-ready]) .story-hero-copy{top:calc(var(--hub-nav-height,100px) + 20px)}}
 @media(max-width:800px){.app-nav .nav-note{display:none}.app-tabs{width:100%}.app-tab{gap:7px;padding:10px;font-size:12px}.app-tab img{width:34px;height:34px}.app-tab small{font-size:9px}}
-@media(max-width:600px){.app-nav{padding-block:9px}.app-tabs{border-radius:19px}.app-tab{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;min-height:85px;padding:8px 5px;text-align:center;font-size:11px}.app-tab small{display:none}.app-tab img{width:31px;height:31px;border-radius:10px}.stories-panel{padding-inline:12px;margin-inline:-12px;border-radius:22px}.stories-panel .commerce-hero h1{font-size:clamp(35px,10vw,56px)}.stories-panel .story-scroll-hint{font-size:10px}.tab-marker{border-radius:15px}}
+@media(max-width:600px){.app-nav{padding:4px;border-radius:22px}.app-tabs{border-radius:17px}.app-tab{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;min-height:85px;padding:8px 5px;text-align:center;font-size:11px}.app-tab small{display:none}.app-tab img{width:31px;height:31px;border-radius:10px}.stories-panel{padding-inline:12px;margin-inline:-12px;border-radius:22px}.stories-panel .commerce-hero h1{font-size:clamp(35px,10vw,56px)}.stories-panel .story-scroll-hint{font-size:10px}.tab-marker{border-radius:17px}}
 
 /* The same navigation can grow to more apps without shrinking touch targets. */
 .app-tabs{grid-template-columns:repeat(4,minmax(0,1fr));width:100%;max-width:none}
