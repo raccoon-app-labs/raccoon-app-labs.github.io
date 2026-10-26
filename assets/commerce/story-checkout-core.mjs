@@ -62,7 +62,7 @@ export function confirmationUrl(raw) {
 
 export function createApi({fetcher = globalThis.fetch, getSession, setSession, deviceId}) {
   let refresh;
-  async function request(path, {method = 'GET', body, authenticated = false, retry = true} = {}) {
+  async function request(path, {method = 'GET', body, authenticated = false, retry = true, networkRetries = 1} = {}) {
     const session = getSession();
     if (authenticated && !session?.accessToken) throw new ShopError('login_required', 401);
     let response;
@@ -72,7 +72,10 @@ export function createApi({fetcher = globalThis.fetch, getSession, setSession, d
         headers:{...(body ? {'Content-Type':'application/json'} : {}), ...(authenticated ? {Authorization:`Bearer ${session.accessToken}`} : {})},
         ...(body ? {body:JSON.stringify(body)} : {}), signal:AbortSignal.timeout(25000)
       });
-    } catch { throw new ShopError(method === 'POST' && path.includes('/create') ? 'payment_uncertain' : 'network_error'); }
+    } catch {
+      if (method === 'GET' && networkRetries > 0) return request(path, {method, body, authenticated, retry, networkRetries:networkRetries - 1});
+      throw new ShopError(method === 'POST' && path.includes('/create') ? 'payment_uncertain' : 'network_error');
+    }
     const data = await response.json().catch(() => ({}));
     if (response.status === 401 && authenticated && retry && session.refreshToken) {
       if (getSession()?.accessToken !== session.accessToken) return request(path, {method, body, authenticated, retry:false});

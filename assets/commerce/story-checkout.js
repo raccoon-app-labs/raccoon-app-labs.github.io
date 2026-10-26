@@ -1,4 +1,4 @@
-import {API_BASE, ShopError, validateOffer, purchasableStories, purchaseRequest, confirmationUrl, createApi} from './story-checkout-core.mjs?v=1bf19313396a';
+import {API_BASE, ShopError, validateOffer, purchasableStories, purchaseRequest, confirmationUrl, createApi} from './story-checkout-core.mjs?v=c47f6d210c03';
 
 const root = document.documentElement;
 const sourcePanel = document.querySelector('#stories-panel') || document.querySelector('.commerce-stories');

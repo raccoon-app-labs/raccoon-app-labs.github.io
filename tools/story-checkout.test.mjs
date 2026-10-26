@@ -74,3 +74,11 @@ test('authentication is required before calling private endpoints',async()=>{
   const api=createApi({fetcher:()=>assert.fail('must not fetch'),getSession:()=>null,setSession:()=>{},deviceId:'web'});
   await assert.rejects(api('/api/books',{authenticated:true}),error=>error.status===401);
 });
+test('a transient catalog connection failure is retried once without retrying mutations',async()=>{
+  let reads=0;
+  const api=createApi({fetcher:async()=>{if(++reads===1)throw new Error('connection reset');return Response.json({stories:[]});},getSession:()=>null,setSession:()=>{},deviceId:'web'});
+  assert.deepEqual(await api('/v1/catalog/ru'),{stories:[]});assert.equal(reads,2);
+  reads=0;
+  const failing=createApi({fetcher:async()=>{reads++;throw new Error('connection reset');},getSession:()=>null,setSession:()=>{},deviceId:'web'});
+  await assert.rejects(failing('/v1/catalog/ru'),error=>error.code==='network_error');assert.equal(reads,2);
+});
