@@ -1,7 +1,8 @@
 /* Presentation only: language never changes the checkout contract, region or session. */
 (() => {
   'use strict';
-  const data = window.HANZI_PLUS_MESSAGES;
+  const data = window.HANZI_SITE_MESSAGES || window.HANZI_PLUS_MESSAGES;
+  const aliases = window.HANZI_SOURCE_ALIASES || {};
   if (!data?.en) return;
   const languages = [
     ['en','English','English','Hello','Aa'], ['ru','Русский','Russian','Привет','Я'],
@@ -41,7 +42,8 @@
   const textState = new WeakMap(), attributeState = new WeakMap();
   const ownedAnimations = new Set();
   let code = 'en', changing = false;
-  const templates = Object.keys(data.en).filter(key => /\{\w+\}/u.test(key)).map(key => {
+  const templates = Object.keys(data.en).filter(key => /\{\w+\}/u.test(key))
+    .sort((a,b) => b.replace(/\{\w+\}/gu,'').length-a.replace(/\{\w+\}/gu,'').length).map(key => {
     const names = [];
     const escaped = key.split(/(\{\w+\})/u).map(part => {
       if (/^\{\w+\}$/u.test(part)) { names.push(part.slice(1,-1)); return '(.+?)'; }
@@ -52,17 +54,22 @@
   function t(key, params = {}) {
     return (data[code][key] ?? data.en[key] ?? key).replace(/\{(\w+)\}/gu, (all, name) => params[name] ?? all);
   }
-  function translate(source) {
-    const value = normalize(source);
+  function translate(source, depth = 0) {
+    const raw = normalize(source);
+    const value = Object.hasOwn(data.en,raw) ? raw : aliases[raw] || raw;
     let result = data[code][value];
     if (result === undefined) {
       for (const template of templates) {
         const match = value.match(template.pattern);
-        if (match) { result = t(template.key, Object.fromEntries(template.names.map((name,i) => [name,match[i+1]]))); break; }
+        if (match) { result = t(template.key, Object.fromEntries(template.names.map((name,i) => [name,depth < 3 ? translate(match[i+1],depth+1) : match[i+1]]))); break; }
       }
     }
     if (result === undefined && /^Hanzi (Bloom|Keys) Plus · The little app shop$/u.test(value))
       result = t('Hanzi Plus · The little app shop').replace('Hanzi Plus',value.split(' · ')[0]);
+    if (result === undefined && depth < 3) {
+      const pieces = source.split(/(?<=[.!?])(\s+)(?=[A-ZА-ЯЁ0-9])/u);
+      if (pieces.length > 1) return pieces.map((piece,i) => i%2 ? piece : translate(piece,depth+1)).join('');
+    }
     if (result === undefined) return source;
     return (source.match(/^\s*/u)?.[0] || '') + result + (source.match(/\s*$/u)?.[0] || '');
   }
@@ -75,7 +82,7 @@
     saved.last = result; textState.set(node,saved);
     if (node.data !== result) node.data = result;
   }
-  const attrs = ['aria-label','placeholder','title','alt'];
+  const attrs = ['aria-label','aria-description','placeholder','title','alt','content'];
   function attributes(node) {
     if (node.closest?.('[data-no-l10n]')) return;
     let states = attributeState.get(node);
@@ -93,7 +100,7 @@
       if (!raw || raw.startsWith('#')) return;
       try {
         const url = new URL(raw, location.href);
-        if (url.origin === location.origin && (url.pathname.startsWith('/plus/') || url.pathname.startsWith('/en/apps/hanzi-bloom/plus/'))) {
+        if (url.origin === location.origin && !url.pathname.startsWith('/assets/') && !url.pathname.startsWith('/plus/assets/')) {
           url.searchParams.set('lang',code);
           const next = url.pathname + url.search + url.hash;
           if (raw !== next) node.setAttribute('href',next);
@@ -108,12 +115,14 @@
     if (root.nodeType === Node.ELEMENT_NODE) attributes(root);
     const walker = document.createTreeWalker(root,NodeFilter.SHOW_TEXT);
     while (walker.nextNode()) text(walker.currentNode);
-    root.querySelectorAll('[aria-label],[placeholder],[title],[alt],a[href]').forEach(attributes);
+    root.querySelectorAll('[aria-label],[aria-description],[placeholder],[title],[alt],meta[content],a[href]').forEach(attributes);
   }
   function initialLanguage() {
     const query = baseCode(new URLSearchParams(location.search).get('lang'));
     if (valid(query)) return query;
     try { const saved = localStorage.getItem(storageKey); if (valid(saved)) return saved; } catch {}
+    const legacy = window.HANZI_INITIAL_LOCALE?.legacy;
+    if (valid(legacy)) return legacy;
     return (navigator.languages || [navigator.language]).map(baseCode).find(valid) || 'en';
   }
   const host = document.querySelector('header');
@@ -121,7 +130,8 @@
   const utility = document.createElement('div'); utility.className = 'language-utility';
   const accountLink = [...host.children].find(node => node.matches('a') && !node.matches('.shop-brand,.brand'));
   host.classList.add('language-host');
-  if (accountLink) utility.append(accountLink);
+  const legacySwitcher = host.querySelector('.language-switch');
+  if (!legacySwitcher && accountLink && accountLink !== host.querySelector('a')) utility.append(accountLink);
   const launch = document.createElement('button');
   launch.type = 'button'; launch.className = 'language-launch'; launch.dataset.languageControl = ''; launch.dataset.noL10n = '';
   launch.setAttribute('aria-haspopup','dialog'); launch.setAttribute('aria-controls','language-dialog'); launch.setAttribute('aria-expanded','false');
@@ -130,7 +140,8 @@
   const chevron = document.createElement('span'); chevron.className = 'language-chevron'; chevron.setAttribute('aria-hidden','true'); chevron.textContent = '⌄';
   const sparks = document.createElement('span'); sparks.className = 'language-sparks'; sparks.setAttribute('aria-hidden','true');
   for (let i = 0; i < 4; i++) { const spark = document.createElement('i'); spark.textContent = '✦'; sparks.append(spark); }
-  launch.append(paper,current,chevron,sparks); utility.append(launch); host.append(utility);
+  launch.append(paper,current,chevron,sparks); utility.append(launch);
+  if (legacySwitcher) legacySwitcher.replaceWith(utility); else host.append(utility);
   const dialog = document.createElement('div'); dialog.id = 'language-dialog'; dialog.className = 'language-dropdown'; dialog.dataset.noL10n = '';
   dialog.setAttribute('role','dialog'); dialog.setAttribute('popover','auto');
   const nativePopover = typeof dialog.showPopover === 'function';
@@ -160,6 +171,14 @@
   });
   panel.append(heading,search,grid,empty,note,device); dialog.append(panel); document.body.append(dialog);
   const announce = document.createElement('p'); announce.className = 'language-announcement'; announce.setAttribute('aria-live','polite'); announce.dataset.noL10n = ''; document.body.append(announce);
+  const sourceLanguage = document.documentElement.dataset.legalSource;
+  let legalNote, original;
+  if (sourceLanguage) {
+    const banner = document.createElement('aside'); banner.className = 'site-translation-note'; banner.dataset.noL10n = '';
+    legalNote = document.createElement('span'); original = document.createElement('button'); original.type = 'button'; original.dataset.languageControl = '';
+    original.addEventListener('click', () => setLanguage(sourceLanguage,true)); banner.append(legalNote,original);
+    const main = document.querySelector('main'); if (main) main.prepend(banner);
+  }
   function refreshPicker() {
     const selected = languages.find(lang => lang[0] === code);
     current.textContent = selected[1]; paper.replaceChildren(flag(code));
@@ -169,6 +188,11 @@
     note.textContent = t('The page language does not change your payment region or currency.');
     device.textContent = t('Use device language'); empty.textContent = t('No languages found');
     for (const card of cards) { const chosen = card.dataset.code === code; card.setAttribute('aria-selected',String(chosen)); card.tabIndex = chosen ? 0 : -1; }
+    if (legalNote) {
+      legalNote.parentElement.hidden = code === sourceLanguage;
+      legalNote.textContent = t('Translation for convenience. Original document: {language}.',{language:sourceLanguage === 'ru' ? 'Русский' : 'English'});
+      original.textContent = t('Show original document');
+    }
   }
   function setLanguage(next, persist = false) {
     if (!valid(next)) return;
@@ -184,7 +208,7 @@
     }
     const description = document.querySelector('meta[name="description"]');
     const summary = document.getElementById('hero-description') || document.querySelector('.garden-note');
-    if (description && summary) description.content = summary.textContent;
+    if (!window.HANZI_SITE_MESSAGES && description && summary) description.content = summary.textContent;
     dispatchEvent(new CustomEvent('hanzi:languagechange',{detail:{code}}));
     if (persist) {
       announce.textContent = t('Language changed to {language}',{language:languages.find(lang => lang[0] === code)[1]});
@@ -317,8 +341,8 @@
     field.addEventListener('invalid', () => field.setCustomValidity(t('Check your email address or six-digit code.')));
     field.addEventListener('input', () => field.setCustomValidity(''));
   }
-  setLanguage(initialLanguage());
   observer.observe(document,{subtree:true,childList:true,characterData:true,attributes:true,attributeFilter:[...attrs,'href']});
+  setLanguage(initialLanguage());
   addEventListener('popstate', () => setLanguage(initialLanguage()));
   window.addEventListener('resize',positionDropdown,{passive:true});
   window.visualViewport?.addEventListener('resize',positionDropdown,{passive:true});

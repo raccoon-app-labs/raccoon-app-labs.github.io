@@ -5,6 +5,7 @@
   'use strict';
   const root=document.querySelector('.neon-lab');if(!root)return;
   const en=document.documentElement.lang==='en',t=(ru,enText)=>en?enText:ru;
+  const canvasText=(ru,english)=>window.HanziLocale?.t(english) ?? t(ru,english);
   const canvas=root.querySelector('canvas'),ctx=canvas.getContext('2d');
   const status=root.querySelector('[data-neon-status]'),score=root.querySelector('[data-neon-score]');
   const W=1080,H=1920,R=34,STEP=1/60,START_Y=1500;
@@ -118,7 +119,7 @@
       if(flash>0){ctx.strokeStyle=`rgba(191,255,255,${flash*.6})`;ctx.lineWidth=3;ctx.beginPath();for(let i=0;i<20;i++){const p=i/19,hx=x-Math.sign(vx)*(24+Math.sin(p*Math.PI)*52),hy=sy+22+p*66;i?ctx.lineTo(hx,hy):ctx.moveTo(hx,hy);}ctx.stroke();}
     }
     ctx.restore();ctx.fillStyle='#06efff';ctx.fillRect(300,100,480*Math.max(0,1-thrust),4);
-    if(dead||complete){ctx.fillStyle='#04091ec9';ctx.fillRect(0,0,W,H);ctx.fillStyle='#e6fbff';ctx.font='bold 44px sans-serif';ctx.textAlign='center';ctx.fillText(dead?t('ЕЩЁ ОДИН ПРЫЖОК?','ONE MORE JUMP?'):t('УЧАСТОК ПРОЙДЕН','SECTION CLEARED'),540,900);ctx.font='28px sans-serif';ctx.fillText(t('↺ — начать заново','↺ — try again'),540,970);ctx.textAlign='start';}
+    if(dead||complete){ctx.fillStyle='#04091ec9';ctx.fillRect(0,0,W,H);ctx.fillStyle='#e6fbff';ctx.font='bold 44px sans-serif';ctx.textAlign='center';ctx.fillText(dead?canvasText('ЕЩЁ ОДИН ПРЫЖОК?','ONE MORE JUMP?'):canvasText('УЧАСТОК ПРОЙДЕН','SECTION CLEARED'),540,900);ctx.font='28px sans-serif';ctx.fillText(canvasText('↺ — начать заново','↺ — try again'),540,970);ctx.textAlign='start';}
   }
   function tick(now){accumulator+=Math.min(.1,(now-last)/1000);last=now;while(accumulator>=STEP&&!dead&&!complete){physics();accumulator-=STEP;}draw();if(visible&&!document.hidden&&started&&!dead&&!complete)frame=requestAnimationFrame(tick);}
   function resume(stopHold=true){cancelAnimationFrame(frame);if(stopHold)release();accumulator=0;last=performance.now();if(visible&&!document.hidden&&started&&!dead&&!complete)frame=requestAnimationFrame(tick);}
@@ -130,5 +131,6 @@
   }
   root.querySelector('[data-neon-reset]').addEventListener('click',reset);
   new IntersectionObserver(entries=>{visible=entries[0].isIntersecting;resume();}).observe(canvas);
+  window.addEventListener('hanzi:languagechange',()=>draw());
   document.addEventListener('visibilitychange',()=>resume());window.addEventListener('pagehide',()=>{cancelAnimationFrame(frame);release();});reset();
 })();

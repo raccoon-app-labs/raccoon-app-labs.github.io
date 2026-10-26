@@ -1,0 +1,170 @@
+{
+  "apps/dokupit/index.html": {
+    "bundle": "p-26d8d4b25089.js",
+    "messages": 150,
+    "original": "ru",
+    "style": "portfolio"
+  },
+  "apps/hanzi-bloom/index.html": {
+    "bundle": "p-6b7f409afbb0.js",
+    "messages": 156,
+    "original": "ru",
+    "style": "portfolio"
+  },
+  "apps/hanzi-bloom/plus/checkout/index.html": {
+    "bundle": "p-83e65d139089.js",
+    "messages": 65,
+    "original": "ru",
+    "style": "legal"
+  },
+  "apps/hanzi-bloom/plus/index.html": {
+    "bundle": "p-10db06d6d6f0.js",
+    "messages": 92,
+    "original": "ru",
+    "style": "legal"
+  },
+  "apps/hanzi-bloom/plus/offer/archive-2026-10-08.html": {
+    "bundle": "p-c05804b83c90.js",
+    "messages": 140,
+    "original": "ru",
+    "style": "legal"
+  },
+  "apps/hanzi-bloom/plus/offer/archive-2026-10-16.html": {
+    "bundle": "p-dc923bc97a1e.js",
+    "messages": 156,
+    "original": "ru",
+    "style": "legal"
+  },
+  "apps/hanzi-bloom/plus/offer/index.html": {
+    "bundle": "p-d64832facf73.js",
+    "messages": 164,
+    "original": "ru",
+    "style": "legal"
+  },
+  "apps/hanzi-bloom/plus/privacy/archive-2026-10-08.html": {
+    "bundle": "p-317e26029f15.js",
+    "messages": 157,
+    "original": "ru",
+    "style": "legal"
+  },
+  "apps/hanzi-bloom/plus/privacy/archive-2026-10-16.html": {
+    "bundle": "p-40d03d97e7db.js",
+    "messages": 174,
+    "original": "ru",
+    "style": "legal"
+  },
+  "apps/hanzi-bloom/plus/privacy/index.html": {
+    "bundle": "p-f4676876ac84.js",
+    "messages": 184,
+    "original": "ru",
+    "style": "legal"
+  },
+  "apps/hanzi-keys/index.html": {
+    "bundle": "p-bc3958204534.js",
+    "messages": 144,
+    "original": "ru",
+    "style": "portfolio"
+  },
+  "apps/magical-stories/index.html": {
+    "bundle": "p-dc3e8022d9f6.js",
+    "messages": 135,
+    "original": "ru",
+    "style": "portfolio"
+  },
+  "apps/muropolis/index.html": {
+    "bundle": "p-70eeb1947255.js",
+    "messages": 150,
+    "original": "ru",
+    "style": "portfolio"
+  },
+  "apps/neon-cyber-wall-kicker/index.html": {
+    "bundle": "p-be15f99a5486.js",
+    "messages": 149,
+    "original": "ru",
+    "style": "portfolio"
+  },
+  "apps/neon-cyber-wall-kicker/shop/index.html": {
+    "bundle": "p-4845ad1dd8ce.js",
+    "messages": 107,
+    "original": "ru",
+    "style": "neon"
+  },
+  "apps/neon-cyber-wall-kicker/shop/offer/index.html": {
+    "bundle": "p-f57ed01fe3e0.js",
+    "messages": 123,
+    "original": "ru",
+    "style": "neon"
+  },
+  "apps/neon-cyber-wall-kicker/shop/privacy/index.html": {
+    "bundle": "p-9b64186fc020.js",
+    "messages": 121,
+    "original": "ru",
+    "style": "neon"
+  },
+  "apps/what-to-eat/index.html": {
+    "bundle": "p-748d3cad019b.js",
+    "messages": 183,
+    "original": "ru",
+    "style": "portfolio"
+  },
+  "en/apps/dokupit/index.html": {
+    "bundle": "p-26d8d4b25089.js",
+    "messages": 150,
+    "original": "en",
+    "style": "portfolio"
+  },
+  "en/apps/hanzi-bloom/index.html": {
+    "bundle": "p-6b7f409afbb0.js",
+    "messages": 156,
+    "original": "en",
+    "style": "portfolio"
+  },
+  "en/apps/hanzi-bloom/plus/offer/index.html": {
+    "bundle": "p-c81952830d78.js",
+    "messages": 67,
+    "original": "en",
+    "style": "legal"
+  },
+  "en/apps/hanzi-bloom/plus/privacy/index.html": {
+    "bundle": "p-fb5c1cf0701a.js",
+    "messages": 61,
+    "original": "en",
+    "style": "legal"
+  },
+  "en/apps/hanzi-keys/index.html": {
+    "bundle": "p-bc3958204534.js",
+    "messages": 144,
+    "original": "en",
+    "style": "portfolio"
+  },
+  "en/apps/magical-stories/index.html": {
+    "bundle": "p-dc3e8022d9f6.js",
+    "messages": 135,
+    "original": "en",
+    "style": "portfolio"
+  },
+  "en/apps/muropolis/index.html": {
+    "bundle": "p-70eeb1947255.js",
+    "messages": 150,
+    "original": "en",
+    "style": "portfolio"
+  },
+  "en/apps/neon-cyber-wall-kicker/index.html": {
+    "bundle": "p-be15f99a5486.js",
+    "messages": 149,
+    "original": "en",
+    "style": "portfolio"
+  },
+  "en/apps/what-to-eat/index.html": {
+    "bundle": "p-748d3cad019b.js",
+    "messages": 183,
+    "original": "en",
+    "style": "portfolio"
+  },
+  "index.html": {
+    "bundle": "p-0eb547304658.js",
+    "messages": 124,
+    "original": "ru",
+    "style": "portfolio"
+  }
+}
