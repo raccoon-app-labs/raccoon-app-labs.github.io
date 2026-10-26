@@ -1,5 +1,6 @@
 import {apps} from './catalog.js?v=20261026-fast';
 import {installStoreEffects} from './effects.js?v=20261026-motion3';
+import {installFaqReveals} from './faq.js?v=20261026-fold';
 
 const el = id => document.getElementById(id);
 const tabs = [...document.querySelectorAll('[data-app-tab]')];
@@ -12,6 +13,7 @@ let sceneAnimations = [];
 let userReducedMotion = false;
 const reducedMotion = () => motion.matches || userReducedMotion;
 const interactionEffects = installStoreEffects({reducedMotion, finePointer});
+const faqReveals = installFaqReveals({reducedMotion});
 
 function moveMarker() {
   const selected = tabs.find(tab => tab.dataset.appTab === current);
@@ -160,6 +162,7 @@ function syncMotion() {
   el('motion-toggle').disabled = motion.matches;
   el('motion-toggle').title = motion.matches ? 'Reduced motion follows your device setting.' : 'Reduce decorative motion';
   if (reducedMotion()) {
+    faqReveals.finishAll();
     interactionEffects.clear();
     document.getAnimations().forEach(animation => animation.cancel());
     resetPointer(); el('scene-particles').replaceChildren();
