@@ -1,5 +1,4 @@
 /* Shared app navigation stays mounted when the account-region view changes. */
-:root[data-account-region=ru]:is([data-app=bloom],[data-app=keys]) :is(#app-panel,#hanzi-content>.pass-section,#hanzi-content>.how-section,#hanzi-content>.faq-section,#mobile-buybar){display:none!important}
 .account-routes a[aria-current=true]{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent);background:var(--soft)}
 .account-routes a{transition:background-color .25s,box-shadow .25s,transform .25s}
 .account-routes a:active{transform:scale(.985)}
@@ -34,3 +33,45 @@
 @media(max-width:650px){.ru-region-heading{align-items:flex-start;gap:12px}.ru-worlds{gap:5px}.ru-worlds img{width:38px;height:38px;border-radius:12px}.ru-worlds span{display:none}.ru-price-grid,.ru-benefit-grid{grid-template-columns:1fr}.ru-price-card{padding:24px;gap:14px}.ru-region-heading h1{font-size:30px}.ru-region-panel{padding-top:24px}.ru-region-heading p{font-size:15px}.ru-region-note{font-size:14px;gap:8px}}
 @media(prefers-reduced-motion:reduce){.account-routes a,.ru-price-card .action{transition:none}.ru-price-card .action:hover,.account-routes a:active{transform:none}}
 :root[data-motion=reduced] .ru-price-card .action:hover,:root[data-motion=reduced] .account-routes a:active{transform:none}
+
+/* One product, one layout. The little currency dock sits beside the prices. */
+:root[data-currency-ui] .pass-section{display:block;margin-block:80px}
+:root[data-currency-ui] .pass-intro{margin-bottom:26px;max-width:680px}
+:root[data-currency-ui] .pass-intro h2 br,:root[data-currency-ui] .pass-intro p br{display:none}
+:root[data-currency-ui] .plus-pass{display:grid;grid-template-columns:minmax(200px,.7fr) minmax(0,1.6fr);align-items:start;overflow:visible;background:var(--theme-surface,var(--paper));color:var(--ink);border:1px solid var(--line);box-shadow:none}
+:root[data-currency-ui] .pass-body{padding:30px;border-inline-end:1px dashed var(--line);color:var(--ink)}
+:root[data-currency-ui] .pass-shared,:root[data-currency-ui] .pass-id{color:var(--muted)}
+:root[data-currency-ui] .pass-badge{color:var(--ink);border-color:var(--line)}
+.currency-plans{min-width:0;padding:26px}
+.account-routes.currency-picker{padding:0;margin:0 0 24px;border:0;border-radius:0;background:none}
+.currency-picker>div{display:flex;gap:6px;padding:5px;border:1px solid var(--line);border-radius:20px;background:var(--theme-well,var(--paper))}
+.currency-picker a{position:relative;flex:1;min-height:58px;padding:10px 12px;border-color:transparent;border-radius:15px;transition:background-color .25s,transform .25s,color .25s}
+.currency-picker a[aria-current=true]{background:var(--theme-button,var(--mint));color:var(--theme-on-button,var(--ink));box-shadow:none;border-color:transparent}
+.currency-picker a[aria-current=true]::after{content:'✓';position:absolute;inset-inline-end:9px;top:7px;font-size:12px}
+.currency-picker a[aria-current=true] small{color:inherit}
+.currency-picker a:hover{transform:translateY(-2px)}
+.currency-picker a>span:first-child{display:inline-block;transform:rotateY(0);transition:transform .65s cubic-bezier(.16,1,.3,1)}
+.currency-picker a[aria-current=true]>span:first-child{transform:rotateY(1turn) rotate(-8deg)}
+.currency-picker a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.currency-picker small{font-size:11px}.currency-picker strong{font-size:14px;padding-inline-end:12px}
+.currency-picker>p:last-child{font-size:11px;line-height:1.6;max-width:52em}
+.currency-plans .ru-region-panel{padding:0}
+.currency-plans :is(.ru-region-heading,.ru-benefits,.ru-region-help){display:none}
+.currency-plans .ru-price-grid{gap:12px}.currency-plans .ru-price-card{padding:20px;gap:12px;border-radius:20px 20px 20px 7px}
+.currency-plans .ru-price-card h2{font-size:23px}.currency-plans .ru-price{font-size:clamp(32px,3.5vw,50px);letter-spacing:-.05em}
+.currency-plans .ru-price-card ul{font-size:12px}.currency-plans .ru-price-card p:not(.ru-price){font-size:12px}
+.currency-plans .ru-price-card .action{font-size:13px;padding:14px 12px;color:var(--theme-on-button,var(--ink));background:var(--theme-button,var(--mint))}
+.currency-plans .ru-region-note{font-size:11px;gap:7px;padding:18px 0}.currency-plans .ru-region-details{padding:14px 0}.currency-plans .ru-region-details summary{font-size:14px}.currency-plans .ru-region-details p{font-size:12px}
+.currency-plans .pass-checkout{border:1px solid var(--line);border-radius:20px;padding:25px;background:var(--theme-well,var(--paper));color:var(--ink)}
+.currency-plans .pass-checkout p,.currency-plans .pass-availability{color:var(--muted)}
+.currency-plans .pass-price{color:var(--ink)}
+.currency-plans [aria-disabled=true]{cursor:default;opacity:.7;background:var(--soft);color:var(--ink)}
+.currency-plans [aria-disabled=true] .action-arrow{display:none}
+:root[data-currency-ui] .currency-plans [data-currency-unavailable]{opacity:1;background:var(--theme-well,var(--paper));color:var(--theme-text,var(--ink));border:1px dashed var(--line);box-shadow:none;min-height:54px}
+.currency-plans [hidden]{display:none!important}
+@media(max-width:950px){:root[data-currency-ui] .plus-pass{grid-template-columns:1fr}:root[data-currency-ui] .pass-body{border-inline-end:0;border-bottom:1px dashed var(--line)}:root[data-currency-ui] .pass-body h3 br{display:none}.currency-plans{padding:22px}}
+@media(max-width:520px){.currency-plans{padding:16px}.currency-plans .ru-price-grid{grid-template-columns:1fr}.currency-picker a{padding:10px 8px;gap:7px}.currency-picker strong{font-size:12px}.currency-picker small{font-size:10px}:root[data-currency-ui] .pass-body{padding:22px}.currency-plans .ru-price-card ul{font-size:13px}}
+@media(prefers-reduced-motion:reduce){.currency-picker a{transition:none}.currency-picker a:hover{transform:none}}
+:root[data-motion=reduced] .currency-picker a{transition:none}:root[data-motion=reduced] .currency-picker a:hover{transform:none}
+@media(prefers-reduced-motion:reduce){.currency-picker a>span:first-child{transition:none;transform:none!important}}
+:root[data-motion=reduced] .currency-picker a>span:first-child{transition:none;transform:none!important}

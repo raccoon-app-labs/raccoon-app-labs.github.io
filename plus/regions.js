@@ -1,83 +1,45 @@
-/* The region picker changes the shop view, never the account's billing region. */
+/* Currency selects a catalogue, never an account region or session. */
 (() => {
-  'use strict';
-  const root = document.documentElement;
-  const panel = document.querySelector('[data-ru-region-panel]');
-  if (!panel) return;
-  const picker = document.querySelector('[data-commerce-region]');
-  const pass = document.querySelector('.pass-section');
-  const globalContent = [...document.querySelectorAll('#app-panel,#hanzi-content>.pass-section,#hanzi-content>.how-section,#hanzi-content>.faq-section')];
-  const footer = [...document.querySelectorAll('.store-footer a[href]')].filter(a => /\/(offer|privacy)\//.test(a.getAttribute('href')));
-  const originalFooter = new Map(footer.map(a => [a,a.getAttribute('href')]));
-  let entrance;
-  const region = () => new URLSearchParams(location.search).get('region') === 'ru' ? 'ru' : 'global';
-  const app = () => ['keys','bloom'].includes(root.dataset.app) ? root.dataset.app : null;
-  const language = () => new URLSearchParams(location.search).get('lang') || root.lang || 'en';
-  function shopUrl(value) {
-    const url = new URL(location.href);
-    url.searchParams.set('region',value);
-    url.searchParams.set('app',app() || 'bloom');
-    url.searchParams.set('lang',language());
-    url.hash = '';
-    return url;
-  }
-  function checkout(plan) {
-    const url = new URL('/apps/hanzi-bloom/plus/checkout/',location.href);
-    url.searchParams.set('app',app() || 'bloom');
-    url.searchParams.set('lang',language());
-    if (plan) url.searchParams.set('plan',plan);
-    return url.href;
-  }
-  function render() {
-    const ru = region() === 'ru', hanzi = !!app();
-    root.dataset.accountRegion = ru ? 'ru' : 'global';
-    for (const link of picker.querySelectorAll('[data-russian-catalog],[data-international-catalog]')) {
-      const value = link.hasAttribute('data-russian-catalog') ? 'ru' : 'global';
-      link.href = shopUrl(value).href;
-      if ((value === 'ru') === ru) link.setAttribute('aria-current','true');
-      else link.removeAttribute('aria-current');
-    }
-    for (const node of globalContent) node.hidden = hanzi && ru;
-    panel.hidden = !hanzi || !ru;
-    // Only the current shop owns #plus, including after Back/Forward and app changes.
-    pass.id = hanzi && !ru ? 'plus' : 'hanzi-plus';
-    panel.id = hanzi && ru ? 'plus' : 'ru-pricing';
-    if (hanzi) {
-      document.querySelector('.skip-link').href = ru ? '#plus' : '#app-panel';
-      for (const link of document.querySelectorAll('[data-checkout]')) {
-        if (ru) link.href = checkout();
-        else {
-          const url = new URL('/en/apps/hanzi-bloom/plus/checkout/',location.href);
-          url.searchParams.set('app',app());url.searchParams.set('lang',language());link.href=url.href;
-        }
-      }
-    }
-    for (const link of panel.querySelectorAll('[data-ru-web-plan]')) link.href = checkout(link.dataset.ruWebPlan);
-    for (const link of footer) {
-      const url = new URL(originalFooter.get(link),location.href);
-      if (hanzi && ru) url.pathname = '/apps/hanzi-bloom/plus/checkout/' + (url.pathname.includes('/offer/')?'offer/':'privacy/');
-      url.searchParams.set('lang',language());link.href = url.href;
-    }
-    for (const link of panel.querySelectorAll('[data-ru-document]')) {
-      const url=new URL(link.href);url.searchParams.set('lang',language());link.href=url.href;
-    }
-  }
-  picker.addEventListener('click',event => {
-    const link=event.target.closest('[data-russian-catalog],[data-international-catalog]');
-    if (!link || event.button || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
-    event.preventDefault();
-    const value=link.hasAttribute('data-russian-catalog')?'ru':'global';
-    const changed=region()!==value;
-    if (changed) history.pushState(null,'',shopUrl(value));
-    render();
-    entrance?.cancel();
-    const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches || root.dataset.motion==='reduced';
-    if (changed && !reduced) entrance=(value==='ru'?panel:document.querySelector('#app-panel')).animate([
-      {opacity:.25,transform:'translateY(16px) scale(.985)'},{opacity:1,transform:'translateY(0) scale(1)'}
-    ],{duration:420,easing:'cubic-bezier(.2,.8,.2,1)'});
+ 'use strict';
+ const root=document.documentElement,panel=document.querySelector('[data-ru-region-panel]'),picker=document.querySelector('[data-commerce-region]');
+ if(!panel || !picker)return;
+ const pass=document.querySelector('.pass-section'),ticket=pass.querySelector('.plus-pass'),usd=pass.querySelector('.pass-checkout');
+ const plans=document.createElement('div');plans.className='currency-plans';ticket.append(plans);plans.append(picker,panel,usd);
+ picker.classList.add('currency-picker');picker.dataset.noL10n='';picker.dataset.currencyReady='true';
+ const footer=[...document.querySelectorAll('.store-footer a[href]')].filter(a=>/\/(offer|privacy)\//.test(a.getAttribute('href'))),originalFooter=new Map(footer.map(a=>[a,a.getAttribute('href')]));
+ const region=()=>new URLSearchParams(location.search).get('region')==='ru'?'ru':'global';
+ const app=()=>['keys','bloom'].includes(root.dataset.app)?root.dataset.app:null;
+ const language=()=>window.HanziLocale?.code || root.lang || 'en';
+ const t=key=>(window.HanziCurrencyCopy?.[language()] || window.HanziCurrencyCopy?.en || {})[key] || key;
+ const set=(node,value)=>{if(node && node.textContent!==value){node.dataset.noL10n='';node.textContent=value;}};
+ let entrance;
+ function url(value){const u=new URL(location.href);u.searchParams.set('region',value);u.searchParams.set('app',app()||'bloom');u.searchParams.set('lang',language());return u;}
+ function checkout(plan){const u=new URL(region()==='ru'?'/apps/hanzi-bloom/plus/checkout/':'/en/apps/hanzi-bloom/plus/checkout/',location.href);u.searchParams.set('app',app()||'bloom');u.searchParams.set('lang',language());if(plan)u.searchParams.set('plan',plan);return u.href;}
+ function render(){
+  const ru=region()==='ru',hanzi=!!app();root.dataset.accountRegion=ru?'ru':'global';root.dataset.currencyUi='ready';
+  for(const node of document.querySelectorAll('#app-panel,#hanzi-content>.how-section,#hanzi-content>.faq-section'))node.hidden=false;
+  pass.hidden=false;pass.id=hanzi?'plus':'hanzi-plus';panel.id='ru-pricing';panel.hidden=!ru || !hanzi;usd.hidden=ru || !hanzi;
+  picker.setAttribute('aria-label',t('currency'));set(picker.querySelector(':scope>p'),t('currency'));set(picker.querySelector(':scope>p:last-child'),t('hint'));
+  picker.querySelectorAll('[data-russian-catalog],[data-international-catalog]').forEach(link=>{
+   const rub=link.hasAttribute('data-russian-catalog');link.href=url(rub?'ru':'global').href;link.setAttribute('aria-current',String(rub===ru));
+   set(link.querySelector('strong'),t(rub?'rub':'usd'));set(link.querySelector('small'),rub?'RUB':t('soon')+' · USD');
   });
-  addEventListener('raccoon:appchange',render);
-  addEventListener('hanzi:languagechange',render);
-  addEventListener('popstate',render);
-  render();
+  panel.querySelectorAll('.ru-price-card>.eyebrow').forEach(node=>set(node,'RUB · ₽'));
+  const unavailable=usd.querySelector('[data-checkout]');unavailable.removeAttribute('href');unavailable.setAttribute('aria-disabled','true');unavailable.setAttribute('role','button');unavailable.tabIndex=0;unavailable.dataset.currencyUnavailable='';
+  set(unavailable.querySelector('#pass-action'),t('soon'));set(usd.querySelector('.pass-availability'),t('usdNotice'));set(usd.querySelector(':scope>p'),t('onePayment'));set(usd.querySelector('.pass-term'),t('month'));
+  if(hanzi){document.querySelector('.skip-link').href='#app-panel';for(const link of document.querySelectorAll('.hero-actions [data-checkout],#mobile-buybar [data-checkout]'))link.href='#plus';document.querySelector('.account-link').href=checkout();}
+  for(const link of panel.querySelectorAll('[data-ru-web-plan]'))link.href=checkout(link.dataset.ruWebPlan);
+  for(const link of footer){const u=new URL(originalFooter.get(link),location.href);if(hanzi&&ru)u.pathname='/apps/hanzi-bloom/plus/checkout/'+(u.pathname.includes('/offer/')?'offer/':'privacy/');u.searchParams.set('lang',language());link.href=u.href;}
+  for(const link of panel.querySelectorAll('[data-ru-document]')){const u=new URL(link.href);u.searchParams.set('lang',language());link.href=u.href;}
+  const how=document.querySelectorAll('.how-steps p');set(how[0],t('email'));set(how[1],t('pay'));set(how[2],t('access'));
+  const answers=document.querySelectorAll('.faq-answer p');set(answers[0],t('shared'));set(answers[1],t('onePayment'));
+  const answer=answers[2];if(answer){answer.dataset.noL10n='';const help=answer.querySelector('a');if(help && answer.firstChild?.nodeType===3){const value=t('restore')+' ';if(answer.firstChild.textContent!==value)answer.firstChild.textContent=value;while(help.nextSibling)help.nextSibling.remove();}}
+ }
+ picker.addEventListener('click',event=>{
+  const link=event.target.closest('[data-russian-catalog],[data-international-catalog]');if(!link || event.button || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey)return;
+  event.preventDefault();const value=link.hasAttribute('data-russian-catalog')?'ru':'global',changed=region()!==value;if(changed)history.pushState(null,'',url(value));render();entrance?.cancel();
+  if(changed && !matchMedia('(prefers-reduced-motion: reduce)').matches && root.dataset.motion!=='reduced')entrance=(value==='ru'?panel:usd).animate([{opacity:.35,transform:'perspective(700px) rotateX(-5deg) translateY(10px)'},{opacity:1,transform:'perspective(700px) rotateX(0) translateY(0)'}],{duration:380,easing:'cubic-bezier(.16,1,.3,1)'});
+ });
+ document.addEventListener('click',event=>{if(event.target.closest('[data-currency-unavailable]')){event.preventDefault();event.stopImmediatePropagation();}},true);
+ addEventListener('raccoon:appchange',render);addEventListener('hanzi:languagechange',render);addEventListener('popstate',render);render();
 })();
