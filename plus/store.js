@@ -4,6 +4,8 @@ import {installFaqReveals} from './faq.js?v=20261026-fold';
 import {installTicketTear} from './ticket.js?v=20261026-night';
 
 const el = id => document.getElementById(id);
+// Independent shops share navigation, never the Hanzi billing catalog.
+const shops = {stories:{name:'Magical Stories',icon:'/assets/apps/stories-icon.webp',route:'/apps/magical-stories/'},neon:{name:'Neon Cyber Wall Kicker',icon:'/assets/apps/neon-icon.webp',route:'/apps/neon-cyber-wall-kicker/'}};
 const tabs = [...document.querySelectorAll('[data-app-tab]')];
 const motion = matchMedia('(prefers-reduced-motion: reduce)');
 const finePointer = matchMedia('(hover: hover) and (pointer: fine)');
@@ -35,9 +37,9 @@ function finishSelection({id, changed, updateUrl, announce}) {
     document.querySelector('main').scrollIntoView({block:'start',behavior:'instant'});
   }
   window.dispatchEvent(new CustomEvent('raccoon:appchange',{detail:{app:id}}));
-  if(announce)el('app-announcement').textContent=id==='stories'?'Magical Stories':apps[id].name+' selected. The same Hanzi Plus includes both apps.';
+  if(announce)el('app-announcement').textContent=shops[id]?shops[id].name:apps[id].name+' selected. The same Hanzi Plus includes both apps.';
   panelAnimation?.cancel();
-  if(changed && updateUrl && !reducedMotion())panelAnimation=(id==='stories'?el('stories-panel'):el('hanzi-content')).animate([
+  if(changed && updateUrl && !reducedMotion())panelAnimation=(shops[id]?el(id+'-panel'):el('hanzi-content')).animate([
     {opacity:.2,translate:'0 18px',rotate:'-.35deg'},{opacity:1,translate:'0 0',rotate:'0deg'}
   ],{duration:450,easing:'cubic-bezier(.2,.8,.2,1)'});
 }
@@ -92,29 +94,30 @@ function particles() {
 }
 
 function selectApp(id, {updateUrl = true, announce = true} = {}) {
-  if (id!=='stories' && !Object.hasOwn(apps, id)) return;
+  if (!Object.hasOwn(shops,id) && !Object.hasOwn(apps, id)) return;
   const changed = current !== id;
   current = id; cardIndex = 0;
-  const story=id==='stories';
-  const app = story?{name:'Magical Stories',icon:'/assets/apps/stories-icon.webp'}:apps[id];
+  const independent=Object.hasOwn(shops,id);
+  const app = independent?shops[id]:apps[id];
   document.documentElement.dataset.app = id;
-  document.title = story?'Magical Stories · Shop & bonuses':app.name + ' Plus · The little app shop';
+  document.title = independent?app.name+' · Shop & bonuses':app.name + ' Plus · The little app shop';
   el('app-favicon').href = app.icon;
   for (const tab of tabs) {
     const selected = tab.dataset.appTab === id;
     tab.setAttribute('aria-selected', String(selected));
     tab.tabIndex = selected ? 0 : -1;
   }
-  el('hanzi-content').hidden=story;el('stories-panel').hidden=!story;
-  el('hanzi-content').setAttribute('aria-labelledby',story?'tab-bloom':'tab-'+id);
-  const pass=document.querySelector('.pass-section'),offers=document.querySelector('#stories-panel .offers-section');
-  pass.id=story?'hanzi-plus':'plus';offers.id=story?'plus':'stories-offers';
-  document.querySelector('.skip-link').href=story?'#stories-panel':'#app-panel';
+  el('hanzi-content').hidden=independent;
+  for(const key of Object.keys(shops))el(key+'-panel').hidden=key!==id;
+  el('hanzi-content').setAttribute('aria-labelledby',independent?'tab-bloom':'tab-'+id);
+  document.querySelector('.pass-section').id=independent?'hanzi-plus':'plus';
+  const offers=document.querySelector('#stories-panel .offers-section');offers.id=id==='stories'?'plus':'stories-offers';
+  document.querySelector('.skip-link').href=independent?'#'+id+'-panel':'#app-panel';
   const account=document.querySelector('.account-link');
-  account.replaceChildren(document.createTextNode(story?'Back to app':'Already have Plus?'));
+  account.replaceChildren(document.createTextNode(independent?'Back to app':'Already have Plus?'));
   const arrow=document.createElement('span');arrow.setAttribute('aria-hidden','true');arrow.textContent='↗';account.append(arrow);
-  if(story){
-    account.removeAttribute('data-checkout');account.href='/apps/magical-stories/';
+  if(independent){
+    account.removeAttribute('data-checkout');account.href=app.route;
     el('mobile-buybar').hidden=true;
     sceneAnimations.forEach(animation=>animation.cancel());sceneAnimations=[];
     cancelAnimationFrame(pointerFrame);pointerFrame=0;resetPointer();
@@ -217,7 +220,7 @@ if ('IntersectionObserver' in window) {
   }, {threshold:.12});
   document.querySelectorAll('[data-reveal]').forEach(node => { node.classList.add('will-reveal'); reveal.observe(node); });
   const passVisible = new IntersectionObserver(entries => {
-    const pass = entries[0]; el('mobile-buybar').hidden = current==='stories' || pass.isIntersecting || pass.boundingClientRect.top > innerHeight;
+    const pass = entries[0]; el('mobile-buybar').hidden = !!shops[current] || pass.isIntersecting || pass.boundingClientRect.top > innerHeight;
   }, {threshold:0});
   passVisible.observe(document.querySelector('.plus-pass'));
 }
@@ -225,12 +228,12 @@ if ('IntersectionObserver' in window) {
 new ResizeObserver(moveMarker).observe(document.querySelector('.app-tabs'));
 document.fonts.ready.then(moveMarker);
 const requested = new URLSearchParams(location.search).get('app');
-selectApp(requested==='stories' || Object.hasOwn(apps, requested) ? requested : 'bloom', {updateUrl:false, announce:false});
+selectApp(Object.hasOwn(shops,requested) || Object.hasOwn(apps, requested) ? requested : 'bloom', {updateUrl:false, announce:false});
 syncMotion();
-if(current!=='stories')animateScene();
+if(!shops[current])animateScene();
 if(location.hash)requestAnimationFrame(()=>document.getElementById(location.hash.slice(1))?.scrollIntoView({block:'start',behavior:'instant'}));
 window.addEventListener('popstate',()=>{
-  const app=new URLSearchParams(location.search).get('app');selectApp(app==='stories' || Object.hasOwn(apps,app)?app:'bloom',{updateUrl:false,announce:false});
+  const app=new URLSearchParams(location.search).get('app');selectApp(Object.hasOwn(shops,app) || Object.hasOwn(apps,app)?app:'bloom',{updateUrl:false,announce:false});
   if(location.hash)requestAnimationFrame(()=>document.getElementById(location.hash.slice(1))?.scrollIntoView({block:'start',behavior:'instant'}));
 });
 

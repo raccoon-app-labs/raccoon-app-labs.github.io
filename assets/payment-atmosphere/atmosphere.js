@@ -45,7 +45,7 @@
     const worlds={bloom:['petal','spark','letter'],keys:['key','moon','spark'],stories:['spark','letter','moon'],muropolis:['paw','spark','leaf'],food:['leaf','bowl','ticket'],dokupit:['box','ticket','spark'],neon:['bolt','spark','moon']};
     let currentWorld,frame=0,point={x:0,y:0},closed=false;
     function sync(){
-      const world=root.dataset.paymentAtmosphere==='hanzi'?(['keys','stories'].includes(root.dataset.app)?root.dataset.app:'bloom'):root.dataset.paymentAtmosphere;
+      const world=root.dataset.paymentAtmosphere==='hanzi'?(['keys','stories','neon'].includes(root.dataset.app)?root.dataset.app:'bloom'):root.dataset.paymentAtmosphere;
       if(world!==currentWorld){currentWorld=world;layer.dataset.world=world;tokens.forEach((token,i)=>token.replaceChildren(svg(paths[(worlds[world] || worlds.bloom)[i%3]])));}
       const isReduced=reduced.matches || root.dataset.motion==='reduced' || navigator.connection?.saveData===true;
       layer.dataset.reduced=String(isReduced);

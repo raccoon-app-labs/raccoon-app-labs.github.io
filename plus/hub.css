@@ -1,4 +1,4 @@
-/* Three real app panels, with the Stories shop isolated from the Hanzi pass. */
+/* Independent app shops share navigation, with their offers kept separate. */
 :root[data-payment-page=store]{scroll-padding-top:calc(var(--hub-nav-height,110px) + 14px)}
 .app-nav{position:sticky;top:0;z-index:25;background:var(--theme-bg,var(--paper));isolation:isolate}
 .app-tabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));width:min(100%,790px);flex:1;min-width:0}
@@ -22,3 +22,35 @@
 @media(min-width:761px){.stories-panel .story-scroll-hero:has([data-scroll-ready]) .story-hero-copy{top:calc(var(--hub-nav-height,100px) + 20px)}}
 @media(max-width:800px){.app-nav .nav-note{display:none}.app-tabs{width:100%}.app-tab{gap:7px;padding:10px;font-size:12px}.app-tab img{width:34px;height:34px}.app-tab small{font-size:9px}}
 @media(max-width:600px){.app-nav{padding-block:9px}.app-tabs{border-radius:19px}.app-tab{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;min-height:85px;padding:8px 5px;text-align:center;font-size:11px}.app-tab small{display:none}.app-tab img{width:31px;height:31px;border-radius:10px}.stories-panel{padding-inline:12px;margin-inline:-12px;border-radius:22px}.stories-panel .commerce-hero h1{font-size:clamp(35px,10vw,56px)}.stories-panel .story-scroll-hint{font-size:10px}.tab-marker{border-radius:15px}}
+
+/* The same navigation can grow to more apps without shrinking touch targets. */
+.app-tabs{grid-template-columns:repeat(4,minmax(0,1fr));width:100%;max-width:none}
+.app-nav .nav-note{display:none}
+#neon-panel[hidden]{display:none!important}
+:root[data-app=neon] #hanzi-content,:root[data-app=neon] #stories-panel,:root[data-app=neon] .account-routes,:root[data-app=neon] #mobile-buybar,:root[data-app=neon] .store-footer a[href*="/hanzi-bloom/plus/"]{display:none!important}
+:root[data-app=neon] #neon-panel[hidden]{display:block!important}
+:root[data-app=neon][data-theme]{--theme-bg:#081426;--theme-text:#fff4c5;--theme-muted:#a4b6d2;--theme-accent:#34e3db;--theme-mint:#34e3db;--theme-button:#ffe36b;--theme-on-button:#081426;--theme-surface:#12253c;--theme-line:#344d72}
+.neon-panel{position:relative;margin:24px -24px 0;padding:0 0 32px;background:radial-gradient(ellipse at 0 3%,#16334c 0,transparent 36%),#081426;isolation:isolate;border-radius:24px;overflow:clip}
+#neon-panel{line-height:1.65;color:#fff4c5}
+#neon-panel h1,#neon-panel h2,#neon-panel h3{font-family:system-ui,-apple-system,'Segoe UI',sans-serif}
+#neon-panel :is(#bundles,#coins,#terms,#contacts){scroll-margin-top:20px}
+#neon-panel .hero-art{--rift-progress:0;perspective:1000px;transform-style:preserve-3d;contain:layout}
+#neon-panel .hero-fox{transform:translate3d(calc(var(--rift-progress)*-36px),calc(var(--rift-progress)*-46px),calc(var(--rift-progress)*55px)) rotate(calc(var(--rift-progress)*-9deg))}
+#neon-panel .hero-maestro{transform:translate3d(calc(var(--rift-progress)*28px),calc(var(--rift-progress)*-22px),0) rotate(calc(5deg + var(--rift-progress)*12deg))}
+#neon-panel .hero-word{transform:translateY(calc(var(--rift-progress)*38px)) rotate(calc(-10deg + var(--rift-progress)*8deg));opacity:calc(1 - var(--rift-progress)*.35)}
+#neon-panel .hero-slash{transform:translateY(calc(var(--rift-progress)*-55px)) rotate(calc(-13deg - var(--rift-progress)*14deg)) scaleX(calc(1 + var(--rift-progress)*.2))}
+#neon-panel .art-stamp{transform:translateY(calc(var(--rift-progress)*15px)) rotate(calc(-7deg + var(--rift-progress)*13deg))}
+#neon-panel .scroll-rift{position:absolute;inset:5% 2%;z-index:-1;pointer-events:none;transform:rotate(calc(-18deg + var(--rift-progress)*46deg)) scale(calc(.7 + var(--rift-progress)*.3));opacity:calc(.12 + var(--rift-progress)*.88);border:2px solid #34e3db88;border-radius:48% 52% 44% 56%;box-shadow:0 0 35px #34e3db33,inset 0 0 40px #34e3db22}
+#neon-panel .scroll-rift i{position:absolute;left:calc(8% + var(--shard)*13%);top:calc(12% + var(--shard)*10%);width:12px;height:32px;background:linear-gradient(#34e3db,#9b79ff);clip-path:polygon(50% 0,100% 65%,10% 100%,0 40%);transform:translateY(calc(var(--rift-progress)*(var(--shard) - 3)*22px)) rotate(calc(var(--shard)*43deg + var(--rift-progress)*90deg))}
+:root[data-motion=reduced] #neon-panel .scroll-rift{display:none}
+@media(prefers-reduced-motion:reduce){#neon-panel .scroll-rift{display:none}}
+@media(max-width:600px){.app-tabs{grid-template-columns:repeat(2,minmax(0,1fr))}.app-tab{flex-direction:row;text-align:start;justify-content:flex-start;min-height:62px;padding:8px 10px;gap:8px}.app-tab>span{flex:1}.neon-panel{margin-inline:-12px}.app-tabs .app-tab img{width:29px;height:29px}#neon-panel .hero-art{perspective:none}#neon-panel .hero-fox{transform:translate(calc(var(--rift-progress)*-12px),calc(var(--rift-progress)*-24px)) rotate(calc(var(--rift-progress)*-6deg))}#neon-panel .hero-maestro{transform:translate(calc(var(--rift-progress)*12px),calc(var(--rift-progress)*-10px)) rotate(calc(5deg + var(--rift-progress)*8deg))}}
+/* A short sticky scene gives the rift time to unfold while copy scrolls past. */
+@media(min-width:761px){#neon-panel .hero{min-height:740px;align-items:start}#neon-panel .hero-copy{padding-top:35px}#neon-panel .hero-art{position:sticky;top:calc(var(--hub-nav-height,100px) + 24px);margin-top:20px}}
+#neon-panel .scroll-rift:before,#neon-panel .scroll-rift:after{content:"";position:absolute;inset:12% -7%;border:1px solid #ffe36b88;border-radius:50%;transform:rotateX(58deg) rotateZ(calc(var(--rift-progress)*100deg));box-shadow:0 0 18px #34e3db33}
+#neon-panel .scroll-rift:after{inset:-8% 18%;transform:rotateY(55deg) rotateZ(calc(var(--rift-progress)*-120deg));border-color:#ff796b88}
+:root[data-motion=reduced] #neon-panel .hero-art{position:relative;top:auto}
+@media(prefers-reduced-motion:reduce){#neon-panel .hero-art{position:relative;top:auto}}
+
+:root[data-motion=reduced] #neon-panel .hero{min-height:0}
+@media(prefers-reduced-motion:reduce){#neon-panel .hero{min-height:0}}
