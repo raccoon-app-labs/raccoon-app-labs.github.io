@@ -8,9 +8,11 @@
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
   <meta name="description" content="A little more room for curiosity. Explore Hanzi Bloom and Hanzi Keys, and find your Hanzi Plus pass.">
   <link rel="canonical" href="https://raccoon-app-labs.github.io/plus/">
-  <link rel="icon" href="/assets/apps/bloom-icon.webp" id="app-favicon">
-  <link rel="stylesheet" href="/plus/store.css">
-  <script type="module" src="/plus/store.js"></script>
+  <link rel="icon" href="/plus/assets/bloom-icon-128.webp" id="app-favicon">
+  <link rel="preload" href="/plus/fonts/unbounded-latin.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="/plus/store.css?v=20261026-fast">
+  <link rel="modulepreload" href="/plus/catalog.js?v=20261026-fast">
+  <script type="module" src="/plus/store.js?v=20261026-fast"></script>
   <title>Hanzi Plus · The little app shop</title>
 </head>
 <body>
@@ -18,7 +20,7 @@
   <div class="site-shell">
     <header class="topbar">
       <a class="shop-brand" href="/" aria-label="Raccoon App Labs home">
-        <img src="/assets/raccoon-app-labs-logo.webp" width="36" height="36" alt="">
+        <img src="/plus/assets/shop-logo-128.webp" width="36" height="36" alt="">
         <span>raccoon<span class="brand-dot">.</span><small>the little app shop</small></span>
       </a>
       <a class="account-link" data-checkout href="/en/apps/hanzi-bloom/plus/checkout/?app=bloom">Already have Plus? <span aria-hidden="true">↗</span></a>
@@ -28,11 +30,11 @@
       <div class="app-tabs" role="tablist" aria-label="Choose an app">
         <span class="tab-marker" aria-hidden="true"></span>
         <button class="app-tab" role="tab" id="tab-bloom" data-app-tab="bloom" aria-selected="true" aria-controls="app-panel" tabindex="0">
-          <img src="/assets/apps/bloom-icon.webp" width="42" height="42" alt="">
+          <img src="/plus/assets/bloom-icon-128.webp" width="42" height="42" alt="">
           <span>Hanzi Bloom<small>Words &amp; stories</small></span><span class="tab-dot" aria-hidden="true"></span>
         </button>
         <button class="app-tab" role="tab" id="tab-keys" data-app-tab="keys" aria-selected="false" aria-controls="app-panel" tabindex="-1">
-          <img src="/assets/apps/keys-icon.webp" width="42" height="42" alt="">
+          <img src="/plus/assets/keys-icon-128.webp" width="42" height="42" alt="">
           <span>Hanzi Keys<small>Shapes &amp; characters</small></span><span class="tab-dot" aria-hidden="true"></span>
         </button>
       </div>
@@ -59,7 +61,7 @@
             <div class="scene-orbit orbit-two" aria-hidden="true"></div>
             <div class="scene-ticks" aria-hidden="true"><span>01 /</span><span id="scene-annotation">a little word garden</span></div>
             <div class="floating-note" id="floating-note" aria-hidden="true"><span class="note-spark">✦</span><span id="note-text">a little progress, every day</span></div>
-            <img class="scene-panda" id="scene-panda" src="/assets/demo/bao.webp" width="778" height="800" alt="Bao, the red panda, watering a little seedling" fetchpriority="high">
+            <img class="scene-panda" id="scene-panda" src="/plus/assets/bloom-panda-320.webp" srcset="/plus/assets/bloom-panda-320.webp 320w, /plus/assets/bloom-panda-560.webp 560w, /plus/assets/bloom-panda-778.webp 778w" sizes="(max-width:520px) 80vw, (max-width:800px) 360px, (max-width:1100px) 36vw, 440px" width="778" height="800" alt="Bao, the red panda, watering a little seedling" fetchpriority="high" decoding="async">
 
             <div class="word-ticket" id="word-ticket">
               <div class="ticket-top"><span id="ticket-label">A little hello</span><span class="ticket-number" id="ticket-number">01</span></div>
@@ -89,7 +91,7 @@
         <div class="pass-intro"><span class="eyebrow">A LITTLE EXTRA POSSIBILITY</span><h2>One pass.<br>Two worlds.</h2><p>For the moments when<br>“just one more” becomes a habit.</p></div>
         <div class="plus-pass">
           <span class="pass-notch notch-top" aria-hidden="true"></span><span class="pass-notch notch-bottom" aria-hidden="true"></span>
-          <div class="pass-body"><div class="pass-heading"><span class="pass-badge">PLUS</span><span class="pass-id">THE CURIOSITY PASS</span></div><h3 id="pass-title">A little more<br> of what you love.</h3><div class="pass-apps"><img src="/assets/apps/bloom-icon.webp" width="34" height="34" alt=""><img src="/assets/apps/keys-icon.webp" width="34" height="34" alt=""><span>Hanzi Bloom <b>+</b> Hanzi Keys</span></div><p class="pass-shared">The same Plus unlocks both apps.<br>One email. One purchase.</p></div>
+          <div class="pass-body"><div class="pass-heading"><span class="pass-badge">PLUS</span><span class="pass-id">THE CURIOSITY PASS</span></div><h3 id="pass-title">A little more<br> of what you love.</h3><div class="pass-apps"><img src="/plus/assets/bloom-icon-128.webp" width="34" height="34" alt=""><img src="/plus/assets/keys-icon-128.webp" width="34" height="34" alt=""><span>Hanzi Bloom <b>+</b> Hanzi Keys</span></div><p class="pass-shared">The same Plus unlocks both apps.<br>One email. One purchase.</p></div>
           <div class="pass-checkout"><span class="pass-term">ONE CALENDAR MONTH</span><div class="pass-price"><span class="currency">$</span>5.99<span class="price-currency">USD</span></div><p>Pay once.<br>No automatic renewal.</p><a class="action action-light" data-checkout href="/en/apps/hanzi-bloom/plus/checkout/?app=bloom"><span id="pass-action">Continue with Bloom</span><span class="action-arrow" aria-hidden="true">↗</span></a><span class="pass-availability">International checkout is being prepared.</span></div>
         </div>
       </section>

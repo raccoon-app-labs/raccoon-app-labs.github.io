@@ -2,13 +2,15 @@
 // supply its own approved product/route; never silently sell it the Hanzi pass.
 export const apps = Object.freeze({
   bloom: {
-    name: 'Hanzi Bloom', shortName: 'Bloom', icon: '/assets/apps/bloom-icon.webp',
+    name: 'Hanzi Bloom', shortName: 'Bloom', icon: '/plus/assets/bloom-icon-128.webp',
     checkout: '/en/apps/hanzi-bloom/plus/checkout/?app=bloom',
     title: ['Your Chinese.', 'In full ', 'bloom.'],
     eyebrow: 'A word today. A world tomorrow.',
     description: 'Turn new words into little everyday adventures. Stories, listening and practice that stay with you.',
     fact: 'Published HSK 1–3 lessons',
-    panda: '/assets/demo/bao.webp', pandaAlt: 'Bao, the red panda, watering a little seedling',
+    panda: '/plus/assets/bloom-panda-778.webp', pandaAlt: 'Bao, the red panda, watering a little seedling',
+    pandaSrcset: '/plus/assets/bloom-panda-320.webp 320w, /plus/assets/bloom-panda-560.webp 560w, /plus/assets/bloom-panda-778.webp 778w',
+    pandaSizes: '(max-width:520px) 80vw, (max-width:800px) 360px, (max-width:1100px) 36vw, 440px',
     annotation: 'a little word garden', note: 'a little progress, every day',
     demoAction: 'Grow another word', demoAria: 'Discover another Chinese word',
     footer: 'Curiosity looks good on you.',
@@ -28,13 +30,15 @@ export const apps = Object.freeze({
     ]
   },
   keys: {
-    name: 'Hanzi Keys', shortName: 'Keys', icon: '/assets/apps/keys-icon.webp',
+    name: 'Hanzi Keys', shortName: 'Keys', icon: '/plus/assets/keys-icon-128.webp',
     checkout: '/en/apps/hanzi-bloom/plus/checkout/?app=keys',
     title: ['Small pieces.', 'Big ', 'discoveries.'],
     eyebrow: 'There is a little clue in every character.',
     description: 'Go beyond memorizing shapes. Discover the parts, build characters and make them your own.',
     fact: 'Break down · build · write',
-    panda: '/plus/assets/keys-panda.webp', pandaAlt: 'Bao, the red panda, opening an illustrated atlas with a glowing golden key',
+    panda: '/plus/assets/keys-panda-960.webp', pandaAlt: 'Bao, the red panda, opening an illustrated atlas with a glowing golden key',
+    pandaSrcset: '/plus/assets/keys-panda-384.webp 384w, /plus/assets/keys-panda-640.webp 640w, /plus/assets/keys-panda-960.webp 960w',
+    pandaSizes: '(max-width:520px) 100vw, (max-width:800px) 470px, (max-width:1100px) 46vw, 570px',
     annotation: 'a little character workshop', note: 'oh, now it makes sense',
     demoAction: 'Bring the pieces together', demoAria: 'See how sun and moon appear in the character for bright',
     footer: 'The best part? The little “aha”.',

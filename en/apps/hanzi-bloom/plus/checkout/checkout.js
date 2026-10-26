@@ -12,11 +12,13 @@
   if (includedLink) includedLink.href = '/plus/?app=' + (isKeys ? 'keys' : 'bloom') + '#included';
   if (isKeys) {
     const appIcon = el('checkout-app-icon');
-    if (appIcon) appIcon.src = '/assets/apps/keys-icon.webp';
+    if (appIcon) appIcon.src = '/plus/assets/keys-icon-128.webp';
     const accent = document.createElement('em'); accent.textContent = 'Big discoveries.';
     el('product-title').replaceChildren(document.createTextNode('Small pieces.'), document.createElement('br'), accent);
     const panda = document.querySelector('.garden-art img');
-    panda.src = '/plus/assets/keys-panda.webp'; panda.width = 1536; panda.height = 1024;
+    panda.sizes = '(max-width:760px) 160px, 390px';
+    panda.srcset = '/plus/assets/keys-panda-384.webp 384w, /plus/assets/keys-panda-640.webp 640w, /plus/assets/keys-panda-960.webp 960w';
+    panda.src = '/plus/assets/keys-panda-960.webp'; panda.width = 960; panda.height = 640;
   }
   const configuredApi = document.querySelector('meta[name="hanzi-global-api"]').content;
   let api = null;

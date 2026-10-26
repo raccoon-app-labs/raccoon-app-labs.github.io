@@ -1,4 +1,4 @@
-import {apps} from './catalog.js';
+import {apps} from './catalog.js?v=20261026-fast';
 
 const el = id => document.getElementById(id);
 const tabs = [...document.querySelectorAll('[data-app-tab]')];
@@ -101,7 +101,9 @@ function selectApp(id, {updateUrl = true, announce = true} = {}) {
     if (character) item.textContent = character;
     featureDemo.append(item);
   }
-  el('scene-panda').src = app.panda; el('scene-panda').alt = app.pandaAlt;
+  const panda = el('scene-panda');
+  panda.sizes = app.pandaSizes; panda.srcset = app.pandaSrcset;
+  panda.src = app.panda; panda.alt = app.pandaAlt;
   scene.setAttribute('aria-label', 'An interactive peek at ' + app.name);
   el('scene-play').setAttribute('aria-label', app.demoAria);
   for (const link of document.querySelectorAll('[data-checkout]')) link.href = app.checkout;
@@ -125,7 +127,11 @@ tabs.forEach((tab, index) => {
     else if (event.key === 'End') next = tabs.length - 1;
     if (next !== undefined) { event.preventDefault(); tabs[next].focus(); selectApp(tabs[next].dataset.appTab); }
   });
-  tab.addEventListener('pointerenter', () => { const preload = new Image(); preload.src = apps[tab.dataset.appTab].panda; }, {once:true});
+  tab.addEventListener('pointerenter', () => {
+    if (!finePointer.matches || navigator.connection?.saveData || tab.dataset.appTab === current) return;
+    const app = apps[tab.dataset.appTab], preload = new Image();
+    preload.sizes = app.pandaSizes; preload.srcset = app.pandaSrcset; preload.src = app.panda;
+  }, {once:true});
 });
 
 el('scene-play').addEventListener('click', () => { cardIndex = (cardIndex + 1) % apps[current].cards.length; renderCard(true); });
@@ -176,6 +182,3 @@ const requested = new URLSearchParams(location.search).get('app');
 selectApp(Object.hasOwn(apps, requested) ? requested : 'bloom', {updateUrl:false, announce:false});
 syncMotion();
 animateScene();
-const preloadArt = () => Object.entries(apps).filter(([id]) => id !== current).forEach(([, app]) => { const image = new Image(); image.src = app.panda; });
-if ('requestIdleCallback' in window) requestIdleCallback(preloadArt, {timeout:1500});
-else setTimeout(preloadArt, 1200);
