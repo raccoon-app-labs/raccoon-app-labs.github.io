@@ -186,5 +186,9 @@
 #neon-panel .coin-amount{font-size:27px}
 #neon-panel .seller>div{grid-template-columns:65px 1fr;gap:12px}}
 #neon-panel .skip:not(:focus){clip-path:inset(50%);width:1px;height:1px;overflow:hidden;padding:0}
+#neon-panel .seller-note{align-self:end}
+#neon-panel .contacts .seller-note p{font-size:12px;line-height:1.65;margin:0 0 4px}
+#neon-panel .seller-note a{display:inline-block;padding-block:5px;font-size:12px;line-height:1.6;color:var(--muted);text-decoration:underline;text-underline-offset:4px}
+#neon-panel .seller-note a:focus-visible{outline:2px solid var(--accent);outline-offset:4px;border-radius:2px}
 @media(prefers-reduced-motion:reduce){#neon-panel{scroll-behavior:auto}
 #neon-panel *,#neon-panel *:before,#neon-panel *:after{animation:none!important;transition:none!important}}
