@@ -1,5 +1,5 @@
 import {apps} from './catalog.js?v=20261026-fast';
-import {installStoreEffects} from './effects.js?v=20261026-motion2';
+import {installStoreEffects} from './effects.js?v=20261026-motion3';
 
 const el = id => document.getElementById(id);
 const tabs = [...document.querySelectorAll('[data-app-tab]')];

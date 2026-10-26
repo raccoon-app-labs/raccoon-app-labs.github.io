@@ -42,10 +42,10 @@ export function installStoreEffects({reducedMotion, finePointer}) {
 
   function addPiece(x, y, {burst = false, angle = 0, index = 0} = {}) {
     if (pieces.length >= 72) pieces.shift();
-    const speed = burst ? 22 + Math.random() * 30 : 7 + Math.random() * 12;
+    const speed = burst ? 45 + Math.random() * 45 : 7 + Math.random() * 12;
     pieces.push({x, y, start:performance.now(), duration:burst ? 620 : 760,
       vx:Math.cos(angle) * speed, vy:Math.sin(angle) * speed - (burst ? 13 : 8),
-      size:burst ? 3 + Math.random() * 3 : 3 + Math.random() * 3,
+      size:burst ? 4 + Math.random() * 3 : 3 + Math.random() * 3,
       angle:angle + Math.PI / 4, spin:(Math.random() - .5) * 2,
       color:colors()[index % 3], shape:index % 3,
       keys:document.documentElement.dataset.app === 'keys'});
