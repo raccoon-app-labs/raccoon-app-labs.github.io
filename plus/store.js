@@ -11,6 +11,7 @@ const scene = el('scene');
 const marker = document.querySelector('.tab-marker');
 let current = 'bloom', cardIndex = 0, pointerFrame = 0, pointer = {x:0, y:0};
 let sceneAnimations = [];
+let panelAnimation;
 let userReducedMotion = false;
 const reducedMotion = () => motion.matches || userReducedMotion;
 const interactionEffects = installStoreEffects({reducedMotion, finePointer});
@@ -21,6 +22,24 @@ function moveMarker() {
   const selected = tabs.find(tab => tab.dataset.appTab === current);
   marker.style.width = selected.offsetWidth + 'px';
   marker.style.transform = `translateX(${selected.offsetLeft}px)`;
+  marker.style.top = selected.offsetTop + 'px';
+  marker.style.height = selected.offsetHeight + 'px';
+  document.documentElement.style.setProperty('--hub-nav-height', Math.ceil(document.querySelector('.app-nav').offsetHeight) + 'px');
+}
+
+function finishSelection({id, changed, updateUrl, announce}) {
+  moveMarker();
+  if (updateUrl) {
+    const url=new URL(location.href);url.searchParams.set('app',id);url.hash='';
+    if(changed)history.pushState(null,'',url.pathname+url.search);else history.replaceState(null,'',url.pathname+url.search);
+    document.querySelector('main').scrollIntoView({block:'start',behavior:'instant'});
+  }
+  window.dispatchEvent(new CustomEvent('raccoon:appchange',{detail:{app:id}}));
+  if(announce)el('app-announcement').textContent=id==='stories'?'Magical Stories':apps[id].name+' selected. The same Hanzi Plus includes both apps.';
+  panelAnimation?.cancel();
+  if(changed && updateUrl && !reducedMotion())panelAnimation=(id==='stories'?el('stories-panel'):el('hanzi-content')).animate([
+    {opacity:.2,translate:'0 18px',rotate:'-.35deg'},{opacity:1,translate:'0 0',rotate:'0deg'}
+  ],{duration:450,easing:'cubic-bezier(.2,.8,.2,1)'});
 }
 
 function animateScene() {
@@ -73,19 +92,35 @@ function particles() {
 }
 
 function selectApp(id, {updateUrl = true, announce = true} = {}) {
-  if (!Object.hasOwn(apps, id)) return;
+  if (id!=='stories' && !Object.hasOwn(apps, id)) return;
   const changed = current !== id;
   current = id; cardIndex = 0;
-  const app = apps[id];
+  const story=id==='stories';
+  const app = story?{name:'Magical Stories',icon:'/assets/apps/stories-icon.webp'}:apps[id];
   document.documentElement.dataset.app = id;
-  document.title = app.name + ' Plus · The little app shop';
+  document.title = story?'Magical Stories · Shop & bonuses':app.name + ' Plus · The little app shop';
   el('app-favicon').href = app.icon;
   for (const tab of tabs) {
     const selected = tab.dataset.appTab === id;
     tab.setAttribute('aria-selected', String(selected));
     tab.tabIndex = selected ? 0 : -1;
   }
-  el('app-panel').setAttribute('aria-labelledby', 'tab-' + id);
+  el('hanzi-content').hidden=story;el('stories-panel').hidden=!story;
+  el('hanzi-content').setAttribute('aria-labelledby',story?'tab-bloom':'tab-'+id);
+  const pass=document.querySelector('.pass-section'),offers=document.querySelector('#stories-panel .offers-section');
+  pass.id=story?'hanzi-plus':'plus';offers.id=story?'plus':'stories-offers';
+  document.querySelector('.skip-link').href=story?'#stories-panel':'#app-panel';
+  const account=document.querySelector('.account-link');
+  account.replaceChildren(document.createTextNode(story?'Back to app':'Already have Plus?'));
+  const arrow=document.createElement('span');arrow.setAttribute('aria-hidden','true');arrow.textContent='↗';account.append(arrow);
+  if(story){
+    account.removeAttribute('data-checkout');account.href='/apps/magical-stories/';
+    el('mobile-buybar').hidden=true;
+    sceneAnimations.forEach(animation=>animation.cancel());sceneAnimations=[];
+    cancelAnimationFrame(pointerFrame);pointerFrame=0;resetPointer();
+    finishSelection({id,changed,updateUrl,announce});return;
+  }
+  account.setAttribute('data-checkout','');
   el('title-first').textContent = app.title[0];
   el('title-second').replaceChildren(document.createTextNode(app.title[1]));
   const emphasis = document.createElement('em'); emphasis.textContent = app.title[2]; el('title-second').append(emphasis);
@@ -119,12 +154,7 @@ function selectApp(id, {updateUrl = true, announce = true} = {}) {
     if (language) target.searchParams.set('lang', language);
     link.href = target.href;
   }
-  renderCard(); moveMarker();
-  if (updateUrl) {
-    const url = new URL(location.href); url.searchParams.set('app', id);
-    history.replaceState(null, '', url.pathname + url.search + url.hash);
-  }
-  if (announce) el('app-announcement').textContent = app.name + ' selected. The same Hanzi Plus includes both apps.';
+  renderCard(); finishSelection({id,changed,updateUrl,announce});
   if (changed) animateScene();
 }
 
@@ -142,11 +172,12 @@ tabs.forEach((tab, index) => {
   tab.addEventListener('pointerenter', () => {
     if (!finePointer.matches || navigator.connection?.saveData || tab.dataset.appTab === current) return;
     const app = apps[tab.dataset.appTab], preload = new Image();
+    if(!app)return;
     preload.sizes = app.pandaSizes; preload.srcset = app.pandaSrcset; preload.src = app.panda;
   }, {once:true});
 });
 
-el('scene-play').addEventListener('click', () => { cardIndex = (cardIndex + 1) % apps[current].cards.length; renderCard(true); });
+el('scene-play').addEventListener('click', () => { if(!apps[current])return;cardIndex = (cardIndex + 1) % apps[current].cards.length; renderCard(true); });
 
 function resetPointer() {
   pointer = {x:0, y:0};
@@ -186,7 +217,7 @@ if ('IntersectionObserver' in window) {
   }, {threshold:.12});
   document.querySelectorAll('[data-reveal]').forEach(node => { node.classList.add('will-reveal'); reveal.observe(node); });
   const passVisible = new IntersectionObserver(entries => {
-    const pass = entries[0]; el('mobile-buybar').hidden = pass.isIntersecting || pass.boundingClientRect.top > innerHeight;
+    const pass = entries[0]; el('mobile-buybar').hidden = current==='stories' || pass.isIntersecting || pass.boundingClientRect.top > innerHeight;
   }, {threshold:0});
   passVisible.observe(document.querySelector('.plus-pass'));
 }
@@ -194,8 +225,13 @@ if ('IntersectionObserver' in window) {
 new ResizeObserver(moveMarker).observe(document.querySelector('.app-tabs'));
 document.fonts.ready.then(moveMarker);
 const requested = new URLSearchParams(location.search).get('app');
-selectApp(Object.hasOwn(apps, requested) ? requested : 'bloom', {updateUrl:false, announce:false});
+selectApp(requested==='stories' || Object.hasOwn(apps, requested) ? requested : 'bloom', {updateUrl:false, announce:false});
 syncMotion();
-animateScene();
+if(current!=='stories')animateScene();
+if(location.hash)requestAnimationFrame(()=>document.getElementById(location.hash.slice(1))?.scrollIntoView({block:'start',behavior:'instant'}));
+window.addEventListener('popstate',()=>{
+  const app=new URLSearchParams(location.search).get('app');selectApp(app==='stories' || Object.hasOwn(apps,app)?app:'bloom',{updateUrl:false,announce:false});
+  if(location.hash)requestAnimationFrame(()=>document.getElementById(location.hash.slice(1))?.scrollIntoView({block:'start',behavior:'instant'}));
+});
 
 window.addEventListener('hanzi:languagechange', moveMarker);

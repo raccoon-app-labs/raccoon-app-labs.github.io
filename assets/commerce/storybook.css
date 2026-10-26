@@ -34,3 +34,4 @@
 :root[dir=rtl] .story-scroll-hint{direction:rtl}
 
 .story-scroll-track:not([data-scroll-ready]) .book-hint-motion{display:none}.story-scroll-track:not([data-scroll-ready]) .book-hint-still{display:inline}
+.story-scroll-track[data-book-reduced=true]{height:var(--book-stage-height)!important}.story-scroll-track[data-book-reduced=true] .story-scroll-stage{position:relative!important;top:auto!important}.story-scroll-track[data-book-reduced=true] .book-hint-motion,.story-scroll-track[data-book-reduced=true] .scroll-book-arrow{display:none}.story-scroll-track[data-book-reduced=true] .book-hint-still{display:inline}.story-scroll-hero:has([data-book-reduced=true]) .story-hero-copy{position:relative!important;top:auto!important}

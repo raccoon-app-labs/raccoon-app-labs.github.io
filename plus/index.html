@@ -15,16 +15,21 @@
   <link rel="modulepreload" href="/plus/effects.js?v=20261026-night-0b85c74e1730">
   <link rel="modulepreload" href="/plus/faq.js?v=20261026-fold">
   <link rel="modulepreload" href="/plus/ticket.js?v=20261026-night-c8d017e50eea">
-  <script type="module" src="/plus/store.js?v=20261026-night-25820a1294e7"></script>
+  <script type="module" src="/plus/store.js?v=20261026-night-cadddcde32bf"></script>
   <link rel="stylesheet" href="/plus/locale.css?v=20261026-site1-f091d1f79ed2">
-  <script src="/plus/locale-data.js?v=20261026-night-0dfbae0aece2"></script>
+  <script src="/plus/locale-data.js?v=20261026-night-88523ea501a4"></script>
   <script src="/plus/locale.js?v=20261026-site1-97af4b6e0b71" defer></script>
   <title>Hanzi Plus · The little app shop</title>
 <script data-payment-theme src="/plus/theme.js?v=20261026-night-7ada87b005" integrity="sha256-pE/+zFqFpKkP4bGut9rxLGSy7ozSpREwkdFOaH5e4WY="></script>
 <link data-payment-theme rel="stylesheet" href="/plus/theme.css?v=20261026-night-7ada87b005">
 <link data-commerce-style rel="stylesheet" href="/assets/commerce/commerce.css?v=0e93c370e3bd">
+<link data-shop-hub rel="stylesheet" href="/assets/commerce/commerce.css?v=0e93c370e3bd">
+<link data-shop-hub rel="stylesheet" href="/assets/commerce/storybook.css?v=3c1a6c212d60">
+<link data-shop-hub rel="stylesheet" href="/plus/hub.css?v=50284d65b7b7">
+<script data-shop-hub src="/plus/hub-start.js?v=7b8a652ed9fe"></script>
+<script data-shop-hub src="/assets/commerce/storybook.js?v=df1e0038defd" defer></script>
 <link data-payment-atmosphere-asset rel="stylesheet" href="/assets/payment-atmosphere/atmosphere.css?v=e786eddf5e68">
-<script data-payment-atmosphere-asset src="/assets/payment-atmosphere/atmosphere.js?v=c151799b202c" integrity="sha256-wVF5myAs/olxFH66RoKsIF3ZWDkQ5CHkZYDROHEOkck=" defer></script>
+<script data-payment-atmosphere-asset src="/assets/payment-atmosphere/atmosphere.js?v=102a38d486da" integrity="sha256-ECo41IbaugmrLcu2hIJS7P5loXpK4Qp5iMGRn+OozIg=" defer></script>
 </head>
 <body>
   <a class="skip-link" href="#app-panel">Skip to the app</a>
@@ -40,13 +45,17 @@
     <nav class="app-nav" aria-label="Our apps">
       <div class="app-tabs" role="tablist" aria-label="Choose an app">
         <span class="tab-marker" aria-hidden="true"></span>
-        <button class="app-tab" role="tab" id="tab-bloom" data-app-tab="bloom" aria-selected="true" aria-controls="app-panel" tabindex="0">
+        <button class="app-tab" role="tab" id="tab-bloom" data-app-tab="bloom" aria-selected="true" aria-controls="hanzi-content" tabindex="0">
           <img src="/plus/assets/bloom-icon-128.webp" width="42" height="42" alt="">
           <span>Hanzi Bloom<small>Words &amp; stories</small></span><span class="tab-dot" aria-hidden="true"></span>
         </button>
-        <button class="app-tab" role="tab" id="tab-keys" data-app-tab="keys" aria-selected="false" aria-controls="app-panel" tabindex="-1">
+        <button class="app-tab" role="tab" id="tab-keys" data-app-tab="keys" aria-selected="false" aria-controls="hanzi-content" tabindex="-1">
           <img src="/plus/assets/keys-icon-128.webp" width="42" height="42" alt="">
           <span>Hanzi Keys<small>Shapes &amp; characters</small></span><span class="tab-dot" aria-hidden="true"></span>
+        </button>
+        <button class="app-tab" role="tab" id="tab-stories" data-app-tab="stories" aria-selected="false" aria-controls="stories-panel" tabindex="-1">
+          <img src="/assets/apps/stories-icon.webp" width="42" height="42" alt="">
+          <span><span>Magical Stories</span><small>All stories</small></span><span class="tab-dot" aria-hidden="true"></span>
         </button>
       </div>
       <span class="nav-note">Small apps. Big little discoveries.</span>
@@ -54,7 +63,8 @@
 
     <section class="account-routes" data-commerce-region><p>Choose your account region</p><div><a data-russian-catalog href="/apps/hanzi-bloom/plus/?app=bloom"><span aria-hidden="true">₽</span><span><strong>Russian account</strong><small>Plans in rubles · inside the app</small></span></a><a data-international-catalog href="/plus/?app=bloom#plus"><span aria-hidden="true">$</span><span><strong>International account</strong><small>Monthly plan in USD</small></span></a></div><p>Your page language does not choose your account region.</p></section>
 <main>
-      <article id="app-panel" role="tabpanel" aria-labelledby="tab-bloom" tabindex="0">
+      <div id="hanzi-content" role="tabpanel" aria-labelledby="tab-bloom">
+      <article id="app-panel" tabindex="0">
         <section class="hero" aria-labelledby="hero-title">
           <div class="hero-copy">
             <p class="eyebrow"><span class="eyebrow-line" aria-hidden="true"></span><span id="hero-eyebrow">A word today. A world tomorrow.</span></p>
@@ -111,11 +121,16 @@
       <section class="how-section" aria-labelledby="how-title"><div><span class="eyebrow">FROM HERE TO YOUR APPS</span><h2 id="how-title">A small step.<br>Then you're in.</h2></div><ol class="how-steps"><li><span>01</span><div><h3>Your email</h3><p>Use the same international account email as in your apps.</p></div></li><li><span>02</span><div><h3>Your Plus</h3><p>When checkout opens, pay securely on lava.top.</p></div></li><li><span>03</span><div><h3>Your next discovery</h3><p>Sign in to either app and check your Plus. It works in both.</p></div></li></ol></section>
 
       <section class="faq-section" aria-labelledby="faq-title"><div><span class="eyebrow">A FEW LITTLE DETAILS</span><h2 id="faq-title">Good to know.</h2></div><div class="faq-list"><details><summary>Is Plus shared between the two apps?<span class="faq-toggle" aria-hidden="true"><i></i><i></i></span></summary><div class="faq-answer"><div class="faq-paper"><p>Yes. This monthly Hanzi Plus pass includes Hanzi Bloom and Hanzi Keys. Sign in with the same international account email in both apps. You don't need to buy it twice.</p></div></div></details><details><summary>Does it renew automatically?<span class="faq-toggle" aria-hidden="true"><i></i><i></i></span></summary><div class="faq-answer"><div class="faq-paper"><p>No. You pay once for one calendar month. Buy another month only when you choose to.</p></div></div></details><details><summary>Already purchased, but can't see Plus?<span class="faq-toggle" aria-hidden="true"><i></i><i></i></span></summary><div class="faq-answer"><div class="faq-paper"><p>Sign in with your purchase email, choose the International account region and check your access in the app. If it is still missing, contact <a href="mailto:raccoon.app.labs@gmail.com">raccoon.app.labs@gmail.com</a> with your order number. Please don't pay again to troubleshoot a missing purchase.</p></div></div></details></div></section>
+      </div>
+      <!-- STORIES_PANEL_START --><article id="stories-panel" class="commerce-page commerce-stories stories-panel" role="tabpanel" aria-labelledby="tab-stories" hidden><section class="commerce-hero story-scroll-hero"><div class="story-hero-copy"><p class="commerce-eyebrow">THE LITTLE STORY POST OFFICE</p><h1>A whole library. A little more magic.</h1><p class="commerce-lead">Choose a month of Premium or keep one special story forever. The next chapter begins in the app.</p><a class="commerce-action" href="#plus"><span>Explore the offers</span><i aria-hidden="true">↗</i></a></div><div class="story-scroll-track" data-story-scroll><div class="commerce-scene story-scroll-stage"><div aria-hidden="true" class="scene-ring"></div><div aria-hidden="true" class="scene-art"><div class="scroll-book"><div class="book-back-board"></div><div class="book-paper-stack"></div><div class="book-right-page"><span class="book-face "><img loading="lazy" src="/assets/demo/bunny-page-3.webp" width="420" height="560" alt=""></span></div><div class="book-leaf leaf-far"><span class="book-face face-front"><img loading="lazy" src="/assets/demo/bunny-page-3.webp" width="420" height="560" alt=""></span><span class="book-face face-back"><img loading="lazy" src="/assets/demo/bunny-page-2.webp" width="420" height="560" alt=""></span></div><div class="book-leaf leaf-near"><span class="book-face face-front"><img loading="lazy" src="/assets/demo/bunny-page-2.webp" width="420" height="560" alt=""></span><span class="book-face face-back"><img loading="lazy" src="/assets/demo/bunny-page-2.webp" width="420" height="560" alt=""></span></div><div class="book-cover"><span class="book-face face-front"><img loading="lazy" src="/assets/demo/bunny-page-1.webp" width="420" height="560" alt=""></span><span class="cover-seal">✦</span><span class="book-face face-back cover-inside"><i></i><b>✦</b></span></div><div class="book-spine"></div></div><div class="book-world"><span class="paper-moon"></span><span class="paper-comet"></span><i class="paper-star star-0">✦</i><i class="paper-star star-1">✦</i><i class="paper-star star-2">✦</i><i class="paper-star star-3">✦</i><i class="paper-star star-4">✦</i><i class="paper-star star-5">✦</i><i class="paper-star star-6">✦</i></div></div><span class="scene-tag">A story to come home to</span><p class="story-scroll-hint"><span aria-hidden="true" class="scroll-book-arrow">↕</span><span class="book-hint-motion">Scroll down to open · up to close</span><span class="book-hint-still">A little peek inside the story</span></p></div></div></section>
+<section class="offers-section" id="stories-offers"><div class="offers-heading"><h2>Two ways to keep the magic close</h2><p class="offer-note">Current Russian offers. Confirm the latest price and availability in the app.</p></div><div class="offer-grid"><article class="offer-card"><span class="offer-tag">THE WHOLE LIBRARY</span><span class="offer-symbol" aria-hidden="true">✦</span><h3>One month of Premium</h3><div class="offer-price"><strong>199</strong><span>RUB · one calendar month</span></div><p>The entire library, no ads and personal voice recordings.</p><ul class="offer-features"><li>All stories</li><li>Without ads</li><li>Your family&#x27;s voices</li></ul><a class="commerce-action" href="#open-app"><span>Open the app</span><i aria-hidden="true">↗</i></a></article><article class="offer-card"><span class="offer-tag">ONE TO KEEP</span><span class="offer-symbol" aria-hidden="true">♡</span><h3>One story, forever</h3><div class="offer-price"><strong>29</strong><span>RUB · one eligible story</span></div><p>Keep the selected story even when Premium ends. Individual purchase is available for eligible stories in the app.</p><ul class="offer-features"><li>One selected story</li><li>Permanent access</li><li>One payment</li></ul><a class="commerce-action" href="#open-app"><span>Open the app</span><i aria-hidden="true">↗</i></a></article></div></section><section class="commerce-details"><article class="commerce-detail"><span aria-hidden="true">01</span><h3>No automatic renewal</h3><p>Premium lasts one calendar month. Another month is purchased only when you choose.</p></article><article class="commerce-detail"><span aria-hidden="true">02</span><h3>Already have access?</h3><p>Sign in with the same purchase email. The app restores access and prevents buying a story you already own.</p></article><article class="commerce-detail"><span aria-hidden="true">03</span><h3>Where to find it</h3><p>In the app: Library or Profile → Premium. Open a locked story to see whether it can be bought separately.</p></article></section>
+<section class="commerce-get" id="open-app"><div><h2>How it works</h2><ol class="commerce-steps"><li><b>1</b><span>Open the app</span></li><li><b>2</b><span>Choose an option</span></li><li><b>3</b><span>Confirm in the app</span></li></ol><p>The app shows the latest price, eligibility and payment options before confirmation.</p><p>No website payment is collected here.</p></div><div class="commerce-stores"><a class="commerce-action" href="https://www.rustore.ru/catalog/app/com.volshebnye.istorii"><span>Open in RuStore</span><i aria-hidden="true">↗</i></a></div></section>
+<div class="commerce-help"><span aria-hidden="true">✉</span><span>Need a little help?</span><a href="mailto:raccoon.app.labs@gmail.com">Contact support</a></div><div class="story-legal-links"><a href="https://reserve.volshebnye-istorii.ru/legal/premium-terms.html">Purchase terms</a><a href="https://reserve.volshebnye-istorii.ru/legal/privacy.html">Privacy notice</a><a href="/apps/magical-stories/">Back to app</a></div></article><!-- STORIES_PANEL_END -->
     </main>
     <footer class="store-footer"><div class="footer-signature">Made for<br><em>curious minds.</em></div><div class="footer-links"><a href="/en/apps/hanzi-bloom/plus/offer/">Purchase &amp; refund terms</a><a href="/en/apps/hanzi-bloom/plus/privacy/">Privacy notice</a><a href="mailto:raccoon.app.labs@gmail.com">A little help</a><button id="motion-toggle" type="button" aria-pressed="false">Less motion</button></div><span class="copyright">© 2026 Raccoon App Labs</span></footer>
   </div>
   <div class="mobile-buybar" id="mobile-buybar" hidden><span>Hanzi Plus<small>$5.99 · one month · both apps</small></span><a data-checkout href="/en/apps/hanzi-bloom/plus/checkout/?app=bloom">View Plus <span aria-hidden="true">↗</span></a></div>
   <p class="sr-only" id="app-announcement" aria-live="polite"></p>
-  <noscript><p class="noscript-note">Choose <a href="/en/apps/hanzi-bloom/plus/checkout/?app=bloom">Hanzi Bloom</a> or <a href="/en/apps/hanzi-bloom/plus/checkout/?app=keys">Hanzi Keys</a>. JavaScript is required for tabs and checkout.</p></noscript>
+  <noscript><p class="noscript-note">Choose <a href="/en/apps/hanzi-bloom/plus/checkout/?app=bloom">Hanzi Bloom</a> or <a href="/en/apps/hanzi-bloom/plus/checkout/?app=keys">Hanzi Keys</a>. <a href="/apps/magical-stories/shop/">Magical Stories</a>. JavaScript is required for tabs and checkout.</p></noscript>
 </body>
 </html>
