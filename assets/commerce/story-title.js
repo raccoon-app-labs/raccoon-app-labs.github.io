@@ -1,4 +1,4 @@
-/* One viewport-aware floating-type engine for the entire Stories page and its dialogs. */
+/* Floating type follows document scrolling; native text takes over while scrolling. */
 (() => {
   'use strict';
   if(document.querySelector('.story-magic-layer'))return;
@@ -7,16 +7,23 @@
   const own='.story-magic-source,.story-magic-layer';
   const skip='script,style,noscript,svg,canvas,input,textarea,select,option,[contenteditable]:not([contenteditable="false"]),[aria-hidden="true"],[aria-live],.skip-link,.sr-only,#hanzi-content,#neon-panel,.payment-atmosphere,.language-announcement';
   const runs=new Set(),bySource=new WeakMap(),parents=new Map(),layers=new Map(),sparks=new Set(),pending=new Set([document.body]);
-  let frame=0,lastTime=0,closed=false,settleTimer=0,lastSpark=0,seed=0;
+  let frame=0,lastTime=0,closed=false,settleTimer=0,lastSpark=0,seed=0,scrollTimer=0,scrolling=false;
   let pointer={x:0,y:0,inside:false},sparkPoint={x:0,y:0},hovered=null,selection=false;
   const clamp=(n,min,max)=>Math.min(max,Math.max(min,n));
   const stories=()=>root.dataset.app?root.dataset.app==='stories':root.dataset.paymentAtmosphere==='stories' || root.dataset.siteWorld==='stories' || document.body.hasAttribute('data-story-checkout');
-  const enabled=()=>!closed && !document.hidden && root.clientWidth>0 && innerHeight>0 && stories() && !selection && !motion.matches && root.dataset.motion!=='reduced';
+  const enabled=()=>!closed && !scrolling && !document.hidden && root.clientWidth>0 && innerHeight>0 && stories() && !selection && !motion.matches && root.dataset.motion!=='reduced';
   const internal=node=>(node.nodeType===Node.ELEMENT_NODE?node:node.parentElement)?.closest?.(own);
   function queue(){if(!frame && !closed)frame=requestAnimationFrame(draw);}
   function clearSparks(){for(const spark of sparks){spark.animation.cancel();spark.node.remove();}sparks.clear();}
   function restore(run){run.source.removeAttribute('data-painted');if(run.group)run.group.hidden=true;}
-  function pause(){cancelAnimationFrame(frame);frame=0;lastTime=0;pointer.inside=false;clearSparks();for(const run of runs)restore(run);root.dataset.storyTypeState='paused';}
+  function pause(state='paused'){cancelAnimationFrame(frame);frame=0;lastTime=0;pointer.inside=false;clearSparks();for(const run of runs)restore(run);root.dataset.storyTypeState=state;}
+  function scroll(){
+    if(!stories() || closed)return;
+    if(!scrolling){scrolling=true;pause('scrolling');}
+    clearTimeout(scrollTimer);
+    // Wheel, touch and nested dialog scrolling all keep text on its native surface.
+    scrollTimer=setTimeout(()=>{scrolling=false;queue();},160);
+  }
   function dirty(){for(const run of runs)run.dirty=true;clearSparks();queue();}
   function settle(){clearTimeout(settleTimer);settleTimer=setTimeout(dirty,520);}
   function layerFor(parent){
@@ -27,6 +34,7 @@
       node.setAttribute('aria-hidden','true');node.setAttribute('inert','');node.dataset.noL10n='';
       const local=host.matches('.commerce-stories .offer-card');
       if(local)node.classList.add('story-magic-layer-local');
+      else if(host===document.body)node.classList.add('story-magic-layer-page');
       host.append(node);layer={host,node,local};layers.set(host,layer);
     }
     return layer;
@@ -131,7 +139,7 @@
     }
   }
   function draw(now){
-    frame=0;clean();if(!enabled()){pause();return;}
+    frame=0;clean();if(!enabled()){pause(scrolling?'scrolling':'paused');return;}
     if(lastTime && now-lastTime<1000/36){queue();return;}
     const delta=lastTime?clamp((now-lastTime)/16.667,.25,3):1;lastTime=now;
     for(const node of pending)scan(node);pending.clear();
@@ -219,7 +227,7 @@
     queue();
   },{passive:true});
   root.addEventListener('pointerleave',()=>{pointer.inside=false;hovered=null;});
-  document.addEventListener('scroll',queue,{capture:true,passive:true});
+  document.addEventListener('scroll',scroll,{capture:true,passive:true});
   document.addEventListener('selectionchange',()=>{const next=!getSelection()?.isCollapsed;if(selection!==next){selection=next;dirty();}});
   addEventListener('resize',dirty,{passive:true});
   addEventListener('raccoon:appchange',()=>{pause();pending.add(document.body);dirty();settle();});
@@ -227,7 +235,7 @@
   document.addEventListener('visibilitychange',()=>{if(document.hidden)pause();else dirty();});
   motion.addEventListener('change',dirty);fine.addEventListener('change',()=>{pointer.inside=false;});
   document.fonts?.ready.then(dirty);document.fonts?.addEventListener('loadingdone',dirty);
-  addEventListener('pagehide',()=>{closed=true;pause();clearTimeout(settleTimer);});
-  addEventListener('pageshow',()=>{closed=false;pending.add(document.body);dirty();});
+  addEventListener('pagehide',()=>{closed=true;pause();clearTimeout(settleTimer);clearTimeout(scrollTimer);scrolling=false;});
+  addEventListener('pageshow',()=>{closed=false;scrolling=false;pending.add(document.body);dirty();});
   queue();
 })();
