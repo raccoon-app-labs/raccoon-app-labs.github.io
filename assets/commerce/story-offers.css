@@ -1,0 +1,22 @@
+/* Two enchanted tickets; text and buttons stay above the decorative layers. */
+.commerce-stories .offer-grid[data-offer-motion]{perspective:1400px;isolation:isolate}
+.commerce-stories .offer-grid[data-offer-motion=scroll] .offer-card{
+  --offer-progress:.5;--offer-glow:1;
+  transform-origin:center;
+  transform:translateY(calc((.5 - var(--offer-progress))*18px)) rotateY(calc(var(--ticket-side)*(1 - var(--offer-progress))*5deg)) rotateZ(calc(var(--ticket-side)*(.5 - var(--offer-progress))*1.5deg));
+  transition:box-shadow .3s;
+  box-shadow:0 16px 42px #05030d25;
+}
+.commerce-stories .offer-magic{position:absolute;inset:0;border-radius:inherit;pointer-events:none;overflow:hidden;z-index:0;opacity:var(--offer-glow,0)}
+.commerce-stories .offer-card>:not(.offer-magic):not(.offer-symbol){position:relative;z-index:1}
+.commerce-stories .offer-symbol{z-index:1;transform:rotate(calc((var(--offer-progress,.5) - .5)*55deg)) scale(calc(1 + var(--offer-glow,0)*.12))}
+.offer-magic-edge{position:absolute;inset:0;border-radius:inherit;padding:2px;background:conic-gradient(from calc(var(--offer-progress,.5)*360deg),transparent 0 10%,#edc583 20%,#fff3c7 27%,transparent 39% 58%,#edc58388 70%,transparent 84%);mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);mask-composite:exclude}
+.offer-magic-sheen{position:absolute;inset:-35%;background:linear-gradient(115deg,transparent 40%,#edc58304 44%,#fff0b91c 50%,#edc58304 56%,transparent 60%);transform:translateX(calc(-70% + var(--offer-progress,.5)*140%)) rotate(-6deg)}
+.offer-constellation{position:absolute;inset:auto 0 15%;width:100%;height:150px;color:#edc583;opacity:.25;transform:translateY(calc((.5 - var(--offer-progress,.5))*22px))}
+.offer-constellation path{stroke:currentColor;stroke-width:1;stroke-dasharray:100;stroke-dashoffset:calc(100 - var(--offer-progress,.5)*100)}
+.offer-constellation circle{fill:currentColor}
+.offer-magic-star{position:absolute;left:calc(6% + var(--star-index)*14%);top:calc(11% + var(--star-index)*11%);width:9px;height:9px;background:#ffe6a4;clip-path:polygon(50% 0,61% 37%,100% 50%,61% 62%,50% 100%,38% 62%,0 50%,38% 37%);opacity:.55;transform:translateY(calc((.5 - var(--offer-progress,.5))*(16px + var(--star-index)*9px))) rotate(calc(var(--offer-progress,.5)*180deg + var(--star-index)*31deg)) scale(calc(.45 + var(--offer-glow,0)*.55))}
+.commerce-stories .offer-grid[data-offer-motion=reduced] .offer-magic{display:none}
+.commerce-stories .offer-grid[data-offer-motion=reduced] .offer-card,.commerce-stories .offer-grid[data-offer-motion=reduced] .offer-symbol{transform:none;transition:none}
+@media(max-width:760px){.commerce-stories .offer-grid[data-offer-motion=scroll] .offer-card{transform:translateY(calc((.5 - var(--offer-progress))*8px)) rotateZ(calc(var(--ticket-side)*(.5 - var(--offer-progress))*.6deg))}.offer-constellation{opacity:.16}.offer-magic-star{width:7px;height:7px}}
+@media(prefers-reduced-motion:reduce){.commerce-stories .offer-magic{display:none}.commerce-stories .offer-card,.commerce-stories .offer-symbol{transform:none!important;transition:none!important}}
