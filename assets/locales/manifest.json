@@ -5,6 +5,12 @@
     "original": "ru",
     "style": "portfolio"
   },
+  "apps/dokupit/shop/index.html": {
+    "bundle": "p-7a38092801a8.js",
+    "messages": 13,
+    "original": "en",
+    "style": "commerce"
+  },
   "apps/hanzi-bloom/index.html": {
     "bundle": "p-6b7f409afbb0.js",
     "messages": 156,
@@ -71,11 +77,23 @@
     "original": "ru",
     "style": "portfolio"
   },
+  "apps/magical-stories/shop/index.html": {
+    "bundle": "p-b82be88aa6c9.js",
+    "messages": 13,
+    "original": "en",
+    "style": "commerce"
+  },
   "apps/muropolis/index.html": {
     "bundle": "p-70eeb1947255.js",
     "messages": 150,
     "original": "ru",
     "style": "portfolio"
+  },
+  "apps/muropolis/shop/index.html": {
+    "bundle": "p-1cb3cf7e5fc0.js",
+    "messages": 13,
+    "original": "en",
+    "style": "commerce"
   },
   "apps/neon-cyber-wall-kicker/index.html": {
     "bundle": "p-be15f99a5486.js",
@@ -106,6 +124,12 @@
     "messages": 183,
     "original": "ru",
     "style": "portfolio"
+  },
+  "apps/what-to-eat/shop/index.html": {
+    "bundle": "p-7de4daf0b160.js",
+    "messages": 13,
+    "original": "en",
+    "style": "commerce"
   },
   "en/apps/dokupit/index.html": {
     "bundle": "p-26d8d4b25089.js",

@@ -113,6 +113,12 @@ function selectApp(id, {updateUrl = true, announce = true} = {}) {
   scene.setAttribute('aria-label', 'An interactive peek at ' + app.name);
   el('scene-play').setAttribute('aria-label', app.demoAria);
   for (const link of document.querySelectorAll('[data-checkout]')) link.href = app.checkout;
+  for (const link of document.querySelectorAll('[data-russian-catalog],[data-international-catalog]')) {
+    const target = new URL(link.href); target.searchParams.set('app', id);
+    const language = new URLSearchParams(location.search).get('lang');
+    if (language) target.searchParams.set('lang', language);
+    link.href = target.href;
+  }
   renderCard(); moveMarker();
   if (updateUrl) {
     const url = new URL(location.href); url.searchParams.set('app', id);
