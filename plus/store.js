@@ -1,6 +1,7 @@
 import {apps} from './catalog.js?v=20261026-fast';
 import {installStoreEffects} from './effects.js?v=20261026-motion3';
 import {installFaqReveals} from './faq.js?v=20261026-fold';
+import {installTicketTear} from './ticket.js?v=20261026-ticket';
 
 const el = id => document.getElementById(id);
 const tabs = [...document.querySelectorAll('[data-app-tab]')];
@@ -14,6 +15,7 @@ let userReducedMotion = false;
 const reducedMotion = () => motion.matches || userReducedMotion;
 const interactionEffects = installStoreEffects({reducedMotion, finePointer});
 const faqReveals = installFaqReveals({reducedMotion});
+const ticketTear = installTicketTear({reducedMotion});
 
 function moveMarker() {
   const selected = tabs.find(tab => tab.dataset.appTab === current);
@@ -121,7 +123,7 @@ function selectApp(id, {updateUrl = true, announce = true} = {}) {
 }
 
 tabs.forEach((tab, index) => {
-  tab.addEventListener('click', () => selectApp(tab.dataset.appTab));
+  tab.addEventListener('click', () => { ticketTear.cancel(); selectApp(tab.dataset.appTab); });
   tab.addEventListener('keydown', event => {
     if (event.altKey || event.ctrlKey || event.metaKey) return;
     let next;
@@ -162,6 +164,7 @@ function syncMotion() {
   el('motion-toggle').disabled = motion.matches;
   el('motion-toggle').title = motion.matches ? 'Reduced motion follows your device setting.' : 'Reduce decorative motion';
   if (reducedMotion()) {
+    ticketTear.finish();
     faqReveals.finishAll();
     interactionEffects.clear();
     document.getAnimations().forEach(animation => animation.cancel());
