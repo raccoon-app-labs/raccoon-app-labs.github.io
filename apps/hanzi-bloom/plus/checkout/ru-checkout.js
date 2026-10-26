@@ -8,8 +8,8 @@
   document.documentElement.dataset.app = isKeys ? 'keys' : 'bloom';
   // Presentation must not break login if a browser still has older cached HTML.
   const storeLink = el('checkout-store-link'), includedLink = el('checkout-included-link');
-  if (storeLink) storeLink.href = '/plus/?app=' + (isKeys ? 'keys' : 'bloom');
-  if (includedLink) includedLink.href = '/plus/?app=' + (isKeys ? 'keys' : 'bloom') + '#included';
+  if (storeLink) storeLink.href = '/plus/?app=' + (isKeys ? 'keys' : 'bloom') + '&region=ru';
+  if (includedLink) includedLink.href = '/plus/?app=' + (isKeys ? 'keys' : 'bloom') + '&region=ru#plus';
   if (isKeys) {
     const appIcon = el('checkout-app-icon');
     if (appIcon) appIcon.src = '/plus/assets/keys-icon-128.webp';

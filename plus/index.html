@@ -18,7 +18,8 @@
   <script type="module" src="/plus/store.js?v=20261026-night-b8f2a66abae4"></script>
   <link rel="stylesheet" href="/plus/locale.css?v=20261026-site1-f091d1f79ed2">
   <script src="/plus/locale-data.js?v=20261026-night-fada20c6361a"></script>
-  <script src="/plus/locale.js?v=20261026-site1-97af4b6e0b71" defer></script>
+  <script data-hanzi-regions src="/plus/regions-locales.js?v=1cfa86377c5c" integrity="sha256-HPqGN3xctjQJJu0dTVNN1XB9T6AFywbUOy6ozxwDvvc="></script>
+<script src="/plus/locale.js?v=20261026-site1-97af4b6e0b71" defer></script>
   <title>Hanzi Plus · The little app shop</title>
 <script data-payment-theme src="/plus/theme.js?v=20261026-night-7ada87b005" integrity="sha256-pE/+zFqFpKkP4bGut9rxLGSy7ozSpREwkdFOaH5e4WY="></script>
 <link data-payment-theme rel="stylesheet" href="/plus/theme.css?v=20261026-night-7ada87b005">
@@ -28,7 +29,7 @@
 <link data-shop-hub rel="stylesheet" href="/assets/commerce/storybook.css?v=fb70bfa03f93">
 <link data-shop-hub rel="stylesheet" href="/assets/commerce/story-offers.css?v=64550b0f565c">
 <link data-shop-hub rel="stylesheet" href="/plus/hub.css?v=d5e6053410a0">
-<script data-shop-hub src="/plus/hub-start.js?v=86c2fcf036b4"></script>
+<script data-shop-hub src="/plus/hub-start.js?v=997f6af90117"></script>
 <script data-shop-hub src="/assets/commerce/storybook.js?v=19ec054b22df" defer></script>
 <script data-shop-hub src="/assets/commerce/story-offers.js?v=9ede3cb5910d" defer></script>
 <script data-shop-hub src="/assets/commerce/neon-scroll.js?v=08ea7a7187b3" defer></script>
@@ -36,6 +37,8 @@
 <script data-payment-atmosphere-asset src="/assets/payment-atmosphere/atmosphere.js?v=b9e95f8766d2" integrity="sha256-uelfh2bSlL8aQ6zmPPKHUt7HJdWLA9Dl+t4FZPf94nI=" defer></script>
 <link rel="stylesheet" href="/assets/commerce/story-checkout.css?v=d1e86457d351"><script type="module" src="/assets/commerce/story-checkout.js?v=41a9151cc8e8"></script>
 <link data-story-title rel="stylesheet" href="/assets/commerce/story-title.css?v=41602719c130"><script data-story-title src="/assets/commerce/story-title.js?v=34c63d78ac6f" defer></script>
+<link data-hanzi-regions rel="stylesheet" href="/plus/regions.css?v=551e6b2ee81f">
+<script data-hanzi-regions src="/plus/regions.js?v=af335c9f82dd" integrity="sha256-rzNcn4LdzpVxo/IR+d9fa8T8CjQrzjcSl9+zeOrUKvQ=" defer></script>
 </head>
 <body>
   <a class="skip-link" href="#app-panel">Skip to the app</a>
@@ -71,10 +74,22 @@
       <span class="nav-note">Small apps. Big little discoveries.</span>
     </nav>
 
-    <section class="account-routes" data-commerce-region><p>Choose your account region</p><div><a data-russian-catalog href="/apps/hanzi-bloom/plus/?app=bloom"><span aria-hidden="true">₽</span><span><strong>Russian account</strong><small data-no-l10n>RUB · Robokassa</small></span></a><a data-international-catalog href="/plus/?app=bloom#plus"><span aria-hidden="true">$</span><span><strong>International account</strong><small>Monthly plan in USD</small></span></a></div><p>Your page language does not choose your account region.</p></section>
+    <section class="account-routes" data-commerce-region><p>Choose your account region</p><div><a data-russian-catalog href="/plus/?app=bloom&amp;region=ru"><span aria-hidden="true">₽</span><span><strong>Russian account</strong><small data-no-l10n>RUB · Robokassa</small></span></a><a data-international-catalog href="/plus/?app=bloom&amp;region=global"><span aria-hidden="true">$</span><span><strong>International account</strong><small>Monthly plan in USD</small></span></a></div><p>Your page language does not choose your account region.</p></section>
 <main>
       <div id="hanzi-content" role="tabpanel" aria-labelledby="tab-bloom">
-      <article id="app-panel" tabindex="0">
+      <!-- RU_REGION_START --><section id="ru-pricing" class="ru-region-panel" data-ru-region-panel aria-labelledby="ru-region-title" tabindex="-1" hidden>
+  <header class="ru-region-heading"><div><p class="eyebrow">Тарифы Plus</p><h1 id="ru-region-title">Выберите свой ритм.</h1><p>Месяц, чтобы попробовать. Год, чтобы учиться регулярно.</p></div><div class="ru-worlds" aria-hidden="true"><img src="/plus/assets/bloom-icon-128.webp" width="64" height="64" alt=""><span>+</span><img src="/plus/assets/keys-icon-128.webp" width="64" height="64" alt=""></div></header>
+  <div class="ru-price-grid">
+    <article class="ru-price-card"><span class="eyebrow">Российский тариф</span><h2>На месяц</h2><p class="ru-price" data-no-l10n>299 <span>₽</span></p><p>За один месяц доступа</p><ul><li>Hanzi Bloom + Hanzi Keys</li><li>Один аккаунт для обоих приложений</li></ul><a class="action" data-ru-web-plan="rub_month" href="/apps/hanzi-bloom/plus/checkout/?plan=rub_month"><span>Buy subscription</span><span aria-hidden="true">↗</span></a></article>
+    <article class="ru-price-card featured"><span class="eyebrow">Российский тариф</span><h2>На год</h2><p class="ru-price" data-no-l10n>2 999 <span>₽</span></p><p>Единая оплата за 12 месяцев</p><ul><li>Оба приложения на 12 месяцев</li><li>Примерно 250 ₽ в месяц при оплате за год</li></ul><a class="action" data-ru-web-plan="rub_year" href="/apps/hanzi-bloom/plus/checkout/?plan=rub_year"><span>Buy subscription</span><span aria-hidden="true">↗</span></a></article>
+  </div>
+  <p class="ru-region-note"><span>Account email</span><span aria-hidden="true">→</span><span>Code</span><span aria-hidden="true">→</span><span>Continue payment</span><span>·</span><span>One payment · no automatic renewal</span></p>
+  <section class="ru-benefits"><h2>Bloom + Keys. Вместе понятнее.</h2><div class="ru-benefit-grid"><article><span aria-hidden="true">01 /</span><h3>Hanzi Bloom</h3><p>Все опубликованные квесты и уроки курса HSK доступны на срок подписки. Открывать каждый урок за рекламу не потребуется.</p></article><article><span aria-hidden="true">02 /</span><h3>Hanzi Keys</h3><p>Защищённые занятия, учебный маршрут, практика и разбор ключей доступны с Plus. Реклама Keys отключается на оплаченный срок.</p></article><article><span aria-hidden="true">03 /</span><h3>Прогресс остаётся</h3><p>После первой подписки поддерживаемый облачный прогресс остаётся в аккаунте без продления. В Keys сохраняются изученные ключи; в Bloom — поддерживаемые статусы и пройденные уроки.</p></article></div></section>
+  <details class="ru-region-details" id="ru-terms"><summary>Условия доступа</summary><p>Общий доступ к Hanzi Bloom и Hanzi Keys на выбранный срок в одном российском аккаунте. Это цифровой доступ, без доставки физического товара.</p><p>Доступ связан с аккаунтом Hanzi и активируется не позднее 24 часов после подтверждения оплаты выбранным платёжным сервисом. Оплаченный срок начинается с активации.</p><p>Разовая оплата выбранного срока без автоматического продления и повторных списаний. Для продления нужна новая покупка.</p><p>После оплаты через Робокассу вернитесь в приложение и проверьте Plus. Во втором приложении войдите с той же почтой: повторная покупка не нужна.</p><p>Подписка распространяется на опубликованные материалы. Уроки будущих уровней, отмеченные «скоро», пока не входят в доступный курс. Приложение не гарантирует результат экзамена HSK.</p><p>Если в установленной версии ещё нет общего Plus, обновите приложение перед покупкой. Бесплатная неделя знакомства в Keys сама не вызывает списаний.</p><p><a data-ru-document href="/apps/hanzi-bloom/plus/checkout/offer/">Purchase &amp; refund terms</a> · <a data-ru-document href="/apps/hanzi-bloom/plus/checkout/privacy/">Privacy notice</a></p></details>
+  <div class="ru-region-help" id="ru-help"><p>Вопросы о приложении, доступе и общей подписке.</p><a href="mailto:raccoon.app.labs@gmail.com">raccoon.app.labs@gmail.com</a></div>
+</section>
+<!-- RU_REGION_END -->
+<article id="app-panel" tabindex="0">
         <section class="hero" aria-labelledby="hero-title">
           <div class="hero-copy">
             <p class="eyebrow"><span class="eyebrow-line" aria-hidden="true"></span><span id="hero-eyebrow">A word today. A world tomorrow.</span></p>

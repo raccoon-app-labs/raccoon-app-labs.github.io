@@ -1,0 +1,1 @@
+(()=>{const url=new URL('/plus/',location.href),query=new URLSearchParams(location.search);url.searchParams.set('app',query.get('app')==='keys'?'keys':'bloom');url.searchParams.set('region','ru');if(query.has('lang'))url.searchParams.set('lang',query.get('lang'));url.hash=({'#terms':'#ru-terms','#contacts':'#ru-help'})[location.hash]||'#plus';location.replace(url);})();
