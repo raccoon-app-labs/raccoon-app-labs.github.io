@@ -24,7 +24,7 @@
     paint.fillStyle=glow;paint.fillRect(0,0,64,64);return sprite;
   }));
   const MAX=72,SPACING=11;
-  let particles=[],frame=0,lastTime=0,width=0,height=0;
+  let particles=[],frame=0,lastTime=0,width=0,height=0,dirtyRect=null;
   let point=null,previous=null,carry=0,enabled=false,closed=false,lastCount=-1,night=true;
   const isStories=()=>root.dataset.app==='stories' || root.dataset.paymentAtmosphere==='stories';
   function field(node){
@@ -32,10 +32,14 @@
     return control && (control.tagName!=='INPUT' || !['checkbox','radio','button','submit','reset','range','color','file'].includes(control.type));
   }
   function count(){if(lastCount!==particles.length){lastCount=particles.length;canvas.dataset.activeCount=String(lastCount);}}
+  function erase(){
+    if(!dirtyRect)return;
+    ctx.clearRect(dirtyRect.left,dirtyRect.top,dirtyRect.right-dirtyRect.left,dirtyRect.bottom-dirtyRect.top);dirtyRect=null;
+  }
   function clear(){
     cancelAnimationFrame(frame);frame=0;lastTime=0;
     particles=[];point=null;previous=null;carry=0;
-    ctx.clearRect(0,0,width,height);count();
+    erase();count();
     canvas.dataset.state=enabled?'idle':'paused';
   }
   function resize(){
@@ -87,8 +91,8 @@
   function draw(now){
     frame=0;if(!enabled)return;
     const dt=lastTime?Math.min((now-lastTime)/1000,.04):1/60;lastTime=now;
-    emit();ctx.clearRect(0,0,width,height);ctx.globalCompositeOperation=night?'lighter':'source-over';
-    const time=now/1000;
+    emit();erase();ctx.globalCompositeOperation=night?'lighter':'source-over';
+    const time=now/1000;let left=width,right=0,top=height,bottom=0;
     for(let index=particles.length-1;index>=0;index--){
       const fly=particles[index];fly.age+=dt;
       if(fly.age>=fly.life){particles.splice(index,1);continue;}
@@ -99,6 +103,9 @@
       const pulse=.5+.5*Math.pow(Math.sin(wave*3),2);
       const opacity=Math.min(1,fly.age/.085)*Math.pow(1-t,1.25)*pulse;
       const halo=(32+Math.sin(wave)*4)*fly.size;
+      const radius=halo/2+2;
+      left=Math.min(left,fly.x-radius);right=Math.max(right,fly.x+radius);
+      top=Math.min(top,fly.y-radius);bottom=Math.max(bottom,fly.y+radius);
       ctx.globalAlpha=opacity*.85;
       ctx.drawImage(sprites[night?0:1][fly.color],fly.x-halo/2,fly.y-halo/2,halo,halo);
       ctx.save();ctx.translate(fly.x,fly.y);ctx.rotate(fly.angle+Math.sin(wave)*.25);
@@ -111,9 +118,10 @@
       ctx.beginPath();ctx.ellipse(0,.6*fly.size,.85*fly.size,1.65*fly.size,0,0,Math.PI*2);ctx.fill();
       ctx.restore();
     }
+    if(right>0 && bottom>0 && left<width && top<height)dirtyRect={left:Math.max(0,Math.floor(left)),top:Math.max(0,Math.floor(top)),right:Math.min(width,Math.ceil(right)),bottom:Math.min(height,Math.ceil(bottom))};
     ctx.globalAlpha=1;ctx.globalCompositeOperation='source-over';count();
     if(particles.length || point){canvas.dataset.state='flying';schedule();}
-    else{lastTime=0;previous=null;carry=0;canvas.dataset.state='idle';ctx.clearRect(0,0,width,height);}
+    else{lastTime=0;previous=null;carry=0;canvas.dataset.state='idle';erase();}
   }
   document.addEventListener('pointermove',event=>{
     if(!enabled || event.pointerType==='touch')return;

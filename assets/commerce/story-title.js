@@ -7,7 +7,7 @@
   const own='.story-magic-source,.story-magic-layer';
   const skip='script,style,noscript,svg,canvas,input,textarea,select,option,[contenteditable]:not([contenteditable="false"]),[aria-hidden="true"],[aria-live],.skip-link,.sr-only,#hanzi-content,#neon-panel,.payment-atmosphere,.language-announcement';
   const runs=new Set(),bySource=new WeakMap(),parents=new Map(),layers=new Map(),sparks=new Set(),pending=new Set([document.body]);
-  let frame=0,lastTime=0,closed=false,settleTimer=0,lastSpark=0,seed=0,scrollTimer=0,scrolling=false;
+  let frame=0,lastTime=0,nextTime=0,closed=false,settleTimer=0,lastSpark=0,seed=0,scrollTimer=0,scrolling=false;
   let pointer={x:0,y:0,inside:false},sparkPoint={x:0,y:0},hovered=null,selection=false;
   const clamp=(n,min,max)=>Math.min(max,Math.max(min,n));
   const stories=()=>root.dataset.app?root.dataset.app==='stories':root.dataset.paymentAtmosphere==='stories' || root.dataset.siteWorld==='stories' || document.body.hasAttribute('data-story-checkout');
@@ -15,8 +15,8 @@
   const internal=node=>(node.nodeType===Node.ELEMENT_NODE?node:node.parentElement)?.closest?.(own);
   function queue(){if(!frame && !closed)frame=requestAnimationFrame(draw);}
   function clearSparks(){for(const spark of sparks){spark.animation.cancel();spark.node.remove();}sparks.clear();}
-  function restore(run){run.source.removeAttribute('data-painted');if(run.group)run.group.hidden=true;}
-  function pause(state='paused'){cancelAnimationFrame(frame);frame=0;lastTime=0;pointer.inside=false;clearSparks();for(const run of runs)restore(run);root.dataset.storyTypeState=state;}
+  function restore(run){if(run.painted){run.source.removeAttribute('data-painted');if(run.group)run.group.hidden=true;run.painted=false;}}
+  function pause(state='paused'){cancelAnimationFrame(frame);frame=0;lastTime=0;nextTime=0;pointer.inside=false;clearSparks();for(const run of runs)restore(run);root.dataset.storyTypeState=state;}
   function scroll(){
     if(!stories() || closed)return;
     if(!scrolling){scrolling=true;pause('scrolling');}
@@ -25,7 +25,8 @@
     scrollTimer=setTimeout(()=>{scrolling=false;queue();},160);
   }
   function dirty(){for(const run of runs)run.dirty=true;clearSparks();queue();}
-  function settle(){clearTimeout(settleTimer);settleTimer=setTimeout(dirty,520);}
+  function refreshStyles(){for(const run of runs)run.styleDirty=true;queue();}
+  function settle(rebuild=true){clearTimeout(settleTimer);settleTimer=setTimeout(rebuild?dirty:refreshStyles,520);}
   function layerFor(parent){
     const host=parent.closest('.commerce-stories .offer-card,.magic-book-art,dialog,[popover]') || document.body;
     let layer=layers.get(host);
@@ -71,14 +72,14 @@
   }
   function style(run){
     const css=getComputedStyle(run.parent),group=run.group;run.size=parseFloat(css.fontSize)||16;
-    for(const prop of ['fontFamily','fontSize','fontWeight','fontStyle','fontStretch','fontVariant','fontFeatureSettings','fontVariationSettings','fontKerning','letterSpacing','textTransform','color'])group.style[prop]=css[prop];
+    for(const prop of ['fontFamily','fontSize','fontWeight','fontStyle','fontStretch','fontVariant','fontFeatureSettings','fontVariationSettings','fontKerning','letterSpacing','textTransform','color'])if(group.style[prop]!==css[prop])group.style[prop]=css[prop];
     let opacity=1;run.clips=[];
     for(let node=run.parent;node && node!==run.layer.host.parentElement;node=node.parentElement){
       const ancestor=getComputedStyle(node);opacity*=parseFloat(ancestor.opacity)||0;
       const x=/hidden|clip|auto|scroll/.test(ancestor.overflowX),y=/hidden|clip|auto|scroll/.test(ancestor.overflowY);
       if(x || y || (node===run.layer.host && node!==document.body))run.clips.push({node,x:x || node===run.layer.host,y:y || node===run.layer.host});
     }
-    group.style.opacity=String(opacity);
+    if(group.style.opacity!==String(opacity))group.style.opacity=String(opacity);run.styleDirty=false;
   }
   function build(run,bounds,layerBounds){
     restore(run);run.layer=layerFor(run.parent);
@@ -140,12 +141,13 @@
   }
   function draw(now){
     frame=0;clean();if(!enabled()){pause(scrolling?'scrolling':'paused');return;}
-    if(lastTime && now-lastTime<1000/36){queue();return;}
+    if(nextTime && now+1<nextTime){queue();return;}
+    nextTime=nextTime && now-nextTime<100?nextTime+1000/60:now+1000/60;
     const delta=lastTime?clamp((now-lastTime)/16.667,.25,3):1;lastTime=now;
     for(const node of pending)scan(node);pending.clear();
     const modal=[...document.querySelectorAll('dialog[open]')].at(-1) || null;
     const plans=[],rects=new Map(),layerRects=new Map();
-    const nav=document.querySelector('.app-nav')?.getBoundingClientRect();
+    const viewportWidth=root.clientWidth,nav=document.querySelector('.app-nav')?.getBoundingClientRect();
     for(const run of runs){
       if(!run.visible || (modal && !modal.contains(run.parent))){restore(run);continue;}
       let bounds=rects.get(run.parent);if(!bounds){bounds=run.parent.getBoundingClientRect();rects.set(run.parent,bounds);}
@@ -153,43 +155,54 @@
       const layer=layerFor(run.parent);if(layer!==run.layer)run.dirty=true;
       const belowNav=layer.host===document.body && run.parent.closest('main,.store-footer');
       if(belowNav && nav && bounds.bottom<=nav.bottom){restore(run);continue;}
-      let layerBounds=layerRects.get(layer);if(!layerBounds){layerBounds=layer.node.getBoundingClientRect();layerRects.set(layer,layerBounds);}
-      plans.push({run,bounds,layer,layerBounds,navBottom:belowNav && nav?nav.bottom:0});
+      let layerMetrics=layerRects.get(layer);
+      if(!layerMetrics){const bounds=layer.node.getBoundingClientRect();layerMetrics={bounds,sx:layer.node.clientWidth?bounds.width/layer.node.clientWidth:1,sy:layer.node.clientHeight?bounds.height/layer.node.clientHeight:1};layerRects.set(layer,layerMetrics);}
+      plans.push({run,bounds,layer,layerBounds:layerMetrics.bounds,sx:layerMetrics.sx,sy:layerMetrics.sy,navBottom:belowNav && nav?nav.bottom:0});
     }
     buildLocal(plans);
-    let nearest=null,best=0,total=0;
+    // Finish every geometry read before changing any letter's style. In particular, reading
+    // clientWidth after the previous run's transforms would force repeated style/layout flushes.
     for(const plan of plans){
-      const {run,bounds,layerBounds}=plan;
+      const {run,bounds,layerBounds,sx,sy}=plan;
       if(run.dirty && !plan.layer.local)try{build(run,bounds,layerBounds);}catch{restore(run);run.cells=[];run.dirty=false;}
-      if(!run.cells.length)continue;
-      const sx=plan.layer.node.clientWidth?layerBounds.width/plan.layer.node.clientWidth:1;
-      const sy=plan.layer.node.clientHeight?layerBounds.height/plan.layer.node.clientHeight:1;if(!sx || !sy)continue;
+      if(run.styleDirty && run.group)style(run);
       const local=plan.layer.local?run.localGeometry:null;
-      const x=local?local.x:(bounds.left-layerBounds.left)/sx,y=local?local.y:(bounds.top-layerBounds.top)/sy;
-      let left=0,right=root.clientWidth,top=plan.navBottom,bottom=innerHeight;
+      plan.local=local;plan.x=local?local.x:(bounds.left-layerBounds.left)/sx;plan.y=local?local.y:(bounds.top-layerBounds.top)/sy;
+      let left=0,right=viewportWidth,top=plan.navBottom,bottom=innerHeight;
       for(const clip of local?[]:run.clips || []){
         let rect=rects.get(clip.node);if(!rect){rect=clip.node.getBoundingClientRect();rects.set(clip.node,rect);}
         if(clip.x){left=Math.max(left,rect.left);right=Math.min(right,rect.right);}
         if(clip.y){top=Math.max(top,rect.top);bottom=Math.min(bottom,rect.bottom);}
       }
-      if(!local && (right<=bounds.left || left>=bounds.right || bottom<=bounds.top || top>=bounds.bottom)){restore(run);continue;}
-      Object.assign(run.group.style,{width:(local?local.width:bounds.width/sx)+'px',height:(local?local.height:bounds.height/sy)+'px',
+      plan.clipped=!local && (right<=bounds.left || left>=bounds.right || bottom<=bounds.top || top>=bounds.bottom);
+      plan.geometry={width:(local?local.width:bounds.width/sx)+'px',height:(local?local.height:bounds.height/sy)+'px',
         clipPath:local?'none':`inset(${Math.max(-32,(top-bounds.top)/sy)}px ${Math.max(-32,(bounds.right-right)/sx)}px ${Math.max(-32,(bounds.bottom-bottom)/sy)}px ${Math.max(-32,(left-bounds.left)/sx)}px)`,
-        transform:`translate3d(${x.toFixed(2)}px,${y.toFixed(2)}px,0)`});
-      run.group.hidden=false;run.source.dataset.painted='true';
+        transform:`translate3d(${plan.x.toFixed(2)}px,${plan.y.toFixed(2)}px,0)`};
+    }
+    let nearest=null,best=0,total=0;
+    for(const plan of plans){
+      const {run,bounds,layerBounds,sx,sy,local,x,y}=plan;
+      if(!run.cells.length || !sx || !sy || plan.clipped){restore(run);continue;}
+      for(const [property,value] of Object.entries(plan.geometry))if(run.geometry?.[property]!==value)run.group.style[property]=value;
+      run.geometry=plan.geometry;
+      if(!run.painted){run.group.hidden=false;run.source.dataset.painted='true';run.painted=true;}
       const px=local?(pointer.x-layerBounds.left)/sx-x:(pointer.x-bounds.left)/sx,py=local?(pointer.y-layerBounds.top)/sy-y:(pointer.y-bounds.top)/sy;
       const time=now/1000,amplitude=clamp(run.size*.032,.22,2.7),radius=clamp(run.size*2.2,48,170),pushLimit=clamp(run.size*.125,.8,8);
+      const damp=Math.pow(.78,delta),angleEase=1-Math.pow(.86,delta);
       for(const cell of run.cells){
-        const dx=cell.left+cell.width/2-px,dy=cell.top+cell.height*.55-py,distance=Math.hypot(dx,dy);
-        const influence=pointer.inside?Math.pow(Math.max(0,1-distance/radius),2):0;
+        const dx=cell.left+cell.width/2-px,dy=cell.top+cell.height*.55-py;
+        const nearby=pointer.inside && Math.abs(dx)<radius && Math.abs(dy)<radius;
+        const distance=nearby?Math.hypot(dx,dy):radius;
+        const influence=nearby?Math.pow(Math.max(0,1-distance/radius),2):0;
         const idle=Math.sin(time*cell.speed+cell.phase),push=influence*pushLimit;
         const targetX=Math.sin(time*.54+cell.phase)*amplitude*.32+dx/Math.max(distance,1)*push;
-        const targetY=idle*amplitude+dy/Math.max(distance,1)*push,damp=Math.pow(.78,delta);
+        const targetY=idle*amplitude+dy/Math.max(distance,1)*push;
         cell.vx=(cell.vx+(targetX-cell.x)*.075*delta)*damp;cell.vy=(cell.vy+(targetY-cell.y)*.075*delta)*damp;
         cell.x+=cell.vx*delta;cell.y+=cell.vy*delta;
         const angle=idle*(run.size>=28?.45:.2)+clamp(dx/radius,-1,1)*influence*(run.size>=28?3:1.1);
-        cell.angle+=(angle-cell.angle)*(1-Math.pow(.86,delta));
-        cell.node.style.transform=`translate3d(${cell.x.toFixed(2)}px,${cell.y.toFixed(2)}px,0) rotate(${cell.angle.toFixed(2)}deg)`;
+        cell.angle+=(angle-cell.angle)*angleEase;
+        const transform=`translate3d(${cell.x.toFixed(2)}px,${cell.y.toFixed(2)}px,0) rotate(${cell.angle.toFixed(2)}deg)`;
+        if(cell.transform!==transform){cell.node.style.transform=transform;cell.transform=transform;}
         const glow=Math.round((.12+(idle+1)*.055+influence*.8)*24)/24;
         if(glow!==cell.glow){cell.glow=glow;const scale=clamp(run.size/55,.3,1);
           cell.node.style.textShadow=`0 0 ${(2+glow*13)*scale}px rgba(255,221,157,${(.1+glow*.4)*scale}),0 0 ${(8+glow*25)*scale}px rgba(237,180,104,${glow*.2*scale})`;
@@ -199,8 +212,8 @@
       total+=run.cells.length;
     }
     if(nearest && best>.18)sparkle(nearest.run,nearest.cell,nearest.x,nearest.y,now);
-    root.dataset.storyTypeState=plans.length?'active':'idle';if(root.dataset.storyTypeVisible!==String(total))root.dataset.storyTypeVisible=String(total);
-    if(plans.length)queue();else lastTime=0;
+    const state=plans.length?'active':'idle';if(root.dataset.storyTypeState!==state)root.dataset.storyTypeState=state;if(root.dataset.storyTypeVisible!==String(total))root.dataset.storyTypeVisible=String(total);
+    if(plans.length)queue();else{lastTime=0;nextTime=0;}
   }
   new MutationObserver(records=>{
     let changed=false;
@@ -221,8 +234,8 @@
     if(!fine.matches || event.pointerType==='touch' || !enabled())return;
     pointer={x:event.clientX,y:event.clientY,inside:true};
     if(hovered!==event.target){
-      for(const run of runs)if(run.parent.contains(event.target) || run.parent.contains(hovered) || event.target.contains?.(run.parent) || hovered?.contains?.(run.parent))run.dirty=true;
-      hovered=event.target;settle();
+      for(const run of runs)if(run.parent.contains(event.target) || run.parent.contains(hovered) || event.target.contains?.(run.parent) || hovered?.contains?.(run.parent))run.styleDirty=true;
+      hovered=event.target;settle(false);
     }
     queue();
   },{passive:true});
