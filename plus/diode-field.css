@@ -1,0 +1,5 @@
+/* The original fourteen-pixel dot grid becomes a background LED circuit. */
+#neon-panel .diode-field{position:absolute;top:0;left:0;width:100%;height:var(--diode-height,820px);z-index:-1;pointer-events:none;user-select:none;contain:strict;mask-image:linear-gradient(#000 0%,#000 68%,transparent 100%)}
+#neon-panel[data-diode-ready]::before{background-image:none}
+:root[data-motion=reduced] #neon-panel .diode-field{opacity:.7}
+@media(prefers-reduced-motion:reduce){#neon-panel .diode-field{opacity:.7}}
