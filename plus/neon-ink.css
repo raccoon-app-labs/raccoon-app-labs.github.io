@@ -1,0 +1,15 @@
+/* Native inline text: no cloned glyphs, transforms or viewport-pinned layers. */
+neon-ink.neon-ink-text{display:inline;box-decoration-break:clone;-webkit-box-decoration-break:clone}
+:root[data-app=neon] neon-ink[data-ink-lit]{
+  color:transparent!important;-webkit-text-fill-color:transparent;
+  background-image:radial-gradient(ellipse var(--ink-radius) calc(var(--ink-radius)*.74) at var(--ink-x) var(--ink-y),
+    color-mix(in srgb,var(--ink-a) calc(var(--ink-charge)*100%),var(--ink-base)) 0%,
+    color-mix(in srgb,var(--ink-b) calc(var(--ink-charge)*100%),var(--ink-base)) 29%,
+    color-mix(in srgb,var(--ink-c) calc(var(--ink-charge)*86%),var(--ink-base)) 54%,var(--ink-base) 92%);
+  background-clip:text;-webkit-background-clip:text;
+  text-shadow:0 0 calc(9px*var(--ink-charge)) color-mix(in srgb,var(--ink-a) calc(var(--ink-charge)*25%),transparent),
+    1px 0 color-mix(in srgb,var(--ink-b) calc(var(--ink-charge)*28%),transparent);
+}
+:root[data-app=neon] neon-ink[data-ink-lit]::selection{color:HighlightText!important;-webkit-text-fill-color:HighlightText;background:Highlight;text-shadow:none}
+:root[data-motion=reduced] neon-ink[data-ink-lit]{text-shadow:none}
+@media(prefers-reduced-motion:reduce){neon-ink[data-ink-lit]{text-shadow:none}}
