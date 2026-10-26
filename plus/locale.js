@@ -73,10 +73,16 @@
     if (result === undefined) return source;
     return (source.match(/^\s*/u)?.[0] || '') + result + (source.match(/\s*$/u)?.[0] || '');
   }
-  function skipped(node) { return node.parentElement?.closest('script,style,noscript,[data-no-l10n]'); }
+  function skipped(node) { return node.parentElement?.closest('script,style,noscript,[data-no-l10n],[lang^="zh"]'); }
+  const onlyHanzi = value => /\p{Script=Han}/u.test(value) && /^[\p{Script=Han}\p{Punctuation}\p{Symbol}\s\d]+$/u.test(value);
   function text(node) {
     if (skipped(node) || !normalize(node.data)) return;
     let saved = textState.get(node);
+    // Japanese translations can legitimately be 木 or 口. Never reverse-map
+    // those words over the original Chinese learning glyphs. Meaning labels
+    // already tracked from an English/Russian source still change normally.
+    if (onlyHanzi(node.data) && node.parentElement.closest('[data-product="keys"],[data-product="bloom"],.keys-lab,.bloom-lab')
+        && (!saved || onlyHanzi(saved.source))) return;
     if (!saved || node.data !== saved.last) saved = {source:node.data,last:node.data};
     const result = translate(saved.source);
     saved.last = result; textState.set(node,saved);
@@ -84,7 +90,7 @@
   }
   const attrs = ['aria-label','aria-description','placeholder','title','alt','content'];
   function attributes(node) {
-    if (node.closest?.('[data-no-l10n]')) return;
+    if (node.closest?.('[data-no-l10n],[lang^="zh"]')) return;
     let states = attributeState.get(node);
     if (!states) { states = {}; attributeState.set(node,states); }
     for (const name of attrs) {
