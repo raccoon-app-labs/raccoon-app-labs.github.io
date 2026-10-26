@@ -1,5 +1,8 @@
+import {installComicPointer} from './comic-pointer.js?v=20261027-comic';
+
 // Small, temporary flourishes. Native pointers, focus and navigation stay intact.
 export function installStoreEffects({reducedMotion, finePointer}) {
+  const comic = installComicPointer({reducedMotion, finePointer});
   let canvas, context, frame = 0, pendingPointer, lastPoint, paletteApp, palette;
   let width = 0, height = 0, lastEmission = 0;
   const pieces = [], animations = new Set(), presses = new WeakMap();
@@ -111,6 +114,7 @@ export function installStoreEffects({reducedMotion, finePointer}) {
   }
 
   document.addEventListener('pointermove', event => {
+    if (document.documentElement.dataset.app === 'neon') return;
     if (event.pointerType === 'touch' || !event.isPrimary || !finePointer.matches || reducedMotion()) return;
     pendingPointer = {x:event.clientX, y:event.clientY}; wake();
   }, {passive:true});
@@ -143,11 +147,14 @@ export function installStoreEffects({reducedMotion, finePointer}) {
     const rect = control.getBoundingClientRect();
     const x = event.detail ? event.clientX : rect.left + rect.width / 2;
     const y = event.detail ? event.clientY : rect.top + rect.height / 2;
-    for (let i = 0; i < 12; i++) addPiece(x, y, {burst:true, angle:i / 12 * Math.PI * 2, index:i});
-    wake();
+    if (document.documentElement.dataset.app !== 'neon') {
+      for (let i = 0; i < 12; i++) addPiece(x, y, {burst:true, angle:i / 12 * Math.PI * 2, index:i});
+      wake();
+    }
   }, {passive:true});
 
   function clear() {
+    comic.clear();
     cancelAnimationFrame(frame); frame = 0;
     pieces.length = 0; pendingPointer = lastPoint = undefined;
     if (context) context.clearRect(0, 0, width, height);
@@ -157,6 +164,7 @@ export function installStoreEffects({reducedMotion, finePointer}) {
   window.addEventListener('resize', () => { clear(); resize(); }, {passive:true});
   document.addEventListener('visibilitychange', () => { if (document.hidden) clear(); });
   window.addEventListener('pagehide', clear);
+  window.addEventListener('raccoon:appchange', clear);
   document.documentElement.addEventListener('pointerleave', () => { lastPoint = pendingPointer = undefined; });
   return {clear};
 }
