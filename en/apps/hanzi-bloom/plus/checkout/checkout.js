@@ -6,10 +6,13 @@
   const sourceApp = new URLSearchParams(location.search).get('app') === 'keys' ? APPS[1] : APPS[0];
   const isKeys = sourceApp === APPS[1];
   document.documentElement.dataset.app = isKeys ? 'keys' : 'bloom';
-  el('checkout-store-link').href = '/plus/?app=' + (isKeys ? 'keys' : 'bloom');
-  el('checkout-included-link').href = '/plus/?app=' + (isKeys ? 'keys' : 'bloom') + '#included';
+  // Presentation must not break login if a browser still has older cached HTML.
+  const storeLink = el('checkout-store-link'), includedLink = el('checkout-included-link');
+  if (storeLink) storeLink.href = '/plus/?app=' + (isKeys ? 'keys' : 'bloom');
+  if (includedLink) includedLink.href = '/plus/?app=' + (isKeys ? 'keys' : 'bloom') + '#included';
   if (isKeys) {
-    el('checkout-app-icon').src = '/assets/apps/keys-icon.webp';
+    const appIcon = el('checkout-app-icon');
+    if (appIcon) appIcon.src = '/assets/apps/keys-icon.webp';
     const accent = document.createElement('em'); accent.textContent = 'Big discoveries.';
     el('product-title').replaceChildren(document.createTextNode('Small pieces.'), document.createElement('br'), accent);
     const panda = document.querySelector('.garden-art img');
