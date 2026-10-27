@@ -1,7 +1,7 @@
 /* The studio is a constellation of seven small worlds. */
 :root[data-site-world=studio]{overflow-x:clip}
 :root[data-site-world=studio] body{isolation:isolate}
-.studio-field{position:fixed;inset:0;width:100%;height:100%;z-index:-1;pointer-events:none;opacity:1}
+.studio-field{position:fixed;inset:0;width:100%;height:100%;z-index:-1;pointer-events:none;opacity:.9}
 .studio-orbit{border:0;padding:0;background:none;color:inherit;cursor:pointer;width:100%;height:100%;display:grid;place-items:center;border-radius:50%}
 .studio-orbit:focus-visible{outline:2px dashed var(--theme-accent,var(--violet));outline-offset:14px}
 .studio-orbit .core-logo{transition:filter .4s,scale .6s cubic-bezier(.2,.8,.2,1)}
