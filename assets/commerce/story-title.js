@@ -5,7 +5,7 @@
   const root=document.documentElement;
   const motion=matchMedia('(prefers-reduced-motion: reduce)'),fine=matchMedia('(hover: hover) and (pointer: fine)');
   const own='.story-magic-source,.story-magic-layer';
-  const skip='script,style,noscript,svg,canvas,input,textarea,select,option,[contenteditable]:not([contenteditable="false"]),[aria-hidden="true"],[aria-live],.skip-link,.sr-only,#hanzi-content,#neon-panel,.payment-atmosphere,.language-announcement';
+  const skip='script,style,noscript,svg,canvas,input,textarea,select,option,[contenteditable]:not([contenteditable="false"]),[aria-hidden="true"],[aria-live],.skip-link,.sr-only,#hanzi-content,#neon-panel,.payment-atmosphere,.language-announcement,.magic-book-portal';
   const runs=new Set(),bySource=new WeakMap(),parents=new Map(),layers=new Map(),sparks=new Set(),pending=new Set([document.body]),mutationScopes=new Set();
   let frame=0,lastTime=0,nextTime=0,closed=false,settleTimer=0,mutationTimer=0,lastSpark=0,seed=0,scrollTimer=0,scrolling=false;
   let pointer={x:0,y:0,inside:false},sparkPoint={x:0,y:0},hovered=null,selection=false;
