@@ -1,0 +1,41 @@
+/* The same printed space comic as the shop, across the entire product page. */
+:root[data-site-world=neon]{overflow-x:clip}
+.product-neon{--cyan:#34e3db;--yellow:#ffe36b;--coral:#ff796b;--ink:var(--theme-ink,#fff4c5);isolation:isolate;background:radial-gradient(ellipse at 3% 4%,#16334c88,transparent 38%),var(--theme-bg,#081426)}
+.product-neon main{position:relative;isolation:isolate;--cyan:#34e3db;--yellow:#ffe36b;--coral:#ff796b;--ink:var(--theme-ink,#fff4c5)}
+.product-neon .diode-field{position:fixed;inset:0;width:100%;height:100%;z-index:-1;pointer-events:none;contain:strict;opacity:.85}
+.product-neon .pointer-flourishes{position:fixed;inset:0;width:100%;height:100%;z-index:80;pointer-events:none}
+.product-neon .hero{padding-top:65px;gap:30px}
+.product-neon h1{font-family:system-ui,-apple-system,"Segoe UI",sans-serif;font-synthesis:style;font-weight:900;font-style:italic;font-size:clamp(47px,6.4vw,85px);line-height:1.02;letter-spacing:-.055em;text-shadow:3px 4px 0 #08142638}
+.product-neon h2{font-family:system-ui,-apple-system,"Segoe UI",sans-serif;font-synthesis:style;font-weight:900;font-style:italic;letter-spacing:-.045em}
+.product-neon .hero .lead{max-width:590px}
+.product-neon .store-link,.product-neon .app-purchases-link{border-radius:2px;clip-path:polygon(12px 0,100% 0,100% calc(100% - 12px),calc(100% - 12px) 100%,0 100%,0 12px)}
+.product-neon .store-link.primary{background:var(--yellow);color:#10263a;border-color:var(--yellow);box-shadow:5px 6px 0 #34e3db33}
+.product-neon .hero-scene.neon-comic-scene{min-height:555px;overflow:visible}
+.product-neon .neon-comic-scene::before{inset:8% 1% 5%;border:0;border-radius:0;background:repeating-conic-gradient(from 10deg,#21466288 0deg 13deg,transparent 13deg 29deg);clip-path:polygon(50% 0,63% 14%,84% 5%,85% 28%,100% 40%,88% 57%,100% 81%,71% 83%,62% 100%,43% 86%,17% 100%,15% 74%,0 60%,14% 42%,0 15%,31% 22%);transform:rotate(calc(-8deg + var(--neon-scene,0)*8deg));transition:transform .2s linear}
+.neon-comic-scene .hero-fox,.neon-comic-scene .hero-maestro{position:absolute;width:64%;max-height:510px;object-fit:contain;filter:drop-shadow(0 22px 19px #0005);transform-origin:50% 85%;transition:translate .8s cubic-bezier(.2,.8,.2,1),rotate .8s}
+.neon-comic-scene .hero-fox{left:0;top:4%;z-index:3;rotate:calc(-4deg + var(--neon-scene,0)*5deg)}
+.neon-comic-scene .hero-maestro{right:-3%;top:8%;z-index:2;rotate:calc(4deg - var(--neon-scene,0)*5deg)}
+.neon-comic-scene:hover .hero-fox{translate:-5px -14px;rotate:-7deg}
+.neon-comic-scene:hover .hero-maestro{translate:9px -8px;rotate:6deg}
+.neon-comic-scene .comic-slash{position:absolute;left:0;right:-1%;top:70%;height:16px;background:var(--cyan);rotate:-14deg;box-shadow:0 12px 0 #34e3db20;z-index:1}
+.neon-comic-scene .scene-word{font-size:clamp(60px,7.4vw,105px);left:3%;right:auto;top:1%;transform:rotate(-8deg);color:transparent;-webkit-text-stroke:1px #6b9dc777;opacity:.7;white-space:nowrap}
+.neon-comic-scene .comic-sticker{position:absolute;right:0;bottom:0;z-index:4;max-width:235px;padding:17px 20px;background:var(--yellow);color:#10263a;rotate:-6deg;font-size:18px;font-style:italic;font-weight:900;line-height:1.15;box-shadow:6px 6px 0 #081426;border:2px solid #10263a;clip-path:polygon(0 0,100% 0,100% 88%,92% 100%,0 100%)}
+.product-neon .promise-strip{background:color-mix(in srgb,var(--theme-panel,#0c1d34) 88%,transparent);border-block:1px solid #34e3db55;transform:skewY(-1deg);margin-block:15px}
+.product-neon .promise-strip>.shell{transform:skewY(1deg)}
+.product-neon .promise-strip small{color:var(--yellow);font-style:italic}
+.product-neon .benefit-card{position:relative;background:linear-gradient(145deg,#34e3db0c,transparent 65%),var(--theme-panel,#10243b);border:1px solid #3d6b7c;clip-path:polygon(14px 0,100% 0,100% calc(100% - 14px),calc(100% - 14px) 100%,0 100%,0 14px);transition:translate .45s,border-color .45s}
+.product-neon .benefit-card:hover{translate:0 -7px;border-color:var(--cyan)}
+.product-neon .benefit-card::after{content:'';position:absolute;right:0;top:0;width:40px;height:4px;background:var(--yellow);rotate:-40deg;transform-origin:100% 0}
+.product-neon .feature-index{color:var(--yellow);font-size:24px;font-weight:900;font-style:italic}
+.product-neon .section-heading{position:relative;padding-bottom:20px}
+.product-neon .section-heading::after{content:'';position:absolute;left:0;bottom:0;width:75px;height:5px;background:var(--cyan);box-shadow:82px 0 0 var(--yellow),164px 0 0 var(--coral);transform:skewX(-24deg);scale:var(--section-charge,1) 1;transform-origin:0 50%}
+.product-neon .screens .gallery{padding-block:18px 30px}
+.product-neon .screens .shot{border:1px solid #34e3db66;border-radius:5px;box-shadow:4px 5px 0 #34e3db19;transition:translate .45s,rotate .45s}
+.product-neon .screens .shot:hover{translate:0 -8px;rotate:-1.5deg}
+.product-neon .faq-list details{background:color-mix(in srgb,var(--theme-panel,#10243b) 93%,transparent);border:1px solid #3d6b7c;border-left:4px solid #34e3db55;padding-inline:22px;margin-bottom:12px;border-radius:0 18px 0 18px;overflow:hidden}
+.product-neon .faq-list details[open]{border-left-color:var(--yellow)}
+.product-neon .closing{position:relative;margin-top:90px;padding:70px 24px;border-block:1px solid #34e3db55;background:linear-gradient(115deg,#34e3db0b,transparent,#ff796b0b);isolation:isolate}
+.product-neon .closing::before{content:'';position:absolute;inset:0;z-index:-1;background:repeating-linear-gradient(120deg,transparent 0 50px,#34e3db08 50px 52px);mask-image:linear-gradient(90deg,#000,transparent 40%,transparent 60%,#000)}
+@media(max-width:760px){.product-neon .hero{padding-top:32px}.product-neon .hero-scene.neon-comic-scene{min-height:470px;width:min(100%,500px);margin:auto}.neon-comic-scene .comic-sticker{bottom:2%;font-size:15px;max-width:200px}.product-neon h1{font-size:clamp(44px,10vw,70px)}.product-neon .promise-strip{transform:none}.product-neon .promise-strip>.shell{transform:none}}
+@media(max-width:420px){.product-neon .hero-scene.neon-comic-scene{min-height:375px}}
+@media(prefers-reduced-motion:reduce){.product-neon .pointer-flourishes{display:none}.neon-comic-scene .hero-fox,.neon-comic-scene .hero-maestro,.product-neon .benefit-card,.product-neon .screens .shot{transition:none}.product-neon .benefit-card:hover,.product-neon .screens .shot:hover,.neon-comic-scene:hover .hero-fox,.neon-comic-scene:hover .hero-maestro{translate:none;rotate:0deg}}

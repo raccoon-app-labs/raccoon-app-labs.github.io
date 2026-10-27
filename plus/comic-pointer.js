@@ -1,12 +1,12 @@
 // A short-lived, inked comic brush for the Neon shop. No replacement cursor.
 export function installComicPointer({reducedMotion, finePointer}) {
   const root = document.documentElement;
-  const panel = document.getElementById('neon-panel');
+  const panel = document.getElementById('neon-panel') || document.querySelector('body[data-product="neon"] main');
   const strokes = [], sparks = [], bursts = [];
   let canvas, ctx, frame = 0, width = 0, height = 0;
   let pending, previous, lastSpark = 0, lastBurst = -Infinity, serial = 0;
   let paletteKey, palette;
-  const enabled = () => root.dataset.app === 'neon' && finePointer.matches && !reducedMotion() && !document.hidden;
+  const enabled = () => (root.dataset.app === 'neon' || root.dataset.siteWorld === 'neon') && finePointer.matches && !reducedMotion() && !document.hidden;
   const ink = '#071426';
   const limit = (list, item, maximum) => { if (list.length >= maximum) list.shift(); list.push(item); };
 

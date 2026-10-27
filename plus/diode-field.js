@@ -2,7 +2,8 @@
 (() => {
   'use strict';
   const root = document.documentElement;
-  const panel = document.getElementById('neon-panel');
+  const product = document.body.dataset.product === 'neon';
+  const panel = document.getElementById('neon-panel') || (product ? document.querySelector('main') : null);
   const hero = panel?.querySelector('.hero');
   if (!hero || panel.querySelector('.diode-field')) return;
   const motion = matchMedia('(prefers-reduced-motion: reduce)');
@@ -28,11 +29,11 @@
   const integer = (min, max) => Math.floor(random(min, max + 1));
   const clamp = (n, min, max) => Math.max(min, Math.min(max, n));
   const reduced = () => motion.matches || root.dataset.motion === 'reduced' || navigator.connection?.saveData === true;
-  const active = () => root.dataset.app === 'neon' && visible && !document.hidden && !closed;
+  const active = () => (product || root.dataset.app === 'neon') && visible && !document.hidden && !closed;
   const xy = (col, row) => [OFFSET + col * STEP, OFFSET + row * STEP];
 
   function updateBounds() {
-    bounds = panel.getBoundingClientRect();
+    bounds = product ? {left:0,top:0,right:width,bottom:height} : panel.getBoundingClientRect();
     const rect = hero.querySelector('.hero-copy').getBoundingClientRect();
     copy = {left:rect.left - bounds.left - 12, right:rect.right - bounds.left + 12,
       top:rect.top - bounds.top - 12, bottom:rect.bottom - bounds.top + 12};
@@ -41,7 +42,7 @@
   function rebuild() {
     width = panel.clientWidth;
     if (!width) return false;
-    height = Math.min(1300, Math.max(700, hero.offsetHeight + 80));
+    height = product ? innerHeight : Math.min(1300, Math.max(700, hero.offsetHeight + 80));
     cols = Math.max(2, Math.ceil(width / STEP)); rows = Math.max(2, Math.ceil(height / STEP));
     ratio = Math.min(devicePixelRatio || 1, 2, Math.sqrt(2400000 / (width * height)));
     canvas.width = base.width = Math.round(width * ratio);
@@ -316,7 +317,7 @@
     if (waves.length < 4) waves.push({...p,age:0,radius:0,max:compact.matches ? 7 : 11,color:1});
     for (let d = 0; d < 4; d++) launch(p.col,p.row,d,d % 3,18,false);
   },{passive:true});
-  new IntersectionObserver(entries => { visible = entries[0].isIntersecting; sync(); },{rootMargin:'0px'}).observe(hero);
+  new IntersectionObserver(entries => { visible = entries[0].isIntersecting; sync(); },{rootMargin:'0px'}).observe(product ? panel : hero);
   new ResizeObserver(() => { dirty = true; sync(); }).observe(hero);
   new MutationObserver(sync).observe(root,{attributes:true,attributeFilter:['data-app','data-motion','data-theme']});
   motion.addEventListener('change',sync);

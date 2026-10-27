@@ -1,18 +1,18 @@
 /* Electric ink follows the pointer while every original text node stays in native flow. */
 (() => {
   'use strict';
-  const root=document.documentElement,panel=document.getElementById('neon-panel');
+  const root=document.documentElement,panel=document.getElementById('neon-panel') || document.querySelector('body[data-product="neon"] main');
   if(!panel || root.dataset.neonInkReady)return;
   root.dataset.neonInkReady='';
   const fine=matchMedia('(hover: hover) and (pointer: fine)'),motion=matchMedia('(prefers-reduced-motion: reduce)');
-  const areas=[document.querySelector('.topbar'),document.querySelector('.app-nav'),panel,document.querySelector('.store-footer')].filter(Boolean);
+  const areas=[document.querySelector('.topbar,.site-header'),document.querySelector('.app-nav'),panel,document.querySelector('.store-footer,body[data-product="neon"] footer')].filter(Boolean);
   const skip='neon-ink,script,style,noscript,svg,canvas,input,textarea,select,option,[contenteditable]:not([contenteditable="false"]),[aria-live],.sr-only,.story-magic-layer';
   const runs=new Set(),lit=new Set(),pending=new Set();
   const normal=[[52,227,219],[255,121,107],[255,227,107]];
   const deep=[[8,103,126],[153,46,86],[125,86,12]];
   let frame=0,lastTime=0,pointer,geometry=[],dirty=true,closed=false,serial=0,selection=false;
   const still=()=>motion.matches || root.dataset.motion==='reduced';
-  const enabled=()=>!closed && !document.hidden && root.dataset.app==='neon' && fine.matches && !selection;
+  const enabled=()=>!closed && !document.hidden && (root.dataset.app==='neon' || root.dataset.siteWorld==='neon') && fine.matches && !selection;
   const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
   const mix=(a,b,t)=>'rgb('+a.map((n,i)=>Math.round(n+(b[i]-n)*t)).join(' ')+')';
 
