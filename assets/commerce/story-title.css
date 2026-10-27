@@ -5,7 +5,7 @@
 .story-magic-source::selection{color:HighlightText!important;-webkit-text-fill-color:HighlightText!important;background:Highlight!important}
 .story-magic-layer{position:fixed!important;inset:0!important;width:100%!important;height:100%!important;z-index:90!important;pointer-events:none!important;user-select:none!important;-webkit-user-select:none!important;overflow:clip!important;contain:strict;direction:ltr}
 .story-magic-layer[hidden]{display:none!important}
-.story-magic-layer-page{position:absolute!important;inset:0 0 auto!important;height:0!important;overflow:visible!important;contain:layout style}
+.story-magic-layer-page,.story-magic-layer-scrolled{position:absolute!important;inset:0 0 auto!important;height:0!important;overflow:visible!important;contain:layout style}
 .story-magic-layer-local{position:absolute!important;z-index:3!important;border-radius:inherit}
 .story-magic-layer *{pointer-events:none!important;user-select:none!important;-webkit-user-select:none!important;box-sizing:border-box!important}
 .story-magic-run{position:absolute;inset:0 auto auto 0;margin:0!important;padding:0!important;direction:ltr;white-space:pre}

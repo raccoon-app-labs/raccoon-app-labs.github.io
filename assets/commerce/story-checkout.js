@@ -1,5 +1,5 @@
 import {API_BASE, ShopError, validateOffer, purchasableStories, purchaseRequest, confirmationUrl, createApi} from './story-checkout-core.mjs?v=c47f6d210c03';
-import {installBookCoverTilt} from './story-book-tilt.mjs?v=47c79cfb7795';
+import {installBookCoverTilt} from './story-book-tilt.mjs?v=46e546adac41';
 
 const root = document.documentElement;
 const sourcePanel = document.querySelector('#stories-panel') || document.querySelector('.commerce-stories');
@@ -74,6 +74,7 @@ function install() {
     clearInterval(resendTimer);
     const stage = ({email:1, code:1, review:2, pending:2, success:2, owned:2})[step] || 0;
     dialog.innerHTML = `<div class="magic-shell" data-step="${step}" lang="${ru() ? 'ru' : 'en'}"><header class="magic-header"><a class="magic-shop-brand" href="/plus/?app=stories"><img src="/assets/apps/stories-icon.webp" alt="" width="34" height="34"><span>${t('Волшебные истории','Magical Stories')}<small>${t('Маленький магазин чудес','A little shop of wonders')}</small></span></a><button class="magic-close" data-action="close" aria-label="${t('Закрыть','Close')}">×</button></header><div class="magic-progress" aria-label="${t('Этапы покупки','Purchase steps')}">${[t('Выбираем чудо','Choose your magic'),t('Ваша почта','Your email'),t('Забираем с собой','Make it yours')].map((label, i) => `<span ${i === stage ? 'aria-current="step"' : ''}><b>${String(i+1).padStart(2,'0')}</b>${label}</span>`).join('')}</div><div class="magic-content">${content()}</div><p class="magic-error" role="alert" ${error ? '' : 'hidden'}>${error ? escape(errorText()) : ''}</p><footer class="magic-footer"><span aria-hidden="true">✧</span>${t('Покупка привязана к вашей почте и появится в приложении.','Your purchase is linked to your email and will appear in the app.')}<a href="mailto:raccoon.app.labs@gmail.com">${t('Помощь','Help')}</a></footer></div>`;
+    coverTilt.refresh();
     if (renderedStep !== step) dialog.scrollTop = 0;
     renderedStep = step;
     const abandon = dialog.querySelector('[data-action="abandon"]'); if (abandon) abandon.hidden = !pending?.paymentId;
@@ -86,16 +87,16 @@ function install() {
     dialog.querySelectorAll('[data-story-id]').forEach(button => button.addEventListener('click', () => {
       if (busy) return;
       selected = stories.find(story => story.id === Number(button.dataset.storyId));
-      dialog.querySelectorAll('[data-story-id]').forEach(node => node.setAttribute('aria-pressed', String(node === button)));
-      const selection = dialog.querySelector('.magic-selection'); if (selection) selection.textContent = selected.title;
-      dialog.querySelector('[data-action="continue"]').disabled = !offer?.available;
+      dialog.querySelectorAll('[data-story-id]').forEach(node => { const pressed = String(node === button); if (node.getAttribute('aria-pressed') !== pressed) node.setAttribute('aria-pressed', pressed); });
+      const selection = dialog.querySelector('.magic-selection'); if (selection && selection.textContent !== selected.title) selection.textContent = selected.title;
+      const next = dialog.querySelector('[data-action="continue"]'); if (next.disabled !== !offer?.available) next.disabled = !offer?.available;
       if (!reduced()) button.animate([{backgroundColor:'#edc58324'},{backgroundColor:'#edc5830b'}], {duration:400, easing:'ease-out'});
     }));
     dialog.querySelector('[data-book-search]')?.addEventListener('input', event => {
       coverTilt.reset();
       const query = event.target.value.trim().toLocaleLowerCase(); let count = 0;
-      dialog.querySelectorAll('[data-story-id]').forEach(node => { node.hidden = !node.dataset.search.includes(query); if (!node.hidden) count++; });
-      dialog.querySelector('[data-search-empty]').hidden = count !== 0;
+      dialog.querySelectorAll('[data-story-id]').forEach(node => { const hidden = !node.dataset.search.includes(query); if (node.hidden !== hidden) node.hidden = hidden; if (!hidden) count++; });
+      const empty = dialog.querySelector('[data-search-empty]'); if (empty.hidden !== (count !== 0)) empty.hidden = count !== 0;
     });
     dialog.querySelector('[data-email-form]')?.addEventListener('submit', event => { event.preventDefault(); email = new FormData(event.target).get('email').trim(); sendCode(); });
     dialog.querySelector('[data-code-form]')?.addEventListener('submit', event => { event.preventDefault(); confirmCode(new FormData(event.target).get('code')); });
@@ -123,7 +124,7 @@ function install() {
   function booksContent() {
     if (!catalogLoaded && !catalogError) return `<div class="magic-shelf-loading" role="status"><i></i><i></i><i></i><span>${t('Книги спешат на полку…','The books are finding their shelves…')}</span></div>`;
     if (catalogError) return `<div class="magic-notice"><p>${t('Не удалось загрузить книги с сервера.','Could not load the books from the server.')}</p><button class="magic-text-button" data-action="catalog">${t('Попробовать ещё раз','Try again')}</button></div>`;
-    return `<div class="magic-shelf-heading"><p class="magic-lead">${t('Одна история. Сколько угодно тёплых вечеров.','One story. So many cozy evenings.')} <strong>${price(offer.bookAmount)}</strong></p><label class="magic-search"><span aria-hidden="true">⌕</span><input type="search" data-book-search placeholder="${t('Найти свою сказку','Find your story')}" aria-label="${t('Поиск книг','Search books')}"></label></div><div class="magic-books">${stories.map(story => `<button class="magic-book" data-story-id="${story.id}" data-search="${escape((story.title+' '+(story.category || '')).toLocaleLowerCase())}" aria-pressed="${selected?.id === story.id}" ${owned.has(story.id) ? 'disabled' : ''}><span class="magic-book-art">${story.cover ? `<img src="${escape(story.cover)}" alt="" width="200" height="260" loading="lazy" decoding="async">` : `<span class="magic-book-fallback" aria-hidden="true">${escape(story.emoji || '✦')}</span>`}<i aria-hidden="true">✓</i><small>${escape(story.age || '')}</small></span><strong>${escape(story.title)}</strong><span>${owned.has(story.id) ? t('Уже ваша','Already yours') : escape(story.category || t('Сказка навсегда','A story to keep'))}</span></button>`).join('')}</div><p class="magic-empty" data-search-empty ${stories.length ? 'hidden' : ''}>${t('Книг не найдено. Попробуйте другой запрос или загляните позже.','No books found. Try another search or come back later.')}</p>`;
+    return `<div class="magic-shelf-heading"><p class="magic-lead">${t('Одна история. Сколько угодно тёплых вечеров.','One story. So many cozy evenings.')} <strong>${price(offer.bookAmount)}</strong></p><label class="magic-search"><span aria-hidden="true">⌕</span><input type="search" data-book-search placeholder="${t('Найти свою сказку','Find your story')}" aria-label="${t('Поиск книг','Search books')}"></label></div><div class="magic-books">${stories.map(story => `<button class="magic-book" data-story-id="${story.id}" data-search="${escape((story.title+' '+(story.category || '')).toLocaleLowerCase())}" aria-pressed="${selected?.id === story.id}" ${owned.has(story.id) ? 'disabled' : ''}><span class="magic-book-art"><span class="magic-book-glare" aria-hidden="true"><span class="magic-book-light"></span></span>${story.cover ? `<img src="${escape(story.cover)}" alt="" width="200" height="260" loading="lazy" decoding="async">` : `<span class="magic-book-fallback" aria-hidden="true">${escape(story.emoji || '✦')}</span>`}<i aria-hidden="true">✓</i><small>${escape(story.age || '')}</small></span><strong>${escape(story.title)}</strong><span>${owned.has(story.id) ? t('Уже ваша','Already yours') : escape(story.category || t('Сказка навсегда','A story to keep'))}</span></button>`).join('')}</div><p class="magic-empty" data-search-empty ${stories.length ? 'hidden' : ''}>${t('Книг не найдено. Попробуйте другой запрос или загляните позже.','No books found. Try another search or come back later.')}</p>`;
   }
   function updateResend() {
     const button = dialog.querySelector('[data-action="resend"]'); if (!button) return;

@@ -84,9 +84,12 @@
 .magic-book{position:relative;border:1px solid transparent;padding:7px 7px 12px;border-radius:14px;background:transparent;color:var(--magic-ink);text-align:left;min-width:0;transform-origin:50% 80%;transition:border-color .3s,background .3s;animation:magic-shelf-arrive .55s backwards}
 .magic-book:nth-child(4n+2){animation-delay:.06s}.magic-book:nth-child(4n+3){animation-delay:.12s}.magic-book:nth-child(4n+4){animation-delay:.18s}
 .magic-book[aria-pressed=true]{border-color:var(--magic-gold);background:#edc5830b;--book-rest-lift:-2px}
-.magic-book-art{position:relative;display:block;aspect-ratio:3/4;border-radius:4px 10px 10px 4px;background:linear-gradient(145deg,#57416f,#30223f);box-shadow:3px 2px 0 #dfcfb8,5px 4px 0 #795c7f,7px calc(10px + var(--book-light,0)*6px) 18px #07030f60,0 0 calc(var(--book-light,0)*22px) #edc58324;overflow:hidden;margin:0 5px 16px 0;isolation:isolate;transform-origin:50% 55%;transform:perspective(850px) translateY(calc(var(--book-lift,0px) + var(--book-rest-lift,0px))) rotateX(var(--book-tilt-x,0deg)) rotateY(var(--book-tilt-y,0deg));transition:box-shadow .25s}
+.magic-book-art{position:relative;display:block;aspect-ratio:3/4;border-radius:4px 10px 10px 4px;background:linear-gradient(145deg,#57416f,#30223f);box-shadow:3px 2px 0 #dfcfb8,5px 4px 0 #795c7f,7px 10px 18px #07030f60;overflow:hidden;margin:0 5px 16px 0;isolation:isolate;contain:layout style;transform-origin:50% 55%;transform:perspective(850px) translateY(var(--book-rest-lift,0px));transition:box-shadow .25s}
 .magic-book-art[data-cover-tilt]{will-change:transform}
-.magic-book-art:before{content:'';position:absolute;inset:0;border-radius:inherit;background:radial-gradient(ellipse at var(--book-light-x,50%) var(--book-light-y,50%),#fff7cf80,transparent 65%),linear-gradient(125deg,transparent 25%,#fff5d622 45%,#fff8e040 49%,transparent 67%);mix-blend-mode:screen;opacity:calc(var(--book-light,0)*.55);pointer-events:none;z-index:2}
+.magic-book-glare{position:absolute;inset:0;border-radius:inherit;overflow:hidden;contain:strict;mix-blend-mode:screen;opacity:0;pointer-events:none;z-index:2}
+.magic-book-glare:before{content:'';position:absolute;inset:0;background:linear-gradient(125deg,transparent 25%,#fff5d622 45%,#fff8e040 49%,transparent 67%)}
+.magic-book-light{position:absolute;inset:0;background:radial-gradient(ellipse at 50% 50%,#fff7cf80,transparent 65%);transform-origin:50% 50%;pointer-events:none}
+.magic-book-art[data-cover-tilt] .magic-book-glare{will-change:opacity}.magic-book-art[data-cover-tilt] .magic-book-light{will-change:transform}
 .magic-book-art:after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,#08031344,transparent 6%,#fff2 8%,transparent 11%,transparent 85%,#08031322);pointer-events:none}
 .magic-book-art img{display:block;width:100%;height:100%;object-fit:cover}
 .magic-book-art>i{display:none;position:absolute;top:8px;right:8px;width:28px;height:28px;place-items:center;border-radius:50%;background:var(--magic-gold);color:#30213d;font-style:normal;box-shadow:0 3px 10px #10092360;z-index:1}
@@ -158,6 +161,6 @@
 }
 @media(max-width:370px){.magic-books{grid-template-columns:repeat(2,minmax(0,1fr))}.magic-provider-mark{display:none}.magic-progress span{font-size:8px}.magic-progress b{width:18px;height:18px}}
 @media(max-width:480px){.magic-books{grid-template-columns:repeat(2,minmax(0,1fr));gap:18px 14px}.magic-book>strong{font-size:12px}.magic-book>span:last-child{font-size:10px}}
-@media(prefers-reduced-motion:reduce){.magic-checkout *,.magic-checkout *:before{animation:none!important;transition:none!important;scroll-behavior:auto!important}.magic-book-art{transform:none!important}.magic-book-art:before{opacity:0!important}}
+@media(prefers-reduced-motion:reduce){.magic-checkout *,.magic-checkout *:before{animation:none!important;transition:none!important;scroll-behavior:auto!important}.magic-book-art{transform:none!important}.magic-book-glare{opacity:0!important}}
 html[data-motion=reduced] .magic-checkout *,html[data-motion=reduced] .magic-checkout *:before{animation:none!important;transition:none!important}
-html[data-motion=reduced] .magic-book-art{transform:none!important}html[data-motion=reduced] .magic-book-art:before{opacity:0!important}
+html[data-motion=reduced] .magic-book-art{transform:none!important}html[data-motion=reduced] .magic-book-glare{opacity:0!important}

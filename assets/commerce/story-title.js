@@ -6,8 +6,8 @@
   const motion=matchMedia('(prefers-reduced-motion: reduce)'),fine=matchMedia('(hover: hover) and (pointer: fine)');
   const own='.story-magic-source,.story-magic-layer';
   const skip='script,style,noscript,svg,canvas,input,textarea,select,option,[contenteditable]:not([contenteditable="false"]),[aria-hidden="true"],[aria-live],.skip-link,.sr-only,#hanzi-content,#neon-panel,.payment-atmosphere,.language-announcement';
-  const runs=new Set(),bySource=new WeakMap(),parents=new Map(),layers=new Map(),sparks=new Set(),pending=new Set([document.body]);
-  let frame=0,lastTime=0,nextTime=0,closed=false,settleTimer=0,lastSpark=0,seed=0,scrollTimer=0,scrolling=false;
+  const runs=new Set(),bySource=new WeakMap(),parents=new Map(),layers=new Map(),sparks=new Set(),pending=new Set([document.body]),mutationScopes=new Set();
+  let frame=0,lastTime=0,nextTime=0,closed=false,settleTimer=0,mutationTimer=0,lastSpark=0,seed=0,scrollTimer=0,scrolling=false;
   let pointer={x:0,y:0,inside:false},sparkPoint={x:0,y:0},hovered=null,selection=false;
   const clamp=(n,min,max)=>Math.min(max,Math.max(min,n));
   const stories=()=>root.dataset.app?root.dataset.app==='stories':root.dataset.paymentAtmosphere==='stories' || root.dataset.siteWorld==='stories' || document.body.hasAttribute('data-story-checkout');
@@ -15,7 +15,7 @@
   const internal=node=>(node.nodeType===Node.ELEMENT_NODE?node:node.parentElement)?.closest?.(own);
   function queue(){if(!frame && !closed)frame=requestAnimationFrame(draw);}
   function clearSparks(){for(const spark of sparks){spark.animation.cancel();spark.node.remove();}sparks.clear();}
-  function restore(run){if(run.painted){run.source.removeAttribute('data-painted');if(run.group)run.group.hidden=true;run.painted=false;}}
+  function restore(run){if(run.painted){run.source.removeAttribute('data-painted');run.painted=false;}if(run.group && !run.group.hidden)run.group.hidden=true;}
   function pause(state='paused'){cancelAnimationFrame(frame);frame=0;lastTime=0;nextTime=0;pointer.inside=false;clearSparks();for(const run of runs)restore(run);root.dataset.storyTypeState=state;}
   function scroll(){
     if(!stories() || closed)return;
@@ -25,6 +25,7 @@
     scrollTimer=setTimeout(()=>{scrolling=false;queue();},160);
   }
   function dirty(){for(const run of runs)run.dirty=true;clearSparks();queue();}
+  function dirtyScope(scope){for(const run of runs)if(scope===run.parent || scope.contains?.(run.parent) || run.parent.contains(scope))run.dirty=true;}
   function refreshStyles(){for(const run of runs)run.styleDirty=true;queue();}
   function settle(rebuild=true){clearTimeout(settleTimer);settleTimer=setTimeout(rebuild?dirty:refreshStyles,520);}
   function layerFor(parent){
@@ -36,13 +37,16 @@
       const local=host.matches('.commerce-stories .offer-card,.magic-book-art');
       if(local)node.classList.add('story-magic-layer-local');
       else if(host===document.body)node.classList.add('story-magic-layer-page');
+      else if(host.matches('dialog'))node.classList.add('story-magic-layer-scrolled');
       host.append(node);layer={host,node,local};layers.set(host,layer);
     }
     return layer;
   }
   const intersection=new IntersectionObserver(entries=>{
     for(const entry of entries)for(const run of parents.get(entry.target) || []){
-      run.visible=entry.isIntersecting;if(run.visible)run.dirty=true;else restore(run);
+      // Scrolling changes viewport coordinates, not a word's internal glyph layout.
+      // Resize, font and text observers already invalidate that layout when necessary.
+      run.visible=entry.isIntersecting;if(!run.visible)restore(run);
     }
     queue();
   },{rootMargin:'12px'});
@@ -83,7 +87,7 @@
   }
   function build(run,bounds,layerBounds){
     restore(run);run.layer=layerFor(run.parent);
-    if(!run.group){run.group=document.createElement('span');run.group.className='story-magic-run';}
+    if(!run.group){run.group=document.createElement('span');run.group.className='story-magic-run';run.group.hidden=true;}
     if(run.group.parentElement!==run.layer.node)run.layer.node.append(run.group);style(run);
     const joining=/[\p{Script=Arabic}\p{Script=Devanagari}]/u.test(run.text.data);
     const language=run.parent.closest('[lang]')?.lang || root.lang || 'en';
@@ -216,18 +220,24 @@
     if(plans.length)queue();else{lastTime=0;nextTime=0;}
   }
   new MutationObserver(records=>{
-    let changed=false;
+    let changed=false;const scopes=new Set();
     for(const record of records){
       if(internal(record.target)){
-        if(record.type==='characterData'){const run=bySource.get(record.target.parentElement);if(run){run.dirty=true;changed=true;}}
+        if(record.type==='characterData'){const run=bySource.get(record.target.parentElement);if(run){run.dirty=true;scopes.add(run.parent);changed=true;}}
         continue;
       }
       if(record.type==='childList'){
         for(const node of record.addedNodes)if(!internal(node)){pending.add(node);changed=true;}
         if([...record.removedNodes].some(node=>!node.isConnected))changed=true;
       }else changed=true;
+      scopes.add(record.target);
     }
-    if(changed){dirty();settle();}
+    if(changed){
+      // Selecting/searching for one book must not recreate every other book's letters.
+      for(const scope of scopes){dirtyScope(scope);mutationScopes.add(scope);}
+      clearSparks();queue();clearTimeout(mutationTimer);
+      mutationTimer=setTimeout(()=>{for(const scope of mutationScopes)if(scope.isConnected)dirtyScope(scope);mutationScopes.clear();queue();},520);
+    }
   }).observe(document.body,{subtree:true,childList:true,characterData:true,attributes:true,attributeFilter:['class','hidden','disabled','aria-disabled','aria-hidden','open','lang','dir']});
   new MutationObserver(()=>{pending.add(document.body);dirty();settle();}).observe(root,{attributes:true,attributeFilter:['data-app','data-motion','data-theme','lang','dir']});
   document.addEventListener('pointermove',event=>{
@@ -241,6 +251,7 @@
   },{passive:true});
   root.addEventListener('pointerleave',()=>{pointer.inside=false;hovered=null;});
   document.addEventListener('scroll',scroll,{capture:true,passive:true});
+  document.addEventListener('animationend',event=>{if(event.animationName==='magic-shelf-arrive'){dirtyScope(event.target);queue();}});
   document.addEventListener('selectionchange',()=>{const next=!getSelection()?.isCollapsed;if(selection!==next){selection=next;dirty();}});
   addEventListener('resize',dirty,{passive:true});
   addEventListener('raccoon:appchange',()=>{pause();pending.add(document.body);dirty();settle();});
@@ -248,7 +259,7 @@
   document.addEventListener('visibilitychange',()=>{if(document.hidden)pause();else dirty();});
   motion.addEventListener('change',dirty);fine.addEventListener('change',()=>{pointer.inside=false;});
   document.fonts?.ready.then(dirty);document.fonts?.addEventListener('loadingdone',dirty);
-  addEventListener('pagehide',()=>{closed=true;pause();clearTimeout(settleTimer);clearTimeout(scrollTimer);scrolling=false;});
+  addEventListener('pagehide',()=>{closed=true;pause();clearTimeout(settleTimer);clearTimeout(mutationTimer);mutationScopes.clear();clearTimeout(scrollTimer);scrolling=false;});
   addEventListener('pageshow',()=>{closed=false;scrolling=false;pending.add(document.body);dirty();});
   queue();
 })();
