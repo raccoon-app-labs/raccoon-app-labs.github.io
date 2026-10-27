@@ -1,7 +1,7 @@
 /* The studio is a constellation of seven small worlds. */
 :root[data-site-world=studio]{overflow-x:clip}
 :root[data-site-world=studio] body{isolation:isolate}
-.studio-field{position:fixed;inset:0;width:100%;height:100%;z-index:-1;pointer-events:none;opacity:.9}
+.studio-field{position:fixed;inset:0;width:100%;height:100%;z-index:-1;pointer-events:none;opacity:1}
 .studio-orbit{border:0;padding:0;background:none;color:inherit;cursor:pointer;width:100%;height:100%;display:grid;place-items:center;border-radius:50%}
 .studio-orbit:focus-visible{outline:2px dashed var(--theme-accent,var(--violet));outline-offset:14px}
 .studio-orbit .core-logo{transition:filter .4s,scale .6s cubic-bezier(.2,.8,.2,1)}
@@ -44,4 +44,4 @@
 @keyframes studio-title-sweep{from{background-position:100% 0}to{background-position:0 0}}
 @keyframes studio-card-glint{to{transform:translateX(130%)}}
 @media(max-width:600px){.studio-satellite{width:36px;height:36px;margin:-18px}.studio-satellite img{width:25px;height:25px}.studio-satellite a{border-radius:11px}.studio-section::before{left:-10px;width:4px;height:4px}}
-@media(prefers-reduced-motion:reduce){.studio-field{opacity:.4}.studio-satellites,.studio-satellite,.studio-rings::before,.studio-rings::after{animation:none}.studio-section h2{animation:none!important}.app-card:hover::after,.visual.is-bursting .studio-pulse,.visual.is-bursting .studio-rings{animation:none}.app-card:hover .app-gallery .shot,.app-card:hover .app-icon-frame{transform:none}.value-card:hover{translate:none}}
+@media(prefers-reduced-motion:reduce){.studio-field{opacity:.65}.studio-satellites,.studio-satellite,.studio-rings::before,.studio-rings::after{animation:none}.studio-section h2{animation:none!important}.app-card:hover::after,.visual.is-bursting .studio-pulse,.visual.is-bursting .studio-rings{animation:none}.app-card:hover .app-gallery .shot,.app-card:hover .app-icon-frame{transform:none}.value-card:hover{translate:none}}
