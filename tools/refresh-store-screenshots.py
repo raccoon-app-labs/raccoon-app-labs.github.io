@@ -99,8 +99,11 @@ def main() -> None:
     parser.add_argument("--html-dir", type=Path, help="Use store HTML fetched during the current refresh")
     args = parser.parse_args()
     manifest = {"updatedAt": datetime.now(timezone.utc).isoformat(), "apps": {}}
-    with tempfile.TemporaryDirectory(prefix="raccoon-store-screens-") as temporary:
-        temporary = Path(temporary)
+    temporary_root = Path(tempfile.gettempdir()).resolve()
+    with tempfile.TemporaryDirectory(prefix="raccoon-store-screens-", dir=temporary_root) as temporary:
+        temporary = Path(temporary).resolve()
+        if temporary.parent != temporary_root or not temporary.name.startswith("raccoon-store-screens-"):
+            raise ValueError("Unexpected staging directory")
         jobs = []
         for key, (slug, package) in APPS.items():
             store = f"https://www.rustore.ru/catalog/app/{package}"
