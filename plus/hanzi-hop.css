@@ -1,0 +1,13 @@
+/* Original text owns line breaking. Its tiny local stage inherits native scrolling. */
+hanzi-hop.hanzi-hop-source{display:inline;position:relative}
+hanzi-hop[data-hop-painted]{color:transparent!important;-webkit-text-fill-color:transparent!important;text-shadow:none!important}
+hanzi-hop-layer.hanzi-hop-layer{position:absolute;left:0;top:0;width:1px;height:1px;overflow:hidden;contain:layout paint style;z-index:3;pointer-events:none!important;user-select:none;direction:ltr}
+.hanzi-hop-layer *{pointer-events:none!important;user-select:none!important;box-sizing:border-box}
+hanzi-hop-letter.hanzi-hop-letter{position:absolute;display:block;margin:0;padding:0;white-space:pre;font:inherit;letter-spacing:inherit;text-transform:inherit;transform-origin:50% 78%;color:var(--hop-base)!important;-webkit-text-fill-color:currentColor!important;backface-visibility:hidden}
+.hanzi-hop-letter::before{content:attr(data-glyph);display:block;font:inherit;letter-spacing:inherit;text-transform:inherit}
+.hanzi-hop-spark{position:absolute;display:block;width:6px;height:9px;background:var(--theme-mint,var(--mint));border-radius:90% 5% 90% 5%;box-shadow:0 0 5px color-mix(in srgb,var(--theme-mint,var(--mint)) 32%,transparent)}
+.hanzi-hop-layer[data-world=keys] .hanzi-hop-spark{width:8px;height:8px;border-radius:0;background:var(--theme-accent,var(--accent));clip-path:polygon(50% 0,63% 35%,100% 50%,63% 65%,50% 100%,37% 65%,0 50%,37% 35%)}
+.hanzi-hop-layer[data-world=keys] .hanzi-hop-spark:nth-of-type(2n){width:3px;height:9px;clip-path:none;rotate:28deg}
+:root[data-motion=reduced] .hanzi-hop-layer{display:none!important}
+:root[data-motion=reduced] hanzi-hop[data-hop-painted]{color:inherit!important;-webkit-text-fill-color:inherit!important}
+@media(prefers-reduced-motion:reduce){.hanzi-hop-layer{display:none!important}hanzi-hop[data-hop-painted]{color:inherit!important;-webkit-text-fill-color:inherit!important}}

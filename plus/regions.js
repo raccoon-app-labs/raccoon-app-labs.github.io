@@ -33,7 +33,7 @@
   for(const link of panel.querySelectorAll('[data-ru-document]')){const u=new URL(link.href);u.searchParams.set('lang',language());link.href=u.href;}
   const how=document.querySelectorAll('.how-steps p');set(how[0],t('email'));set(how[1],t('pay'));set(how[2],t('access'));
   const answers=document.querySelectorAll('.faq-answer p');set(answers[0],t('shared'));set(answers[1],t('onePayment'));
-  const answer=answers[2];if(answer){answer.dataset.noL10n='';const help=answer.querySelector('a');if(help && answer.firstChild?.nodeType===3){const value=t('restore')+' ';if(answer.firstChild.textContent!==value)answer.firstChild.textContent=value;while(help.nextSibling)help.nextSibling.remove();}}
+  const answer=answers[2];if(answer){answer.dataset.noL10n='';const help=answer.querySelector('a'),lead=document.createTreeWalker(answer,NodeFilter.SHOW_TEXT).nextNode();if(help && lead){const value=t('restore')+' ';if(lead.textContent!==value)lead.textContent=value;while(help.nextSibling)help.nextSibling.remove();}}
  }
  picker.addEventListener('click',event=>{
   const link=event.target.closest('[data-russian-catalog],[data-international-catalog]');if(!link || event.button || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey)return;
