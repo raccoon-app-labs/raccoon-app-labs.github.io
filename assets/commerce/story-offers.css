@@ -1,3 +1,11 @@
+/* Quiet information cards keep the same breathing room as the purchase tickets. */
+.commerce-stories .commerce-details{gap:20px}
+.commerce-stories .commerce-detail{min-width:0;display:flex;flex-direction:column;align-items:start;padding:clamp(24px,2.4vw,32px);border:1px solid var(--theme-line,var(--line));border-radius:24px;background:var(--theme-surface,var(--surface));box-shadow:inset 0 1px 0 #fff5e608}
+.commerce-stories .commerce-detail>span{display:grid;place-items:center;flex:none;width:38px;height:38px;margin:0;border:1px solid color-mix(in srgb,var(--theme-accent,var(--accent)) 28%,transparent);border-radius:13px;background:color-mix(in srgb,var(--theme-accent,var(--accent)) 8%,transparent);color:var(--theme-accent,var(--accent));font-size:11px;line-height:1}
+.commerce-stories .commerce-detail h3{margin:20px 0 12px;font-size:20px;line-height:1.35;letter-spacing:-.025em}
+.commerce-stories .commerce-detail p{margin:0;max-width:40ch;line-height:1.8;overflow-wrap:anywhere}
+@media(max-width:1000px){.commerce-stories .commerce-details{grid-template-columns:1fr;gap:16px}.commerce-stories .commerce-detail{padding:24px}.commerce-stories .commerce-detail h3{margin-top:16px}.commerce-stories .commerce-detail p{max-width:65ch}}
+@media(max-width:480px){.commerce-stories .commerce-detail{padding:22px;border-radius:22px}}
 /* Two enchanted tickets; text and buttons stay above the decorative layers. */
 .commerce-stories .offer-grid[data-offer-motion]{isolation:isolate}
 .commerce-stories .offer-grid[data-offer-motion=scroll] .offer-card{
