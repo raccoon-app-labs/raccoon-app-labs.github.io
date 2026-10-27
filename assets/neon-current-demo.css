@@ -11,3 +11,6 @@
 .native-neon [data-neon-pause]{pointer-events:auto;width:32px;height:37px;padding:0;border:2px solid #b8c6eb;border-radius:5px 8px 4px 7px;background:#0b1830eb;color:#fff1ba;font:700 19px/1 system-ui;cursor:pointer}
 .native-neon [data-neon-pause]:focus-visible{outline:3px solid #ffe568;outline-offset:4px}
 .native-neon .neon-jump:disabled{opacity:.5;cursor:default}
+
+/* Keep the portrait playfield and its controls in one desktop/mobile viewport. */
+.native-app.native-neon{width:min(100%,410px,max(240px,calc((100svh - 180px)*.5625)));margin-inline:auto}
