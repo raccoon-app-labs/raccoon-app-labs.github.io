@@ -24,6 +24,13 @@ SOURCES = {
     'mid': 'assets/backgrounds/comic_worlds/solar_mid.webp',
     'near': 'assets/backgrounds/comic_worlds/solar_near.webp',
     'coin': 'assets/ui/comic_menu/coin_sheet.webp',
+    'hazard': 'assets/gameplay_comic/hazard.webp',
+    'part_body': 'assets/player/gameplay_hero_v2/body.webp',
+    'part_arm_back': 'assets/player/gameplay_hero_v2/arm_back.webp',
+    'part_arm_front': 'assets/player/gameplay_hero_v2/arm_front.webp',
+    'part_leg_back': 'assets/player/gameplay_hero_v2/leg_back.webp',
+    'part_leg_front': 'assets/player/gameplay_hero_v2/leg_front.webp',
+    'part_star': 'assets/player/gameplay_hero_v2/star.webp',
     'trail': 'assets/player/energy_boy_v2/trail_classic_v2.webp',
 }
 manifest = {}
@@ -36,11 +43,11 @@ for key, source in SOURCES.items():
     original = DEST / f'{key}-original.webp'
     image.save(original, 'WEBP', lossless=True, method=6, exact=True)
     display = image.copy()
-    display.thumbnail((480, 854) if key in ('far', 'mid', 'near') else (384, 384), Image.Resampling.LANCZOS)
+    display.thumbnail((480, 854) if key in ('far', 'mid', 'near') else (256, 256) if key.startswith('part_') else (384, 384), Image.Resampling.LANCZOS)
     path = DEST / f'{key}.webp'
     display.save(path, 'WEBP', lossless=True, method=6, exact=True)
     preview = image.copy()
-    preview.thumbnail((96, 171) if key in ('far', 'mid', 'near') else (160, 160), Image.Resampling.LANCZOS)
+    preview.thumbnail((96, 171) if key in ('far', 'mid', 'near') else (96, 96) if key.startswith('part_') else (128, 128) if key=='hazard' else (160, 160), Image.Resampling.LANCZOS)
     buffer = BytesIO()
     preview.save(buffer, 'WEBP', lossless=True, method=6, exact=True)
     bounds = image.getchannel('A').point(lambda a: 255 if a > 51 else 0).getbbox() if image.mode == 'RGBA' else (0, 0, *image.size)
