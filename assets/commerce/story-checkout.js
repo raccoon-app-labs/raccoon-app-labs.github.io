@@ -1,6 +1,6 @@
 import {API_BASE, ShopError, validateOffer, purchasableStories, purchaseRequest, confirmationUrl, createApi} from './story-checkout-core.mjs?v=c47f6d210c03';
 import {installBookCoverTilt} from './story-book-tilt.mjs?v=46e546adac41';
-import {installBookPortal} from './story-book-portal.mjs?v=795c54ce7146';
+import {installBookPortal} from './story-book-portal.mjs?v=f60acf36c899';
 
 const root = document.documentElement;
 const sourcePanel = document.querySelector('#stories-panel') || document.querySelector('.commerce-stories');

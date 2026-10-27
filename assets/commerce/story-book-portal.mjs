@@ -10,33 +10,71 @@ export function installBookPortal({host, translate:t, escape, price, onContinue,
     const animation = element.animate(frames, options); animations.push(animation);
     return animation.finished.catch(() => {});
   }
-  function stop() {
+  function stop({revealSource = true} = {}) {
     revision++;
     for (const animation of animations) animation.cancel();
     animations = []; flight?.remove(); flight = null;
-    if (sourceCover) sourceCover.style.visibility = '';
+    if (revealSource && sourceCover) sourceCover.style.visibility = '';
   }
   function finish(restoreFocus) {
     stop(); portal.close(); portal.replaceChildren(); closing = false;
     if (restoreFocus && host.open && source?.isConnected) source.focus({preventScroll:true});
   }
+  function closedPose() {
+    return matchMedia('(max-width:540px)').matches ? 'translateX(0) rotateY(-5deg) scale(.94)' : 'translateX(-25%) rotateY(-8deg) scale(.94)';
+  }
+  function shelfDestination() {
+    if (!host.open || !source?.isConnected || !sourceCover?.offsetWidth || source.hidden) return null;
+    // A resize or a long catalog may move the slot while the modal is open.
+    // Reveal the real slot behind the still-opaque backdrop, then measure it afresh.
+    source.scrollIntoView({block:'nearest',inline:'nearest',behavior:'instant'});
+    const rect = sourceCover.getBoundingClientRect(), shelf = host.getBoundingClientRect();
+    return rect.width && rect.height && rect.bottom > Math.max(0,shelf.top) && rect.top < Math.min(innerHeight,shelf.bottom) ? rect : null;
+  }
   async function close({immediate = false, restoreFocus = true} = {}) {
-    if (!portal.open || closing) return;
-    closing = true; stop();
+    if (!portal.open) return;
+    if (closing) { if (immediate) finish(restoreFocus); return; }
+    closing = true; stop({revealSource:false});
+    const current = revision;
+    portal.dataset.bookReady = 'false'; portal.dataset.bookPhase = 'closing';
     if (!immediate && !reduced()) {
-      const cover = portal.querySelector('.magic-portal-cover');
-      cover.hidden = false;
-      await animate(cover, [{transform:'rotateY(-178deg)',opacity:0},{transform:'rotateY(-150deg)',opacity:1,offset:.12},{transform:'rotateY(0deg)',opacity:1}], {duration:330,easing:'ease-in-out',fill:'both'});
-      await animate(portal.querySelector('.magic-open-book'), [
-        {opacity:1, transform:'translateY(0) scale(1)'},
-        {opacity:0, transform:'translateY(24px) scale(.94)'}
-      ], {duration:150, easing:'ease-in', fill:'both'});
+      const book = portal.querySelector('.magic-open-book'), cover = portal.querySelector('.magic-portal-cover');
+      // Closing during the incoming flight must be safe as well.
+      book.style.visibility = ''; book.style.transform = ''; cover.hidden = false;
+      portal.querySelectorAll('.magic-book-invitation,.magic-book-return,.magic-book-dismiss').forEach(el => animate(el,[{opacity:1},{opacity:0}],{duration:180,fill:'both'}));
+      const folding = animate(cover, [{transform:'rotateY(-178deg)',opacity:0},{transform:'rotateY(-156deg)',opacity:1,offset:.14},{transform:'rotateY(0deg)',opacity:1}], {duration:480,easing:'cubic-bezier(.65,0,.35,1)',fill:'both'});
+      const settling = animate(book,[{transform:'translateX(0) rotateY(0) scale(1)'},{transform:closedPose()}],{duration:480,easing:'cubic-bezier(.65,0,.35,1)',fill:'both'});
+      animate(portal.querySelector('.magic-book-leaf-art'),[{opacity:1},{opacity:0}],{duration:250,fill:'both'});
+      animate(portal.querySelector('.magic-book-spine'),[{opacity:1},{opacity:0}],{duration:250,fill:'both'});
+      await Promise.all([folding,settling]);
+      if (current !== revision || !portal.open) return;
+      const target = shelfDestination(), from = cover.getBoundingClientRect();
+      if (target && from.width && from.height) {
+        flight = document.createElement('div'); flight.className = 'magic-book-flight magic-book-flight-return';
+        flight.innerHTML = cover.querySelector('.magic-portal-cover-front').innerHTML;
+        const title = flight.lastElementChild; title.classList.add('magic-book-flight-title');
+        Object.assign(flight.style,{left:`${from.left}px`,top:`${from.top}px`,width:`${from.width}px`,height:`${from.height}px`});
+        portal.append(flight); book.style.visibility = 'hidden';
+        sourceCover.style.visibility = 'hidden'; portal.dataset.bookPhase = 'returning';
+        const dx = target.left-from.left, dy = target.top-from.top, sx = target.width/from.width, sy = target.height/from.height;
+        animate(title,[{opacity:1},{opacity:0}],{duration:200,fill:'both'});
+        await animate(flight,[
+          {transform:'translate(0,0) scale(1) rotate(0deg)'},
+          {transform:`translate(${dx*.4}px,${dy*.4-30}px) scale(${1+(sx-1)*.4},${1+(sy-1)*.4}) rotate(-5deg)`,offset:.45},
+          {transform:`translate(${dx}px,${dy}px) scale(${sx},${sy}) rotate(0deg)`,boxShadow:'3px 2px 0 #dfcfb8,5px 4px 0 #795c7f,0 6px 14px #07030f40'}
+        ],{duration:680,easing:'cubic-bezier(.4,0,.2,1)',fill:'both'});
+      } else {
+        await animate(book,[{opacity:1},{opacity:0,transform:closedPose()+' translateY(20px) scale(.9)'}],{duration:180,easing:'ease-in',fill:'both'});
+      }
     }
+    if (current !== revision || !portal.open) return;
     finish(restoreFocus);
+    if (!immediate && !reduced() && host.open && sourceCover?.isConnected) sourceCover.animate([{filter:'brightness(1.16)'},{filter:'brightness(1)'}],{duration:260,easing:'ease-out'});
   }
   async function open({story, amount, available, source:button}) {
     if (portal.open) return;
     delete portal.dataset.bookReady;
+    portal.dataset.bookPhase = 'opening';
     resetTilt(); source = button; sourceCover = source.querySelector('.magic-book-art');
     const origin = sourceCover?.getBoundingClientRect();
     const art = story.cover ? `<img src="${escape(story.cover)}" alt="" decoding="async">` : `<span class="magic-portal-fallback">${escape(story.emoji || '✦')}</span>`;
@@ -52,7 +90,7 @@ export function installBookPortal({host, translate:t, escape, price, onContinue,
     const cover = portal.querySelector('.magic-portal-cover');
     if (reduced()) { cover.hidden = true; portal.dataset.bookReady = 'true'; return; }
     const current = ++revision;
-    const closedTransform = matchMedia('(max-width:540px)').matches ? 'translateX(0) rotateY(-5deg) scale(.94)' : 'translateX(-25%) rotateY(-8deg) scale(.94)';
+    const closedTransform = closedPose();
     book.style.transform = closedTransform;
     const landing = cover.getBoundingClientRect();
     if (origin?.width && origin.height && landing.width) {
@@ -76,13 +114,15 @@ export function installBookPortal({host, translate:t, escape, price, onContinue,
     if (current === revision) {
       cover.hidden = true; book.style.transform = '';
       portal.dataset.bookReady = 'true';
+      portal.dataset.bookPhase = 'open';
       if (document.activeElement === portal || document.activeElement === document.body) portal.querySelector('#magic-book-title').focus({preventScroll:true});
     }
   }
   portal.addEventListener('cancel', event => { event.preventDefault(); close(); });
   portal.addEventListener('click', event => { if (event.target === portal || event.target.classList.contains('magic-book-stage')) close(); });
   function settleReducedMotion() {
-    if (!portal.open || closing || !reduced()) return;
+    if (!portal.open || !reduced()) return;
+    if (closing) { finish(true); return; }
     stop();
     const book = portal.querySelector('.magic-open-book');
     book.style.visibility = ''; book.style.transform = '';
