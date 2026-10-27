@@ -1,4 +1,4 @@
-/* Floating type follows document scrolling; native text takes over while scrolling. */
+/* Only the story hero floats at rest; every text run still reacts to the pointer. */
 (() => {
   'use strict';
   if(document.querySelector('.story-magic-layer'))return;
@@ -55,7 +55,7 @@
     const parent=text.parentElement;
     if(!parent || internal(parent) || parent.closest(skip) || !/[\p{L}\p{N}]/u.test(text.data))return;
     const source=document.createElement('span');source.className='story-magic-source';text.replaceWith(source);source.append(text);
-    const run={source,parent,text,visible:false,dirty:true,cells:[],group:null,layer:null,size:16,serial:seed++};
+    const run={source,parent,text,floating:!!parent.closest('.story-hero-copy h1'),visible:false,dirty:true,cells:[],group:null,layer:null,size:16,serial:seed++};
     runs.add(run);bySource.set(source,run);
     if(!parents.has(parent)){parents.set(parent,new Set());intersection.observe(parent);resize.observe(parent);}
     parents.get(parent).add(run);
@@ -87,7 +87,7 @@
   }
   function build(run,bounds,layerBounds){
     restore(run);run.layer=layerFor(run.parent);
-    if(!run.group){run.group=document.createElement('span');run.group.className='story-magic-run';run.group.hidden=true;}
+    if(!run.group){run.group=document.createElement('span');run.group.className='story-magic-run';run.group.dataset.float=run.floating?'idle':'pointer';run.group.hidden=true;}
     if(run.group.parentElement!==run.layer.node)run.layer.node.append(run.group);style(run);
     const joining=/[\p{Script=Arabic}\p{Script=Devanagari}]/u.test(run.text.data);
     const language=run.parent.closest('[lang]')?.lang || root.lang || 'en';
@@ -191,25 +191,26 @@
       run.geometry=plan.geometry;
       if(!run.painted){run.group.hidden=false;run.source.dataset.painted='true';run.painted=true;}
       const px=local?(pointer.x-layerBounds.left)/sx-x:(pointer.x-bounds.left)/sx,py=local?(pointer.y-layerBounds.top)/sy-y:(pointer.y-bounds.top)/sy;
-      const time=now/1000,amplitude=clamp(run.size*.032,.22,2.7),radius=clamp(run.size*2.2,48,170),pushLimit=clamp(run.size*.125,.8,8);
+      const time=now/1000,amplitude=run.floating?clamp(run.size*.032,.22,2.7):0,radius=clamp(run.size*2.2,48,170),pushLimit=clamp(run.size*.125,.8,8);
       const damp=Math.pow(.78,delta),angleEase=1-Math.pow(.86,delta);
       for(const cell of run.cells){
         const dx=cell.left+cell.width/2-px,dy=cell.top+cell.height*.55-py;
         const nearby=pointer.inside && Math.abs(dx)<radius && Math.abs(dy)<radius;
         const distance=nearby?Math.hypot(dx,dy):radius;
         const influence=nearby?Math.pow(Math.max(0,1-distance/radius),2):0;
-        const idle=Math.sin(time*cell.speed+cell.phase),push=influence*pushLimit;
-        const targetX=Math.sin(time*.54+cell.phase)*amplitude*.32+dx/Math.max(distance,1)*push;
+        const idle=run.floating?Math.sin(time*cell.speed+cell.phase):0,push=influence*pushLimit;
+        const targetX=(run.floating?Math.sin(time*.54+cell.phase)*amplitude*.32:0)+dx/Math.max(distance,1)*push;
         const targetY=idle*amplitude+dy/Math.max(distance,1)*push;
         cell.vx=(cell.vx+(targetX-cell.x)*.075*delta)*damp;cell.vy=(cell.vy+(targetY-cell.y)*.075*delta)*damp;
         cell.x+=cell.vx*delta;cell.y+=cell.vy*delta;
         const angle=idle*(run.size>=28?.45:.2)+clamp(dx/radius,-1,1)*influence*(run.size>=28?3:1.1);
         cell.angle+=(angle-cell.angle)*angleEase;
+        if(!run.floating && !influence && Math.max(Math.abs(cell.x),Math.abs(cell.y),Math.abs(cell.vx),Math.abs(cell.vy),Math.abs(cell.angle))<.01)cell.x=cell.y=cell.vx=cell.vy=cell.angle=0;
         const transform=`translate3d(${cell.x.toFixed(2)}px,${cell.y.toFixed(2)}px,0) rotate(${cell.angle.toFixed(2)}deg)`;
         if(cell.transform!==transform){cell.node.style.transform=transform;cell.transform=transform;}
-        const glow=Math.round((.12+(idle+1)*.055+influence*.8)*24)/24;
+        const glow=Math.round(((run.floating ? .12+(idle+1)*.055 : 0)+influence*.8)*24)/24;
         if(glow!==cell.glow){cell.glow=glow;const scale=clamp(run.size/55,.3,1);
-          cell.node.style.textShadow=`0 0 ${(2+glow*13)*scale}px rgba(255,221,157,${(.1+glow*.4)*scale}),0 0 ${(8+glow*25)*scale}px rgba(237,180,104,${glow*.2*scale})`;
+          cell.node.style.textShadow=glow?`0 0 ${(2+glow*13)*scale}px rgba(255,221,157,${(.1+glow*.4)*scale}),0 0 ${(8+glow*25)*scale}px rgba(237,180,104,${glow*.2*scale})`:'none';
         }
         if(influence>best){best=influence;nearest={run,cell,x,y};}
       }
