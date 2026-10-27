@@ -46,7 +46,7 @@
   track.dataset.scrollReady='true';measure();
   window.addEventListener('scroll',schedule,{passive:true});
   window.addEventListener('resize',measure,{passive:true});
-  const resize=new ResizeObserver(measure);resize.observe(track);resize.observe(stage);resize.observe(document.querySelector('.commerce-header') || document.querySelector('.topbar'));
+  const resize=new ResizeObserver(measure);resize.observe(track);resize.observe(stage);const header=document.querySelector('.commerce-header,.topbar,.site-header');if(header)resize.observe(header);
   const tabs=document.querySelector('.app-nav');if(tabs)resize.observe(tabs);
   const visibility=new IntersectionObserver(entries=>{active=entries[0].isIntersecting;if(active)schedule();},{rootMargin:'120px'});visibility.observe(track);
   reduced.addEventListener('change',()=>{cancelAnimationFrame(frame);frame=0;measure();});

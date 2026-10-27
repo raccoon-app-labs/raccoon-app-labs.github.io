@@ -1,0 +1,36 @@
+/* A product page told as an illustrated book, using the shop's physical leaves. */
+:root[data-site-world=stories]{overflow-x:clip}
+.product-stories .hero.story-scroll-hero{--book-stage-height:clamp(310px,74svh,590px);align-items:start;gap:clamp(24px,4vw,64px);padding-top:54px}
+.product-stories .story-scroll-hero .story-hero-copy{top:calc(var(--story-header,86px) + 18px);padding-block:15px 30px}
+.product-stories .story-scroll-stage.commerce-scene{position:relative;display:grid;place-items:center;isolation:isolate;direction:ltr;min-width:0;--book-sticky-top:calc(var(--story-header,86px) + 15px)}
+.product-stories .story-scroll-track[data-scroll-ready] .story-scroll-stage{position:sticky}
+.product-stories .story-scroll-stage .scene-art{position:absolute;inset:0;display:grid;place-items:center;pointer-events:none}
+.product-stories .story-scroll-stage .scene-ring{position:absolute;inset:7% 0 8%;border:1px dashed #dbbd7f42;border-radius:49%;rotate:16deg;pointer-events:none;animation:story-orbit-breathe 12s ease-in-out infinite alternate}
+.product-stories .story-scroll-stage .scene-ring::after{content:'';position:absolute;inset:12%;border:1px solid #beabd532;border-radius:50%;rotate:55deg}
+.product-stories .story-scroll-stage .scene-tag{position:absolute;top:3%;right:3%;padding:10px 16px;border:1px solid #d9b97e44;border-radius:4px 18px 18px;background:var(--theme-panel,var(--card));color:var(--ink);font-size:12px;box-shadow:0 12px 26px #08061422}
+.product-stories .scroll-book{width:min(63%,calc(var(--book-stage-height)*.62),350px)}
+.product-stories .story-scroll-hint{background:var(--theme-panel,var(--card));border-color:#d7b98555;color:var(--ink);bottom:0}
+.product-stories .promise-strip{position:relative;background:color-mix(in srgb,var(--theme-panel,var(--card)) 80%,transparent);border-color:#c4a47544}
+.product-stories .promise-strip span small{display:grid;place-items:center;width:28px;height:28px;border:1px solid #d2b27a55;border-radius:50%;box-shadow:0 0 0 5px #d2b27a07}
+.product-stories .story-chapter{position:relative;--chapter-reveal:0}
+.product-stories .story-chapter::before{content:attr(data-chapter);position:absolute;top:45px;left:0;display:flex;align-items:center;gap:16px;color:var(--accent);font:italic 16px Georgia,serif;letter-spacing:.1em;opacity:.55}
+.product-stories .story-chapter::after{content:'';position:absolute;left:0;right:0;top:74px;height:1px;transform-origin:0 50%;scale:var(--chapter-reveal) 1;background:linear-gradient(90deg,#d8bc86aa,#b397ce44,transparent);pointer-events:none}
+.product-stories .benefit-card{position:relative;border-radius:5px 24px 24px 5px;border:1px solid #d4b98036;border-left:5px solid #bca175;background:linear-gradient(100deg,#d3b77b0b,transparent 28%),var(--theme-panel,var(--card));box-shadow:4px 5px 0 -1px var(--theme-bg,var(--paper)),5px 6px 0 #bd9d6b36;transform-origin:0 80%;transition:translate .6s,box-shadow .6s}
+.product-stories .benefit-card:hover{translate:0 -7px;box-shadow:5px 9px 0 -2px var(--theme-bg,var(--paper)),6px 10px 0 #bd9d6b55,0 20px 40px #08061430}
+.product-stories .benefit-card::after{content:'✦';position:absolute;right:18px;top:17px;font-size:28px;color:var(--accent);opacity:.25;transition:rotate .8s,scale .8s}
+.product-stories .benefit-card:hover::after{rotate:100deg;scale:1.4;opacity:.65}
+.product-stories .benefit-card .feature-index{font:italic 23px Georgia,serif;color:var(--accent)}
+.product-stories .benefit-card.is-unfolded{animation:story-page-unfold 1s cubic-bezier(.18,.75,.25,1) both;animation-delay:calc(var(--chapter-index,0)*90ms)}
+.product-stories .screens .gallery{padding-block:20px 30px;perspective:1200px}
+.product-stories .screens .shot{border:1px solid #cfb78d55;border-radius:6px 18px 18px 6px;box-shadow:3px 4px 0 #c8ad7933;transition:rotate .6s,translate .6s,box-shadow .6s}
+.product-stories .screens .shot:hover{rotate:-1.2deg;translate:0 -8px;box-shadow:5px 10px 0 #c8ad792b,0 15px 35px #08061444}
+.product-stories .faq-list details{position:relative;background:color-mix(in srgb,var(--theme-panel,var(--card)) 76%,transparent);border:1px solid #cfb78d33;border-radius:8px 20px 20px 8px;padding-inline:22px;margin-bottom:12px;overflow:hidden}
+.product-stories .faq-list details::before{content:'';position:absolute;inset:0 auto 0 0;width:3px;background:var(--accent);scale:1 0;transform-origin:50% 0;transition:scale .5s}
+.product-stories .faq-list details[open]::before{scale:1 1}
+.product-stories .closing{position:relative;border:1px solid #d7b98544;border-radius:80px 80px 12px 12px;background:radial-gradient(ellipse at 50% 0,#9c77c51a,transparent 70%);margin-top:110px;padding:70px 24px}
+.product-stories .closing::after{content:'✧';position:absolute;right:9%;top:14%;font:60px Georgia,serif;color:var(--accent);opacity:.35;animation:story-orbit-breathe 7s ease-in-out infinite alternate;pointer-events:none}
+.product-stories .related{border-color:#d7b98544}
+@keyframes story-page-unfold{from{transform:perspective(1000px) rotateY(-12deg) rotateZ(-2deg) translateY(20px)}to{transform:perspective(1000px) rotateY(0) rotateZ(0) translateY(0)}}
+@keyframes story-orbit-breathe{to{rotate:-8deg;scale:1.035}}
+@media(max-width:760px){.product-stories .hero.story-scroll-hero{padding-top:30px;--book-stage-height:clamp(330px,65svh,510px)}.product-stories .story-scroll-hero .story-hero-copy{position:relative;top:auto;padding-block:0}.product-stories .story-scroll-stage.commerce-scene{--book-sticky-top:calc(var(--story-header,80px) + 8px)}.product-stories .story-scroll-track{max-width:520px}.product-stories .closing{border-radius:50px 50px 12px 12px;margin-top:70px}}
+@media(prefers-reduced-motion:reduce){.product-stories .benefit-card.is-unfolded,.product-stories .scene-ring,.product-stories .closing::after{animation:none!important}.product-stories .benefit-card:hover,.product-stories .screens .shot:hover{translate:none;rotate:none}.product-stories .benefit-card::after{transition:none}}
