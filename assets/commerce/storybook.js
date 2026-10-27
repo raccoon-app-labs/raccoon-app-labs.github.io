@@ -3,6 +3,17 @@
   'use strict';
   const track=document.querySelector('[data-story-scroll]');if(!track)return;
   const stage=track.querySelector('.story-scroll-stage'),reduced=matchMedia('(prefers-reduced-motion: reduce)');
+  const root=document.documentElement;
+  let imagesPrepared=false;
+  function prepareImages(){
+    if(imagesPrepared || (root.dataset.app && root.dataset.app!=='stories'))return;
+    imagesPrepared=true;
+    const cover=track.querySelector('.book-cover .face-front img');
+    for(const img of track.querySelectorAll('.book-face img')){
+      img.fetchPriority=img===cover?'high':'low';img.decoding='async';img.loading='eager';
+    }
+  }
+  prepareImages();
   const isReduced=()=>reduced.matches || document.documentElement.dataset.motion==='reduced';
   let start=0,range=1,frame=0,active=true,closed=false,last=-1;
   const clamp=value=>Math.min(1,Math.max(0,value));
@@ -40,7 +51,7 @@
   const visibility=new IntersectionObserver(entries=>{active=entries[0].isIntersecting;if(active)schedule();},{rootMargin:'120px'});visibility.observe(track);
   reduced.addEventListener('change',()=>{cancelAnimationFrame(frame);frame=0;measure();});
   new MutationObserver(measure).observe(document.documentElement,{attributes:true,attributeFilter:['data-motion']});
-  window.addEventListener('raccoon:appchange',measure);
+  window.addEventListener('raccoon:appchange',()=>{prepareImages();measure();});
   document.fonts?.ready.then(measure);
   document.addEventListener('visibilitychange',()=>{if(document.hidden){cancelAnimationFrame(frame);frame=0;}else measure();});
   window.addEventListener('pagehide',()=>{closed=true;cancelAnimationFrame(frame);frame=0;});
