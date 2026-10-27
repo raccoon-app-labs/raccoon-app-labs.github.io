@@ -3,7 +3,6 @@
   'use strict';
   const root = document.documentElement;
   const key = 'hanzi-plus-theme';
-  const system = matchMedia('(prefers-color-scheme: dark)');
   const worlds = ['studio','bloom','keys','stories','muropolis','neon','food','dokupit'];
   const viewWorld = () => {
     const requested = new URLSearchParams(location.search).get('app');
@@ -40,12 +39,11 @@
       : mode === 'dark' ? '#0d1d24' : '#f5f3ea';
     refresh();
   }
-  apply(choice || (system.matches ? 'dark' : 'light'));
-  system.addEventListener('change', () => { if (!choice) apply(system.matches ? 'dark' : 'light'); });
+  apply(choice || 'dark');
   window.addEventListener('storage', event => {
     if (event.key !== key) return;
     choice = valid(event.newValue) ? event.newValue : null;
-    apply(choice || (system.matches ? 'dark' : 'light'));
+    apply(choice || 'dark');
   });
   window.addEventListener('raccoon:appchange', event => {
     if (!root.hasAttribute('data-site-theme') || !worlds.includes(event.detail?.app)) return;
