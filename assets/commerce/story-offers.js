@@ -1,7 +1,7 @@
 /* Tickets and information cards share one short-lived pointer animation clock. */
 (() => {
   'use strict';
-  const grids=[...document.querySelectorAll('.commerce-stories .offer-grid,.commerce-stories .commerce-details')];
+  const grids=[...document.querySelectorAll('.commerce-stories .offer-grid,.commerce-stories .commerce-details,.commerce-stories .commerce-get')];
   if(!grids.length)return;
   const root=document.documentElement,media=matchMedia('(prefers-reduced-motion: reduce)'),fine=matchMedia('(hover: hover) and (pointer: fine)');
   const panel=grids[0].closest('[role=tabpanel]');
@@ -9,7 +9,7 @@
   const clamp=(value,min,max)=>Math.max(min,Math.min(max,value));
   const reduced=()=>media.matches || root.dataset.motion==='reduced';
   const active=()=>!closed && !document.hidden && !panel?.hidden && (!root.dataset.app || root.dataset.app==='stories');
-  const states=grids.flatMap(grid=>[...grid.querySelectorAll('.offer-card,.commerce-detail')].map(card=>({card,grid,ticket:card.matches('.offer-card'),rendered:{},x:0,y:0,lift:0,light:0,spotX:50,spotY:50})));
+  const states=grids.flatMap(grid=>(grid.matches('.commerce-get')?[grid]:[...grid.querySelectorAll('.offer-card,.commerce-detail')]).map(card=>({card,grid,ticket:card.matches('.offer-card'),rendered:{},x:0,y:0,lift:0,light:0,spotX:50,spotY:50})));
   for(const [index,{card,ticket}] of states.entries()){
     if(!ticket){
       const magic=document.createElement('div');magic.className='detail-magic';magic.setAttribute('aria-hidden','true');magic.setAttribute('inert','');
@@ -89,7 +89,7 @@
     grid.addEventListener('pointercancel',()=>{pointer=null;schedule();});
   }
   addEventListener('blur',()=>{pointer=null;schedule();});
-  addEventListener('scroll',()=>{if(pointer?.grid.matches('.commerce-details'))pointer=null;schedule();},{passive:true});addEventListener('resize',measure);
+  addEventListener('scroll',()=>{if(pointer && !pointer.grid.matches('.offer-grid'))pointer=null;schedule();},{passive:true});addEventListener('resize',measure);
   addEventListener('raccoon:appchange',measure);addEventListener('hanzi:languagechange',measure);
   media.addEventListener('change',schedule);
   document.addEventListener('visibilitychange',()=>{if(document.hidden)reset();else measure();});

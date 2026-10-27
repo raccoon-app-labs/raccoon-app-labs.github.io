@@ -13,17 +13,18 @@ function fixture(){
   const style=()=>{const values=new Map();return{setProperty:(name,value)=>values.set(name,value),removeProperty:name=>values.delete(name),getPropertyValue:name=>values.get(name)||''};};
   let reads=0,serial=0,now=0;const raf=new Map(),mutations=[];
   const root={dataset:{app:'stories'}},panel={hidden:false};
-  const makeCard=(ticket,index)=>{
+  const makeCard=(ticket,index,geometry={})=>{
     const card={style:style(),dataset:{},matches:selector=>ticket && selector==='.offer-card',prepend(){},offsetParent:null};
-    for(const [key,value] of Object.entries({offsetTop:ticket?100:450,offsetLeft:100+index*400,offsetWidth:300,offsetHeight:220}))Object.defineProperty(card,key,{get(){reads++;return value;}});
+    for(const [key,value] of Object.entries({offsetTop:ticket?100:450,offsetLeft:100+index*400,offsetWidth:300,offsetHeight:220,...geometry}))Object.defineProperty(card,key,{get(){reads++;return value;}});
     return card;
   };
   const makeGrid=(ticket,count)=>{
     const cards=Array.from({length:count},(_,index)=>makeCard(ticket,index));
-    return{...events(),cards,dataset:{},closest:()=>panel,querySelectorAll:()=>cards,matches:selector=>!ticket && selector==='.commerce-details'};
+    return{...events(),cards,dataset:{},closest:()=>panel,querySelectorAll:()=>cards,matches:selector=>selector===(ticket?'.offer-grid':'.commerce-details')};
   };
   const offers=makeGrid(true,2),details=makeGrid(false,3);
-  const doc={...events(),documentElement:root,hidden:false,querySelectorAll:()=>[offers,details],querySelector:()=>null,createElement:()=>({style:style(),setAttribute(){},append(){}}),fonts:{ready:{then:callback=>callback()}}};
+  const how=Object.assign(makeCard(false,0,{offsetTop:740,offsetWidth:1100,offsetHeight:280}),events(),{closest:()=>panel,matches:selector=>selector==='.commerce-get'});
+  const doc={...events(),documentElement:root,hidden:false,querySelectorAll:()=>[offers,details,how],querySelector:()=>null,createElement:()=>({style:style(),setAttribute(){},append(){}}),fonts:{ready:{then:callback=>callback()}}};
   const context={...events(),document:doc,scrollX:0,scrollY:0,innerHeight:800,matchMedia:query=>({matches:query.includes('pointer: fine'),addEventListener(){}}),
     requestAnimationFrame:callback=>{raf.set(++serial,callback);return serial;},cancelAnimationFrame:id=>raf.delete(id),
     ResizeObserver:class{observe(){}},MutationObserver:class{constructor(callback){mutations.push(callback);}observe(){}}};
@@ -31,7 +32,7 @@ function fixture(){
   const pump=(count=260)=>{for(let i=0;i<count && raf.size;i++){now+=16.667;const batch=[...raf.values()];raf.clear();batch.forEach(callback=>callback(now));}};
   const move=(grid,x,y,pointerType='mouse')=>grid.emit('pointermove',{clientX:x,clientY:y,pointerType});
   const value=(card,name)=>parseFloat(card.style.getPropertyValue('--offer-'+name))||0;
-  pump();return{offers,details,root,context,mutations,pump,move,value,reads:()=>reads,pending:()=>raf.size};
+  pump();return{offers,details,how,root,context,mutations,pump,move,value,reads:()=>reads,pending:()=>raf.size};
 }
 
 test('information cards follow the pointer gently without measuring layout or running an idle loop',()=>{
@@ -74,4 +75,22 @@ test('purchase panels keep their pointer tilt and scroll reveal',()=>{
   assert.equal(f.value(card,'pointer-light'),1,'scroll reveal keeps the original ticket hover behavior');
   f.root.dataset.app='bloom';f.mutations[0]();f.pump();
   assert.equal(card.style.getPropertyValue('--offer-tilt-x'),'');assert.equal(f.pending(),0);
+});
+
+test('the instructions panel tilts as one surface and releases smoothly without an idle loop',()=>{
+  const f=fixture(),card=f.how,reads=f.reads();
+  f.move(card,130,770);f.pump();
+  assert.ok(f.value(card,'tilt-x')>0 && f.value(card,'tilt-y')<0);
+  assert.equal(f.value(card,'pointer-light'),1);
+  assert.equal(f.value(f.details.cards[0],'pointer-light'),0);
+  assert.equal(f.value(f.offers.cards[0],'pointer-light'),0);
+  f.move(card,1100,1000);f.pump();
+  assert.ok(f.value(card,'tilt-x')<0 && f.value(card,'tilt-y')>0);
+  assert.equal(f.reads(),reads);assert.equal(f.pending(),0);
+  f.context.emit('scroll');f.pump(1);
+  assert.ok(f.value(card,'pointer-light')>0 && f.value(card,'pointer-light')<1);
+  f.pump();assert.equal(f.value(card,'tilt-x'),0);assert.equal(f.value(card,'pointer-light'),0);
+  assert.equal(card.dataset.offerTilt,'resting');assert.equal(f.pending(),0);
+  f.move(card,130,770);f.pump();f.root.dataset.motion='reduced';f.mutations[0]();f.pump();
+  assert.equal(f.value(card,'tilt-y'),0);assert.equal(card.dataset.offerMotion,'reduced');
 });

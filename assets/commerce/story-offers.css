@@ -7,17 +7,18 @@
 @media(max-width:1000px){.commerce-stories .commerce-details{grid-template-columns:1fr;gap:16px}.commerce-stories .commerce-detail{padding:24px}.commerce-stories .commerce-detail h3{margin-top:16px}.commerce-stories .commerce-detail p{max-width:65ch}}
 @media(max-width:480px){.commerce-stories .commerce-detail{padding:22px;border-radius:22px}}
 /* Prepainted light moves on its own layer instead of repainting a pointer gradient. */
-.commerce-stories .commerce-details[data-offer-motion=scroll] .commerce-detail{transform:perspective(1000px) translate3d(0,var(--offer-lift,0px),0) rotateX(var(--offer-tilt-x,0deg)) rotateY(var(--offer-tilt-y,0deg))}
-.commerce-stories .commerce-detail>:not(.detail-magic):not(.story-magic-layer){position:relative;z-index:1}
+.commerce-stories .commerce-get{position:relative;isolation:isolate}
+.commerce-stories .commerce-details[data-offer-motion=scroll] .commerce-detail,.commerce-stories .commerce-get[data-offer-motion=scroll]{transform:perspective(1000px) translate3d(0,var(--offer-lift,0px),0) rotateX(var(--offer-tilt-x,0deg)) rotateY(var(--offer-tilt-y,0deg))}
+.commerce-stories :is(.commerce-detail,.commerce-get)>:not(.detail-magic):not(.story-magic-layer){position:relative;z-index:1}
 .commerce-stories .detail-magic{position:absolute;inset:0;z-index:0;border-radius:inherit;overflow:hidden;pointer-events:none;opacity:var(--offer-pointer-light,0)}
 .commerce-stories .detail-magic-light{position:absolute;inset:0;background:radial-gradient(ellipse at center,color-mix(in srgb,var(--theme-accent,var(--accent)) 22%,transparent),transparent 70%);transform:translate3d(calc(var(--offer-pointer-x,50%) - 50%),calc(var(--offer-pointer-y,50%) - 50%),0) scale(1.5)}
-.commerce-stories .commerce-detail::after{content:'';position:absolute;inset:-1px;z-index:0;border-radius:inherit;border:1px solid color-mix(in srgb,var(--theme-accent,var(--accent)) 48%,transparent);box-shadow:0 12px 32px color-mix(in srgb,var(--theme-accent,var(--accent)) 10%,transparent),inset 0 0 22px color-mix(in srgb,var(--theme-accent,var(--accent)) 5%,transparent);pointer-events:none;opacity:var(--offer-pointer-light,0)}
-.commerce-stories .commerce-details[data-offer-tilt=active] .commerce-detail{will-change:transform}
-.commerce-stories .commerce-details[data-offer-tilt=active] .detail-magic,.commerce-stories .commerce-details[data-offer-tilt=active] .commerce-detail::after{will-change:opacity}
-.commerce-stories .commerce-details[data-offer-tilt=active] .detail-magic-light{will-change:transform}
-:root[data-motion=reduced] .commerce-stories .commerce-detail{transform:none!important}
-:root[data-motion=reduced] .commerce-stories .detail-magic,:root[data-motion=reduced] .commerce-stories .commerce-detail::after{display:none}
-@media(prefers-reduced-motion:reduce),(hover:none),(pointer:coarse){.commerce-stories .commerce-detail{transform:none!important}.commerce-stories .detail-magic,.commerce-stories .commerce-detail::after{display:none}}
+.commerce-stories :is(.commerce-detail,.commerce-get)::after{content:'';position:absolute;inset:-1px;z-index:0;border-radius:inherit;border:1px solid color-mix(in srgb,var(--theme-accent,var(--accent)) 48%,transparent);box-shadow:0 12px 32px color-mix(in srgb,var(--theme-accent,var(--accent)) 10%,transparent),inset 0 0 22px color-mix(in srgb,var(--theme-accent,var(--accent)) 5%,transparent);pointer-events:none;opacity:var(--offer-pointer-light,0)}
+.commerce-stories :is(.commerce-details[data-offer-tilt=active] .commerce-detail,.commerce-get[data-offer-tilt=active]){will-change:transform}
+.commerce-stories [data-offer-tilt=active] .detail-magic,.commerce-stories :is(.commerce-details[data-offer-tilt=active] .commerce-detail,.commerce-get[data-offer-tilt=active])::after{will-change:opacity}
+.commerce-stories [data-offer-tilt=active] .detail-magic-light{will-change:transform}
+:root[data-motion=reduced] .commerce-stories :is(.commerce-detail,.commerce-get){transform:none!important}
+:root[data-motion=reduced] .commerce-stories .detail-magic,:root[data-motion=reduced] .commerce-stories :is(.commerce-detail,.commerce-get)::after{display:none}
+@media(prefers-reduced-motion:reduce),(hover:none),(pointer:coarse){.commerce-stories :is(.commerce-detail,.commerce-get){transform:none!important}.commerce-stories .detail-magic,.commerce-stories :is(.commerce-detail,.commerce-get)::after{display:none}}
 /* Two enchanted tickets; text and buttons stay above the decorative layers. */
 .commerce-stories .offer-grid[data-offer-motion]{isolation:isolate}
 .commerce-stories .offer-grid[data-offer-motion=scroll] .offer-card{
