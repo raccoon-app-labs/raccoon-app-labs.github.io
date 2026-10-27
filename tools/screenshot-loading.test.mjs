@@ -27,10 +27,10 @@ test('every official screenshot has valid local lossless previews and an origina
   }
 });
 
-test('all catalog previews start immediately and never request the full-size file',()=>{
+test('catalog placeholders are instant and defer nearby previews without full-size requests',()=>{
   const source=read('index.html'),images=[...source.matchAll(/<img\b[^>]*data-store-screen=[^>]*>/g)].map(m=>attrs(m[0]));
   assert.equal(images.length,14);
-  for(const image of images){assert.equal(image.loading,'eager');assert.doesNotMatch(image.src,/-hq\.webp/);assert.equal(image.srcset,undefined);assert.ok(Number(image.width)>0&&Number(image.height)>0);}
+  for(const image of images){assert.equal(image.loading,'lazy');assert.match(image.src,/^data:image\/webp;base64,/);assert.match(image['data-screen-src'],/^\/assets\/screens\//);assert.doesNotMatch(image['data-screen-src'],/-hq\.webp/);assert.equal(image.srcset,undefined);assert.ok(Number(image.width)>0&&Number(image.height)>0);}
   assert.equal((source.match(/class="screenshot-original"/g)||[]).length,14);
 });
 
@@ -39,7 +39,7 @@ test('both language versions include every current store screenshot',()=>{
     const source=read(`${prefix}/${slug}/index.html`),gallery=source.match(/<div class="gallery"[^>]*>(.*?)<\/div>/s)?.[1];
     assert.ok(gallery,slug);const images=[...gallery.matchAll(/<img\b[^>]*>/g)].map(m=>attrs(m[0]));
     assert.equal(images.length,app.screens.length,`${prefix}/${slug}`);
-    images.forEach((image,i)=>{assert.equal(image.src,app.screens[i].variants[0].src);assert.doesNotMatch(image.srcset,/-hq\.webp/);assert.equal(Number(image['data-store-screen']),i+1);});
+    images.forEach((image,i)=>{assert.equal(image['data-screen-src'],app.screens[i].variants[0].src);assert.equal(image.srcset,undefined);assert.match(image.src,/^data:image\/webp;base64,/);assert.equal(Number(image['data-store-screen']),i+1);});
     assert.doesNotMatch(source,/<a\b[^>]*class="screenshot-original"[^>]*>\s*<a\b/);
   }
 });
@@ -54,10 +54,51 @@ test('switching page language preserves screenshot URLs and responsive candidate
   assert.deepEqual(images,[{src:'preview.webp?v=abc',srcset:'preview.webp?v=abc 320w'}]);assert.equal(sandbox.root.lang,'ru');
 });
 
-test('a failed responsive request falls back to the small local preview and becomes ready',()=>{
-  const listeners={},attributes={src:'small.webp',srcset:'small.webp 320w, medium.webp 640w'};
-  const image={dataset:{screenFallback:'small.webp'},naturalWidth:0,closest:()=>null,getAttribute:name=>attributes[name],removeAttribute:name=>delete attributes[name],addEventListener:(name,fn)=>listeners[name]=fn};
-  vm.runInNewContext(read('assets/screenshot-loading.js'),{window:{},document:{documentElement:{lang:'ru'},querySelectorAll:selector=>selector.startsWith('img')?[image]:[]}});
-  listeners.error();assert.equal(image.src,'small.webp');assert.equal(image.loading,'eager');assert.equal(attributes.srcset,undefined);
-  image.naturalWidth=320;listeners.load();assert.equal(image.dataset.imageState,'ready');
+
+function loader(count=5){
+  const buttons=[],images=[],observations=[];
+  for(let i=0;i<count;i++){
+    const listeners={};let resolveDecode;
+    const figure={append:button=>buttons.push(button)};
+    images.push({dataset:{screenSrc:`small-${i}.webp`},naturalWidth:0,complete:false,
+      closest:()=>figure,getAttribute:()=>'',getBoundingClientRect:()=>({top:100+i*20,height:100,left:0,right:100}),
+      addEventListener:(event,fn)=>listeners[event]=fn,
+      decode:()=>new Promise(resolve=>{resolveDecode=resolve;}),
+      receive(){this.naturalWidth=320;listeners.load();},decodeDone(){resolveDecode();},fail(){listeners.error();}});
+  }
+  const sandbox={window:{IntersectionObserver:true,innerHeight:800,innerWidth:1200},
+    IntersectionObserver:class{constructor(callback){observations.push(callback);}observe(){}unobserve(){}},
+    document:{documentElement:{lang:'ru'},querySelectorAll:selector=>selector==='img[data-store-screen]'?images:[],createElement:()=>({dataset:{},addEventListener(event,fn){this[event]=fn;},remove(){}})}};
+  vm.runInNewContext(read('assets/screenshot-loading.js'),sandbox);
+  return {images,buttons,nearby:()=>observations[0](images.map(target=>({target,isIntersecting:true})))};
+}
+
+test('only two nearby screenshot requests run together and incomplete decodes stay hidden',async()=>{
+  const {images,nearby}=loader();assert.ok(images.every(i=>i.dataset.imageState==='waiting'));
+  nearby();assert.equal(images.filter(i=>i.dataset.imageState==='loading').length,2);
+  assert.equal(images.filter(i=>i.dataset.imageState==='queued').length,3);
+  images[0].receive();assert.equal(images[0].dataset.imageState,'loading','the full bitmap must decode before reveal');
+  images[0].decodeDone();await new Promise(setImmediate);
+  assert.equal(images[0].dataset.imageState,'ready');assert.ok(images.slice(2).some(i=>i.dataset.imageState==='loading'));
+  assert.equal(images.filter(i=>i.dataset.imageState==='loading').length,2);
+});
+
+test('a failed image releases the queue, retains the complete placeholder and can retry',async()=>{
+  const {images,buttons,nearby}=loader(3);nearby();images[0].fail();
+  assert.equal(images[0].dataset.imageState,'error');assert.equal(images[2].dataset.imageState,'loading');assert.equal(buttons.length,1);
+  buttons[0].click();assert.equal(images[0].dataset.imageState,'queued');
+  images[1].receive();images[1].decodeDone();await new Promise(setImmediate);
+  assert.match(images[0].src,/small-0\.webp\?retry=1/);
+  images[0].receive();images[0].decodeDone();await new Promise(setImmediate);assert.equal(images[0].dataset.imageState,'ready');
+});
+
+test('product pages use a local font and keep gallery originals behind explicit links',()=>{
+  for(const slug of Object.keys(manifest.apps))for(const prefix of ['apps','en/apps']){
+    const source=read(`${prefix}/${slug}/index.html`);
+    assert.match(source,/href="\/assets\/fonts\/manrope\.css/);
+    assert.doesNotMatch(source,/<img[^>]+src="[^"]*-hq\.webp/);
+    assert.doesNotMatch(source,/<img[^>]+srcset=/);
+  }
+  assert.doesNotMatch(read('assets/product-pages.css'),/fonts\.googleapis/);
+  assert.doesNotMatch(read('index.html'),/@import[^;]*fonts\.googleapis/);
 });

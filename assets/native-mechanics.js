@@ -2,6 +2,8 @@
 (() => {
   'use strict';
   const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
+  const display={"town-hall.webp":"/assets/display/demo/town-hall.webp?v=d168044e2df7","house.webp":"/assets/display/demo/house.webp?v=08bc93c97782","tree.webp":"/assets/display/demo/tree.webp?v=10dd46947c03","cat.webp":"/assets/display/demo/cat.webp?v=30a846ffce4b","inventory.webp":"/assets/display/demo/inventory.webp?v=00da303148e7","basket.webp":"/assets/display/demo/basket.webp?v=ec2428f93c6e","omelet.webp":"/assets/display/demo/omelet.webp?v=1408437f86fa","soup.webp":"/assets/display/demo/soup.webp?v=bf8cbeeed60a","pasta.webp":"/assets/display/demo/pasta.webp?v=89e8de02698b"};
+  const demoAsset=name=>display[name] || '/assets/demo/'+name;
   const en = document.documentElement.lang === 'en', t = (ru, english) => en ? english : ru;
   const reduced = matchMedia('(prefers-reduced-motion: reduce)');
   const motion = (el, frames, duration, options = {}) => reduced.matches ? null : el.animate(frames, {duration, easing:'cubic-bezier(.2,0,0,1)', ...options});
@@ -71,14 +73,15 @@
       'Однажды ночью одна звёздочка задрожала и медленно поплыла вниз к земле, оставляя за собой золотой след.',
       'Звёздочка лежала в высокой траве. Она была совсем маленькой и едва светилась. «Я не знаю, как вернуться домой...»'
     ];
-    const frames=pages.map((_,i)=>'/assets/demo/bunny-page-'+(i+1)+'.webp');
+    const frames=pages.map((_,i)=>demoAsset('bunny-page-'+(i+1)+'.webp'));
     const captions=en?['The bunny gazes at the moon','A star falls with a golden trail','The bunny finds the star in the grass']:['Зайчик смотрит на луну','Звёздочка падает с золотым следом','Зайчик находит звёздочку в траве'];
     let index=0,speaking=false,generation=0,active=0,transitions=[];
     const prev=$('[data-story-prev]'),next=$('[data-story-next]'),listen=$('[data-story-listen]'),text=$('[data-story-text]'),art=$('.reader-art'),reader=$('.story-book');
     const incoming=art.cloneNode();incoming.removeAttribute('id');incoming.style.opacity='0';incoming.setAttribute('aria-hidden','true');art.after(incoming);
     const images=[art,incoming];
     // Warm the next frames. The previous image stays visible until the new bitmap is decoded.
-    const prepared=frames.map(src=>{const image=new Image();image.src=src;return image.decode().catch(()=>null);});
+    const prepared=new Map();
+    function prepare(index){if(!prepared.has(index)){const image=new Image();image.fetchPriority='low';image.src=frames[index];prepared.set(index,image.decode().catch(()=>null));}return prepared.get(index);}
     const stop=()=>{if('speechSynthesis'in window)speechSynthesis.cancel();speaking=false;listen.textContent=t('▶ Послушать','▶ Listen');};
     const decelerateFrames=(offsetX,offsetY,opacity)=>Array.from({length:31},(_,i)=>{const p=i/30,eased=1-(1-p)*(1-p);return{offset:p,opacity:opacity+(1-opacity)*eased,transform:'translate('+offsetX*(1-eased)+'px,'+offsetY*(1-eased)+'px)'};});
     async function turn(dir){
@@ -86,7 +89,7 @@
       stop();index=target;const revision=++generation;
       prev.disabled=index===0;next.disabled=index===pages.length-1;
       const oldImage=images[active],newImage=images[1-active];
-      await prepared[target];if(revision!==generation)return;
+      await prepare(target);if(revision!==generation)return;
       newImage.src=frames[target];newImage.alt=captions[target];
       try{await newImage.decode();}catch{if(revision===generation)$('[data-story-status]').textContent=t('Не удалось загрузить иллюстрацию. Попробуйте ещё раз.','The illustration could not load. Please try again.');return;}
       if(revision!==generation)return;
@@ -120,11 +123,11 @@
     document.addEventListener('visibilitychange',()=>{if(document.hidden)stop();});
   }
   if ($('.meal-lab')) {
-    const sheet=$('.meal-picker'),slots=$$('[data-meal-slot]'), meals=new Map(),titles={omelet:t('Омлет с помидорами','Tomato omelet'),pasta:t('Паста с помидорами','Tomato pasta'),salad:t('Салат с яйцом','Egg salad')};
-    const ingredients={omelet:{eggs:1,tomatoes:100},pasta:{pasta:80,tomatoes:100},salad:{eggs:1,tomatoes:100,cucumber:100}};
-    const names={eggs:t('Яйца','Eggs'),tomatoes:t('Помидоры','Tomatoes'),pasta:t('Паста','Pasta'),cucumber:t('Огурцы','Cucumbers')};let active,portions=2;
+    const sheet=$('.meal-picker'),slots=$$('[data-meal-slot]'), meals=new Map(),titles={omelet:t('Омлет с помидорами','Tomato omelet'),pasta:t('Паста с помидорами','Tomato pasta'),soup:t('Овощной суп','Vegetable soup')};
+    const ingredients={omelet:{eggs:1,tomatoes:100},pasta:{pasta:80,tomatoes:100},soup:{potatoes:100,carrots:50,tomatoes:50}};
+    const names={eggs:t('Яйца','Eggs'),tomatoes:t('Помидоры','Tomatoes'),pasta:t('Паста','Pasta'),potatoes:t('Картофель','Potatoes'),carrots:t('Морковь','Carrots')};let active,portions=2;
     const savePortions=document.createElement('button');savePortions.type='button';savePortions.className='demo-button';savePortions.hidden=true;savePortions.textContent=t('Сохранить изменения','Save changes');$('.portion-control').after(savePortions);savePortions.addEventListener('click',()=>{const existing=meals.get(active);if(existing){meals.set(active,{...existing,portions});render();closeSheet(sheet);}});
-    function render(){slots.forEach(b=>{const meal=meals.get(b.dataset.mealSlot);b.classList.toggle('has-meal',!!meal);const label=b.querySelector('[data-meal-label]');label.replaceChildren();if(meal){const name=document.createElement('span');name.textContent=meal.custom||titles[meal.dish];if(meal.custom)name.dataset.noL10n='';label.append(name,document.createTextNode(` · ${meal.portions} ${t('порц.','servings')}`));}else label.textContent=t('＋ Добавить','＋ Add');const img=b.querySelector('img');if(meal?.dish)img.src=`/assets/demo/${meal.dish}.webp`;img.style.opacity=meal?.dish?'1':'.28';});$('[data-grocery-preview]').textContent=t('План изменён. Соберите продукты из меню.','Plan updated. Build groceries from your menu.');}
+    function render(){slots.forEach(b=>{const meal=meals.get(b.dataset.mealSlot);b.classList.toggle('has-meal',!!meal);const label=b.querySelector('[data-meal-label]');label.replaceChildren();if(meal){const name=document.createElement('span');name.textContent=meal.custom||titles[meal.dish];if(meal.custom)name.dataset.noL10n='';label.append(name,document.createTextNode(` · ${meal.portions} ${t('порц.','servings')}`));}else label.textContent=t('＋ Добавить','＋ Add');const img=b.querySelector('img');if(meal?.dish)img.src=demoAsset(meal.dish+'.webp');img.style.opacity=meal?.dish?'1':'.28';});$('[data-grocery-preview]').textContent=t('План изменён. Соберите продукты из меню.','Plan updated. Build groceries from your menu.');}
     function mode(value){$('[data-dish-mode]').hidden=value!=='dish';$('[data-text-mode]').hidden=value!=='text';$$('[data-meal-mode]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.mealMode===value)));}
     slots.forEach(b=>b.addEventListener('click',()=>{active=b.dataset.mealSlot;const meal=meals.get(active);portions=meal?.portions||2;setPortions(portions);$('#meal-picker-title').textContent=b.querySelector('small').textContent;$('[data-meal-date]').textContent=b.closest('.native-day-card').querySelector('strong').textContent;$('[data-custom-meal]').value=meal?.custom||'';$('[data-meal-search]').value='';$$('[data-pick-dish]').forEach(x=>x.hidden=false);$('[data-dish-empty]').hidden=true;$('.meal-existing').hidden=!meal;$('[data-repeat-meal]').disabled=active.startsWith('6-');mode(meal?.custom?'text':'dish');openSheet(sheet);}));
     $$('[data-meal-mode]').forEach(b=>b.addEventListener('click',()=>mode(b.dataset.mealMode)));
@@ -158,7 +161,7 @@
     const action=document.createElement('button');action.type='button';action.className='demo-button city-confirm';action.textContent=t('✓ Поставить','✓ Place');action.hidden=true;map.after(action);
     function coords(e){const r=map.getBoundingClientRect();return{x:Math.max(28,Math.min(r.width-28,e.clientX-r.left)),y:Math.max(105,Math.min(r.height-18,e.clientY-r.top))};}
     function move(obj,p){obj.x=p.x;obj.y=p.y;obj.el.style.left=`${p.x/map.clientWidth*100}%`;obj.el.style.top=`${p.y/map.clientHeight*100}%`;}
-    function create(p){const el=document.createElement('button');el.type='button';el.className='city-object';const img=new Image();img.src=`/assets/demo/${tool}.webp`;img.alt=t(tool==='house'?'Домик':'Дерево',tool==='house'?'House':'Tree');el.append(img);el.setAttribute('aria-label',t('Зажмите, чтобы передвинуть. Стрелки — точная позиция.','Hold to move. Arrow keys fine-tune the position.'));map.append(el);const obj={el,tool,x:0,y:0,placed:false};move(obj,p);objects.push(obj);
+    function create(p){const el=document.createElement('button');el.type='button';el.className='city-object';const img=new Image();img.src=demoAsset(tool+'.webp');img.alt=t(tool==='house'?'Домик':'Дерево',tool==='house'?'House':'Tree');el.append(img);el.setAttribute('aria-label',t('Зажмите, чтобы передвинуть. Стрелки — точная позиция.','Hold to move. Arrow keys fine-tune the position.'));map.append(el);const obj={el,tool,x:0,y:0,placed:false};move(obj,p);objects.push(obj);
       el.addEventListener('pointerdown',e=>{e.stopPropagation();if(!obj.placed){drag=obj;el.setPointerCapture(e.pointerId);return;}holdTimer=setTimeout(()=>{drag=obj;obj.placed=false;el.classList.add('placing');el.setPointerCapture(e.pointerId);action.hidden=false;},760);});
       el.addEventListener('pointermove',e=>{if(drag===obj)move(obj,coords(e));});['pointerup','pointercancel'].forEach(n=>el.addEventListener(n,()=>{clearTimeout(holdTimer);drag=null;}));
       el.addEventListener('keydown',e=>{const dirs={ArrowLeft:[-5,0],ArrowRight:[5,0],ArrowUp:[0,-5],ArrowDown:[0,5]};if(dirs[e.key]){e.preventDefault();obj.placed=false;el.classList.add('placing');action.hidden=false;move(obj,{x:Math.max(28,Math.min(map.clientWidth-28,obj.x+dirs[e.key][0])),y:Math.max(105,Math.min(map.clientHeight-18,obj.y+dirs[e.key][1]))});}else if(e.key==='Enter'&&obj.placed){obj.placed=false;el.classList.add('placing');action.hidden=false;}});el.classList.add('placing');action.hidden=false;return obj;

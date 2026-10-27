@@ -15,7 +15,7 @@
       carrier.style.left=50+Math.cos(angle)*45+'%';carrier.style.top=50+Math.sin(angle)*45+'%';
       const link=document.createElement('a');link.href='/apps/'+slug+'/';
       link.setAttribute('aria-label',document.querySelector('.app-card.'+name+' h3')?.textContent || name);
-      const icon=document.createElement('img');icon.src='/assets/apps/'+name+'-icon.webp';icon.width=31;icon.height=31;icon.alt='';link.append(icon);carrier.append(link);satellites.append(carrier);
+      const icon=document.createElement('img');icon.src=({"neon":"/assets/display/apps/neon-icon.webp?v=99747775324b"})[name] || '/assets/apps/'+name+'-icon.webp';icon.width=31;icon.height=31;icon.alt='';link.append(icon);carrier.append(link);satellites.append(carrier);
     });
     visual.append(rings,satellites,pulse);
     let burstTimer;

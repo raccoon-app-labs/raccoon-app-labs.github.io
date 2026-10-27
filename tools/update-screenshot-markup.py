@@ -13,14 +13,14 @@ IMAGE_RE=re.compile(r'<img\b[^>]*\bsrc="([^"]*/assets/screens/([^/]+)/[^/]+/(\d+
 
 def render_image(old: str, screen: dict, *, catalog: bool, hero: bool) -> str:
     small,medium=screen['variants']
-    srcset='' if catalog else ', '.join(f"{item['src']} {item['width']}w" for item in (small,medium))
+    srcset='' # Full originals open on demand, never automatically for gallery DPR.
     alt=re.search(r'\balt="([^"]*)"',old)
     alt=unescape(alt.group(1)) if alt else ''
     class_name=re.search(r'\bclass="([^"]*)"',old)
     classes=f' class="{class_name.group(1)}"' if class_name else ''
     is_front='fan-front' in classes
-    # The catalog requests its small previews immediately, even far below the fold.
-    loading='eager' if catalog or hero else 'lazy'
+    # Only the front hero competes for the initial connection.
+    loading='eager' if hero and is_front else 'lazy'
     priority='high' if hero and is_front else 'auto'
     if catalog:
         sizes=('(max-width:610px) 88vw, (max-width:980px) 46vw, 555px' if screen['width']>screen['height']
@@ -28,7 +28,9 @@ def render_image(old: str, screen: dict, *, catalog: bool, hero: bool) -> str:
     else:
         sizes='(max-width:760px) 72vw, 320px'
     responsive=f' srcset="{srcset}" sizes="{sizes}"' if srcset else ''
-    return (f'<img{classes} src="{small["src"]}"{responsive} '
+    initial=small['src'] if hero and is_front else screen['placeholder']
+    deferred='' if hero and is_front else f' data-screen-src="{small["src"]}"'
+    return (f'<img{classes} src="{initial}"{deferred}{responsive} '
             f'width="{screen["width"]}" height="{screen["height"]}" alt="{escape(alt,quote=True)}" '
             f'loading="{loading}" decoding="async" fetchpriority="{priority}" '
             f'data-store-screen="{screen["index"]}" data-screen-fallback="{small["src"]}">')
@@ -39,6 +41,7 @@ def main() -> None:
     apps=manifest['apps']
     for path in [ROOT/'index.html', *ROOT.glob('apps/*/index.html'), *ROOT.glob('en/apps/*/index.html')]:
         source=path.read_text(encoding='utf-8')
+        source=re.sub(r'<img\b[^>]*data-screen-src="([^"]*)"[^>]*>', lambda m: re.sub(r'\bsrc="[^"]*"', 'src="'+m[1]+'"', m[0], count=1), source)
         if '/assets/screens/' not in source:continue
         catalog=path==ROOT/'index.html'
         slug=None if catalog else path.parent.name
