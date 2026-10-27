@@ -29,12 +29,12 @@
   function refreshStyles(){for(const run of runs)run.styleDirty=true;queue();}
   function settle(rebuild=true){clearTimeout(settleTimer);settleTimer=setTimeout(rebuild?dirty:refreshStyles,520);}
   function layerFor(parent){
-    const host=parent.closest('.commerce-stories .offer-card,.magic-book-art,dialog,[popover]') || document.body;
+    const host=parent.closest('.commerce-stories .offer-card,.commerce-stories .commerce-detail,.magic-book-art,dialog,[popover]') || document.body;
     let layer=layers.get(host);
     if(!layer?.node.isConnected){
       const node=document.createElement('div');node.className='story-magic-layer';
       node.setAttribute('aria-hidden','true');node.setAttribute('inert','');node.dataset.noL10n='';
-      const local=host.matches('.commerce-stories .offer-card,.magic-book-art');
+      const local=host.matches('.commerce-stories .offer-card,.commerce-stories .commerce-detail,.magic-book-art');
       if(local)node.classList.add('story-magic-layer-local');
       else if(host===document.body)node.classList.add('story-magic-layer-page');
       else if(host.matches('dialog'))node.classList.add('story-magic-layer-scrolled');
