@@ -1,21 +1,26 @@
 import fs from 'node:fs';
 import {apps} from './app-content.mjs';
+const screens=JSON.parse(fs.readFileSync('assets/screens/manifest.json','utf8')).apps;
 let pages=0;
 const errors=[];
 for(const a of apps)for(const lang of ['ru','en']){
   const file=`${lang==='en'?'en/':''}apps/${a.slug}/index.html`;
   const html=fs.readFileSync(file,'utf8');
   const check=(condition,message)=>{if(!condition)errors.push(`${file}: ${message}`);};
-  check(html.includes(`<html lang="${lang}">`),'language');
+  check(new RegExp(`<html\\b[^>]*\\blang="${lang}"`).test(html),'language');
   check((html.match(/<h1>/g)||[]).length===1,'one H1');
   check(html.includes('rel="canonical"'),'canonical');
   check(html.includes('hreflang="en"')&&html.includes('hreflang="ru"'),'alternates');
   try{JSON.parse(html.match(/<script type="application\/ld\+json">(.*?)<\/script>/s)[1]);}catch{errors.push(`${file}: invalid JSON-LD`);}
   for(const match of html.matchAll(/(?:src|href)="(\/assets\/[^"?]+)/g))check(fs.existsSync('.'+match[1]),`missing ${match[1]}`);
-  const screenshots=[...html.matchAll(/src="(\/assets\/screens\/[^"?]+)/g)].map(match=>match[1]);
-  check(screenshots.length>0&&screenshots.every(src=>src.endsWith('-hq.webp')),'use full-resolution screenshots, not store thumbnails');
-  const count=lang==='en'&&a.enCount?a.enCount:a.ruCount;
-  check((html.match(/<figure class="shot /g)||[]).length===count,'gallery count');
+  const gallery=html.match(/<div class="gallery"[^>]*>(.*?)<\/div>/s)?.[1]||'';
+  const screenshots=[...gallery.matchAll(/data-screen-src="(\/assets\/screens\/[^"?]+)/g)].map(match=>match[1]);
+  check(screenshots.length===screens[a.slug].screens.length,'current official gallery count');
+  check(screenshots.every(src=>!src.endsWith('-hq.webp')),'load display previews');
+  const originals=[...gallery.matchAll(/href="(\/assets\/screens\/[^"?]+-hq.webp)/g)];
+  check(originals.length===screenshots.length,'full-resolution originals remain available');
+  check(html.includes('/assets/product-core.css?'),'shared product CSS');
+  check(html.includes('data-lazy-src="/assets/native-mechanics.js?'),'demo initializes near its section');
   pages++;
 }
 console.log(JSON.stringify({pages,errors},null,2));

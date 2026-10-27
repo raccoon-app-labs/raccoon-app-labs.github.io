@@ -37,12 +37,23 @@
   $$('[data-carousel]').forEach(carousel => {
     const track = carousel.querySelector('[data-carousel-track]'), shots = [...track.children];
     const prev = carousel.querySelector('[data-carousel-prev]'), next = carousel.querySelector('[data-carousel-next]');
-    let current = 0;
-    const update = () => { current = shots.reduce((best, shot, i) => Math.abs(shot.offsetLeft - shots[0].offsetLeft - track.scrollLeft) < Math.abs(shots[best].offsetLeft - shots[0].offsetLeft - track.scrollLeft) ? i : best, 0); carousel.querySelector('[data-carousel-count]').textContent = `${current + 1} / ${shots.length}`; prev.disabled = track.scrollLeft <= 2; next.disabled = track.scrollLeft + track.clientWidth >= track.scrollWidth - 2; };
+    let current = 0, frame = 0, positions = [];
+    const counter = carousel.querySelector('[data-carousel-count]');
+    const update = () => {
+      frame = 0;
+      const left = track.scrollLeft, atEnd = left + track.clientWidth >= track.scrollWidth - 2;
+      current = positions.reduce((best, value, i) => Math.abs(value - left) < Math.abs(positions[best] - left) ? i : best, 0);
+      const text = `${current + 1} / ${shots.length}`;
+      if (counter.textContent !== text) counter.textContent = text;
+      if (prev.disabled !== (left <= 2)) prev.disabled = left <= 2;
+      if (next.disabled !== atEnd) next.disabled = atEnd;
+    };
+    const schedule = () => { if (!frame) frame = requestAnimationFrame(update); };
+    const measure = () => { const first = shots[0]?.offsetLeft || 0; positions = shots.map(shot => shot.offsetLeft - first); schedule(); };
     const move = delta => track.scrollTo({left: shots[Math.max(0, Math.min(shots.length - 1, current + delta))].offsetLeft - shots[0].offsetLeft, behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth'});
     prev.addEventListener('click', () => move(-1)); next.addEventListener('click', () => move(1));
-    track.addEventListener('scroll', update, {passive: true});
+    track.addEventListener('scroll', schedule, {passive: true});
     track.addEventListener('keydown', e => { if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') { e.preventDefault(); move(e.key === 'ArrowRight' ? 1 : -1); } });
-    new ResizeObserver(update).observe(track); update();
+    new ResizeObserver(measure).observe(track); measure();
   });
 })();

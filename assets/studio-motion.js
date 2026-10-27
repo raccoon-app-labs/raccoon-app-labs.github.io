@@ -26,7 +26,7 @@
   const reveal=new IntersectionObserver(entries=>{for(const entry of entries)entry.target.classList.toggle('is-awake',entry.isIntersecting);},{threshold:.12});sections.forEach(n=>reveal.observe(n));
   const canvas=document.createElement('canvas');canvas.className='studio-field';canvas.setAttribute('aria-hidden','true');document.body.prepend(canvas);const ctx=canvas.getContext('2d');if(!ctx)return;
   let width=1,height=1,frame=0,last=0,time=0,burst=0,closed=false,pointer={x:-1000,y:-1000};
-  const stars=Array.from({length:80},(_,i)=>({x:((i*137.51)%997)/997,y:((i*253.79)%991)/991,phase:i*2.399,accent:i%12===0,size:i%12===0?1.45:.75+(i%3)*.14}));
+  const stars=Array.from({length:88},(_,i)=>({x:((i*137.51)%997)/997,y:((i*253.79)%991)/991,phase:i*2.399,accent:i%12===0,size:i%12===0?1.45:.75+(i%3)*.14}));
   const colors=()=>root.dataset.theme==='light'?['111,99,142','87,123,117']:['175,172,200','146,176,172'];
   let glowKey='',glows=[];
   function glowSprites(palette){
@@ -48,14 +48,14 @@
     const palette=colors(),glow=glowSprites(palette),scroll=scrollY*.025,sweepX=(time*.1)%1.4-.2;
     const points=stars.map((s,i)=>({x:s.x*width+Math.sin(time*.18+s.phase)*10,y:(s.y*height+scroll*(i%2?1:-1)+height*20)%height,s}));
     for(let i=0;i<points.length;i++){
-      const p=points[i],distance=Math.hypot(p.x-pointer.x,p.y-pointer.y),near=Math.max(0,1-distance/180);
+      const p=points[i],distance=Math.hypot(p.x-pointer.x,p.y-pointer.y),near=Math.max(0,1-distance/195);
       const twinkle=.5+.5*Math.sin(time*.7+p.s.phase),sweep=Math.exp(-(((p.x/width-sweepX)/.22)**2));
-      const alpha=.29+twinkle*.1+(p.s.accent ? .08 : 0)+near*.12+sweep*.035+burst*.025;
-      const radius=p.s.size+twinkle*.06+near*.18+burst*.12;
+      const alpha=.29+twinkle*.1+(p.s.accent ? .08 : 0)+near*.16+sweep*.035+burst*.025;
+      const radius=p.s.size+twinkle*.06+near*.25+burst*.12;
       // Mostly crisp pinpoints; only a few accents receive a restrained halo.
       if(p.s.accent||near>.45){
-        const halo=4+p.s.size*1.5+near*2;
-        ctx.globalAlpha=.12+twinkle*.04+near*.08;ctx.drawImage(glow[i%2],p.x-halo,p.y-halo,halo*2,halo*2);ctx.globalAlpha=1;
+        const halo=4+p.s.size*1.5+near*2.7;
+        ctx.globalAlpha=.12+twinkle*.04+near*.11;ctx.drawImage(glow[i%2],p.x-halo,p.y-halo,halo*2,halo*2);ctx.globalAlpha=1;
       }
       ctx.fillStyle=`rgba(${palette[i%2]},${alpha})`;ctx.beginPath();ctx.arc(p.x,p.y,radius,0,Math.PI*2);ctx.fill();
       for(let j=i+1;j<Math.min(i+6,points.length);j++){

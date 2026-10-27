@@ -41,7 +41,7 @@
   const reduced = () => motion.matches || document.documentElement.dataset.motion === 'reduced';
   const textState = new WeakMap(), attributeState = new WeakMap();
   const ownedAnimations = new Set();
-  let code = 'en', changing = false;
+  let code = 'en', changing = false, languageRequest = 0;
   const templates = Object.keys(data.en).filter(key => /\{\w+\}/u.test(key))
     .sort((a,b) => b.replace(/\{\w+\}/gu,'').length-a.replace(/\{\w+\}/gu,'').length).map(key => {
     const names = [];
@@ -200,15 +200,27 @@
       original.textContent = t('Show original document');
     }
   }
-  function setLanguage(next, persist = false) {
+  async function setLanguage(next, persist = false) {
     if (!valid(next)) return;
+    const request = ++languageRequest;
+    const loader = window.HanziLanguageLoader;
+    if (loader && !loader.ready(next)) {
+      launch.setAttribute('aria-busy','true');
+      try { await loader.load(next); }
+      catch { if (request === languageRequest) announce.textContent = code === 'ru' ? 'Не удалось загрузить язык. Попробуйте ещё раз.' : 'Could not load this language. Please try again.'; return; }
+      finally { if (request === languageRequest) launch.removeAttribute('aria-busy'); }
+      if (request !== languageRequest) return;
+    } else launch.removeAttribute('aria-busy');
     code = next; document.documentElement.lang = code; document.documentElement.dir = code === 'ar' ? 'rtl' : 'ltr';
     if (persist) {
       try { localStorage.setItem(storageKey,code); } catch {}
       const url = new URL(location.href); url.searchParams.set('lang',code);
       history.replaceState(history.state,'',url.pathname + url.search + url.hash);
     }
-    changing = true; scan(document); refreshPicker(); changing = false;
+    // Our own text/attribute writes must not feed back into the observer.
+    changing = true; observer.disconnect();
+    try { scan(document); refreshPicker(); }
+    finally { changing = false; observe(); }
     for (const field of document.querySelectorAll('input[type=email],#code')) {
       if (field.validity.customError) field.setCustomValidity(t('Check your email address or six-digit code.'));
     }
@@ -329,11 +341,12 @@
   });
   const observer = new MutationObserver(records => {
     if (changing) return;
-    for (const record of records) {
+    observer.disconnect();
+    try { for (const record of records) {
       if (record.type === 'characterData') text(record.target);
       else if (record.type === 'attributes') attributes(record.target);
       else record.addedNodes.forEach(scan);
-    }
+    } } finally { observe(); }
   });
   window.HanziLocale = Object.freeze({get code() {return code;},t,set:next => setLanguage(next,true),languages:languages.map(([id,name])=>({code:id,name}))});
   const otp = document.getElementById('code');
@@ -347,7 +360,8 @@
     field.addEventListener('invalid', () => field.setCustomValidity(t('Check your email address or six-digit code.')));
     field.addEventListener('input', () => field.setCustomValidity(''));
   }
-  observer.observe(document,{subtree:true,childList:true,characterData:true,attributes:true,attributeFilter:[...attrs,'href']});
+  function observe() { observer.observe(document,{subtree:true,childList:true,characterData:true,attributes:true,attributeFilter:[...attrs,'href']}); }
+  observe();
   setLanguage(initialLanguage());
   addEventListener('popstate', () => setLanguage(initialLanguage()));
   window.addEventListener('resize',positionDropdown,{passive:true});

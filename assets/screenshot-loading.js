@@ -4,18 +4,25 @@
   const queue=[],limit=2;let active=0;
   function drain(){
     while(active<limit && queue.length){
-      queue.sort((a,b)=>{const distance=job=>{const r=job.image.getBoundingClientRect();return Math.abs(r.top+r.height/2-window.innerHeight/2)+Math.max(0,r.left-window.innerWidth,r.right<0?-r.right:0);};return distance(a)-distance(b);});
+      // Read each rectangle once, before sorting or writing image state.
+      for(const job of queue){const r=job.image.getBoundingClientRect();job.distance=Math.abs(r.top+r.height/2-window.innerHeight/2)+Math.max(0,r.left-window.innerWidth,r.right<0?-r.right:0);}
+      queue.sort((a,b)=>a.distance-b.distance);
       const job=queue.shift();active++;job.start(()=>{active--;drain();});
     }
   }
   const retryWords={ru:'Не загрузилось · Повторить',en:'Retry image'};
-  // Painted hero art keeps its complete inline preview while sharpening offscreen.
-  for(const image of document.querySelectorAll('img[data-display-src]')){
-    queue.push({image,start(finish){
+  // Keep complete inline art until its own visible section needs a sharper bitmap.
+  const displayImages=[...document.querySelectorAll('img[data-display-src]')];
+  const artObserver=displayImages.length && 'IntersectionObserver' in window?new IntersectionObserver(entries=>{
+    for(const entry of entries)if(entry.isIntersecting){entry.target._loadDisplayArt();artObserver.unobserve(entry.target);}
+  },{rootMargin:'250px 0px'}):null;
+  for(const image of displayImages){
+    image._loadDisplayArt=()=>{queue.push({image,start(finish){
       const next=new Image();next.decoding='async';next.fetchPriority='high';
       next.onload=async()=>{try{await next.decode();image.src=next.src;}catch{}finish();};
       next.onerror=finish;next.src=image.dataset.displaySrc;
-    }});
+    }});drain();};
+    if(artObserver)artObserver.observe(image);else image._loadDisplayArt();
   }
   drain();
   const observer='IntersectionObserver' in window?new IntersectionObserver(entries=>{
