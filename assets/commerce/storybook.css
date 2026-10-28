@@ -16,6 +16,9 @@
 .book-face{position:absolute;inset:0;display:block;border-radius:3px 12px 12px 3px;backface-visibility:hidden;-webkit-backface-visibility:hidden;overflow:hidden;background:#e3cc9e}
 .book-face img{width:100%;height:100%;object-fit:cover;object-position:43% 50%}.book-right-page .book-face img{object-position:27% 50%}
 .face-back{transform:rotateY(180deg);border-radius:12px 3px 3px 12px}.face-back img{object-position:37% 50%}
+/* Keep the owl, moonflower and returning star inside their portrait leaves. */
+.scroll-book img[src*="/bunny-page-6.webp"]{object-position:22% 50%}
+.scroll-book img[src*="/bunny-page-8.webp"],.scroll-book img[src*="/bunny-page-9.webp"]{object-position:55% 50%}
 .book-cover{transform-origin:0 50%;transform:translateZ(10px) rotateY(calc(var(--cover-turn)*-168deg));border:7px solid #c4a275;border-inline-start-width:11px;background:#c4a275}
 .book-cover .face-front{border:1px solid #f1dab0}.cover-seal{position:absolute;right:16px;bottom:22px;display:grid;place-items:center;width:45px;height:45px;border-radius:50%;background:#f1d492;color:#705027;box-shadow:0 0 0 5px #f4d29240;font-size:30px;transform:translateZ(1px);backface-visibility:hidden}
 .cover-inside{display:grid;place-items:center;background:radial-gradient(ellipse at 80% 30%,#5a4b87,#292240);border:2px solid #e7c995;color:#e6c88f}.cover-inside b{font-size:60px;font-weight:400}.cover-inside i{position:absolute;inset:12%;border:1px dashed #d7b98588;border-radius:45%}
