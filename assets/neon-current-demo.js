@@ -254,8 +254,8 @@
     if(paused){ctx.fillStyle='#071427ba';ctx.fillRect(0,0,W,H);ctx.fillStyle='#fff1ba';ctx.font='italic bold 64px sans-serif';ctx.textAlign='center';ctx.fillText(canvasText('ПАУЗА','PAUSED'),540,900);ctx.font='28px sans-serif';ctx.fillText(canvasText('▶ — продолжить забег','▶ — resume the run'),540,970);ctx.textAlign='start';}
     if(dead||complete){ctx.fillStyle='#04091ec9';ctx.fillRect(0,0,W,H);ctx.fillStyle='#e6fbff';ctx.font='bold 44px sans-serif';ctx.textAlign='center';ctx.fillText(dead?canvasText('ЕЩЁ ОДИН ПРЫЖОК?','ONE MORE JUMP?'):canvasText('УЧАСТОК ПРОЙДЕН','SECTION CLEARED'),540,900);ctx.font='28px sans-serif';ctx.fillText(canvasText('↺ — начать заново','↺ — try again'),540,970);ctx.textAlign='start';}
   }
-  function tick(now){if(paused)return;const dt=Math.min(.1,(now-last)/1000);last=now;if(started)accumulator+=dt;else phase+=dt;while(started&&accumulator>=STEP&&!dead&&!complete){physics();accumulator-=STEP;}if(started||now-lastDraw>=1000/30){draw();lastDraw=now;}if(visible&&!paused&&!document.hidden&&(started||!reduced.matches)&&!dead&&!complete)frame=requestAnimationFrame(tick);}
-  function resume(stopHold=true){cancelAnimationFrame(frame);if(stopHold)release();accumulator=0;last=performance.now();if(visible&&!paused&&!document.hidden&&(started||!reduced.matches)&&!dead&&!complete)frame=requestAnimationFrame(tick);}
+  function tick(now){if(paused||document.documentElement.dataset.siteScrolling)return;const dt=Math.min(.1,(now-last)/1000);last=now;if(started)accumulator+=dt;else phase+=dt;while(started&&accumulator>=STEP&&!dead&&!complete){physics();accumulator-=STEP;}if(started||now-lastDraw>=1000/30){draw();lastDraw=now;}if(visible&&!paused&&!document.hidden&&!document.documentElement.dataset.siteScrolling&&(started||!reduced.matches)&&!dead&&!complete)frame=requestAnimationFrame(tick);}
+  function resume(stopHold=true){cancelAnimationFrame(frame);if(stopHold)release();accumulator=0;last=performance.now();if(visible&&!paused&&!document.hidden&&!document.documentElement.dataset.siteScrolling&&(started||!reduced.matches)&&!dead&&!complete)frame=requestAnimationFrame(tick);}
   for(const el of [canvas,root.querySelector('[data-neon-jump]')]){
     el.addEventListener('pointerdown',e=>{e.preventDefault();el.setPointerCapture(e.pointerId);press();});
     for(const event of ['pointerup','pointercancel','lostpointercapture'])el.addEventListener(event,release);
@@ -267,5 +267,6 @@
   root.querySelector('[data-neon-reset]').addEventListener('click',reset);
   new IntersectionObserver(entries=>{visible=entries[0].isIntersecting;if(visible)sharpenArt();resume();}).observe(canvas);
   window.addEventListener('hanzi:languagechange',()=>draw());
+  window.addEventListener('raccoon:scrollstate',()=>resume());
   document.addEventListener('visibilitychange',()=>resume());window.addEventListener('pageshow',()=>resume());window.addEventListener('pagehide',()=>{cancelAnimationFrame(frame);release();});reset();loadPreviews();
 })();

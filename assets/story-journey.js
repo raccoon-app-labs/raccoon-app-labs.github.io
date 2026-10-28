@@ -7,7 +7,7 @@
   const cards=[...document.querySelectorAll('.benefit-card')];cards.forEach((n,i)=>n.style.setProperty('--chapter-index',i));
   const unfold=new IntersectionObserver(entries=>{for(const e of entries)if(e.isIntersecting){e.target.classList.add('is-unfolded');unfold.unobserve(e.target);}},{threshold:.16});cards.forEach(n=>unfold.observe(n));
   let frame=0,closed=false;
-  function draw(){frame=0;if(closed)return;for(const node of chapters){const r=node.getBoundingClientRect();const p=reduced.matches?1:Math.min(1,Math.max(0,(innerHeight-r.top)/Math.min(innerHeight*.7,500)));node.style.setProperty('--chapter-reveal',p.toFixed(3));}}
+  function draw(){frame=0;if(closed)return;const updates=chapters.map(node=>{const r=node.getBoundingClientRect();return[node,(reduced.matches?1:Math.min(1,Math.max(0,(innerHeight-r.top)/Math.min(innerHeight*.7,500)))).toFixed(3)];});for(const [node,value] of updates)if(node.style.getPropertyValue('--chapter-reveal')!==value)node.style.setProperty('--chapter-reveal',value);}
   function schedule(){if(!frame&&!closed)frame=requestAnimationFrame(draw);}
   function headerSize(){root.style.setProperty('--story-header',(header?.offsetHeight||80)+'px');schedule();}
   if(header)new ResizeObserver(headerSize).observe(header);

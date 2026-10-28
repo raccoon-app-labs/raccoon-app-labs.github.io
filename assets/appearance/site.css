@@ -100,3 +100,7 @@
 @media(max-width:520px){:root[data-site-theme=product] .site-header{position:relative;align-items:center;display:flex;gap:12px;flex-wrap:wrap}:root[data-site-theme=product] .site-header>.brand{flex:1;min-width:0}:root[data-site-theme=product] .header-tools{width:100%;justify-content:space-between;gap:10px;flex-wrap:wrap}:root[data-site-theme=portfolio] header>.header-tools{width:100%;flex-wrap:wrap;justify-content:space-between}:root[data-site-theme] .payment-theme-tools{gap:10px;flex-wrap:wrap}}
 @media(prefers-reduced-motion:reduce){:root[data-site-theme] .payment-theme-toggle,:root[data-site-theme] .payment-theme-toggle *{transition:none;rotate:none}}
 :root[data-motion=reduced] .payment-theme-toggle,:root[data-motion=reduced] .payment-theme-toggle *{transition:none;rotate:none}
+
+/* Decorative clocks yield during scrolling and while their hosts are offscreen. */
+[data-motion-visibility=offscreen],[data-motion-visibility=offscreen] *,[data-motion-visibility=offscreen]::before,[data-motion-visibility=offscreen]::after,[data-motion-visibility=offscreen] *::before,[data-motion-visibility=offscreen] *::after{animation-play-state:paused!important}
+:root[data-site-scrolling] .payment-atmosphere *,:root[data-site-scrolling] .visual *,:root[data-site-scrolling] .visual::before,:root[data-site-scrolling] .visual::after{animation-play-state:paused!important}

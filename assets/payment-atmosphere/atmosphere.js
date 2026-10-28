@@ -55,14 +55,15 @@
       layer.dataset.paused=String(paused);
       if(paused){cancelAnimationFrame(frame);frame=0;depth.style.transform=held;}
     }
-    function draw(){frame=0;if(layer.dataset.paused==='true')return;depth.style.transform=`translate3d(${point.x}px,${point.y-Math.min(scrollY,1500)*.018}px,0)`;}
-    function schedule(){if(!frame && layer.dataset.paused!=='true')frame=requestAnimationFrame(draw);}
+    function draw(){frame=0;if(layer.dataset.paused==='true' || root.dataset.siteScrolling)return;depth.style.transform=`translate3d(${point.x}px,${point.y-Math.min(scrollY,1500)*.018}px,0)`;}
+    function schedule(){if(!frame && !root.dataset.siteScrolling && layer.dataset.paused!=='true')frame=requestAnimationFrame(draw);}
     document.addEventListener('pointermove',event=>{
       if(!fine.matches || event.pointerType==='touch' || layer.dataset.paused==='true')return;
       point={x:(event.clientX/innerWidth-.5)*14,y:(event.clientY/innerHeight-.5)*12};schedule();
     },{passive:true});
     document.documentElement.addEventListener('pointerleave',()=>{point={x:0,y:0};schedule();});
     window.addEventListener('scroll',schedule,{passive:true});
+    window.addEventListener('raccoon:scrollstate',()=>{if(root.dataset.siteScrolling){cancelAnimationFrame(frame);frame=0;}else schedule();});
     document.addEventListener('visibilitychange',sync);
     document.addEventListener('focusin',sync);document.addEventListener('focusout',()=>queueMicrotask(sync));
     reduced.addEventListener('change',sync);

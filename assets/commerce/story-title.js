@@ -11,11 +11,11 @@
   let pointer={x:0,y:0,inside:false},sparkPoint={x:0,y:0},hovered=null,selection=false;
   const clamp=(n,min,max)=>Math.min(max,Math.max(min,n));
   const stories=()=>root.dataset.app?root.dataset.app==='stories':root.dataset.paymentAtmosphere==='stories' || root.dataset.siteWorld==='stories' || document.body.hasAttribute('data-story-checkout');
-  const enabled=()=>!closed && !scrolling && !document.hidden && root.clientWidth>0 && innerHeight>0 && stories() && !selection && !motion.matches && root.dataset.motion!=='reduced';
+  const enabled=()=>!closed && !scrolling && !document.hidden && fine.matches && root.clientWidth>0 && innerHeight>0 && stories() && !selection && !motion.matches && root.dataset.motion!=='reduced';
   const internal=node=>(node.nodeType===Node.ELEMENT_NODE?node:node.parentElement)?.closest?.(own);
   function queue(){if(!frame && !closed)frame=requestAnimationFrame(draw);}
   function clearSparks(){for(const spark of sparks){spark.animation.cancel();spark.node.remove();}sparks.clear();}
-  function restore(run){if(run.painted){run.source.removeAttribute('data-painted');run.painted=false;}if(run.group && !run.group.hidden)run.group.hidden=true;}
+  function restore(run){run.moving=false;if(run.painted){run.source.removeAttribute('data-painted');run.painted=false;}if(run.group && !run.group.hidden)run.group.hidden=true;}
   function pause(state='paused'){cancelAnimationFrame(frame);frame=0;lastTime=0;nextTime=0;pointer.inside=false;clearSparks();for(const run of runs)restore(run);root.dataset.storyTypeState=state;}
   function scroll(){
     if(!stories() || closed)return;
@@ -146,7 +146,6 @@
   function draw(now){
     frame=0;clean();if(!enabled()){pause(scrolling?'scrolling':'paused');return;}
     if(nextTime && now+1<nextTime){queue();return;}
-    nextTime=nextTime && now-nextTime<100?nextTime+1000/60:now+1000/60;
     const delta=lastTime?clamp((now-lastTime)/16.667,.25,3):1;lastTime=now;
     for(const node of pending)scan(node);pending.clear();
     const modal=[...document.querySelectorAll('dialog[open]')].at(-1) || null;
@@ -154,6 +153,7 @@
     const viewportWidth=root.clientWidth,nav=document.querySelector('.app-nav')?.getBoundingClientRect();
     for(const run of runs){
       if(!run.visible || (modal && !modal.contains(run.parent))){restore(run);continue;}
+      if(!run.floating && !run.moving && !(pointer.inside && run.parent.contains(hovered))){restore(run);continue;}
       let bounds=rects.get(run.parent);if(!bounds){bounds=run.parent.getBoundingClientRect();rects.set(run.parent,bounds);}
       if(!bounds.width || !bounds.height || bounds.bottom<0 || bounds.top>innerHeight || bounds.right<0 || bounds.left>innerWidth){restore(run);continue;}
       const layer=layerFor(run.parent);if(layer!==run.layer)run.dirty=true;
@@ -193,6 +193,7 @@
       const px=local?(pointer.x-layerBounds.left)/sx-x:(pointer.x-bounds.left)/sx,py=local?(pointer.y-layerBounds.top)/sy-y:(pointer.y-bounds.top)/sy;
       const time=now/1000,amplitude=run.floating?clamp(run.size*.032,.22,2.7):0,radius=clamp(run.size*2.2,48,170),pushLimit=clamp(run.size*.125,.8,8);
       const damp=Math.pow(.78,delta),angleEase=1-Math.pow(.86,delta);
+      run.moving=false;
       for(const cell of run.cells){
         const dx=cell.left+cell.width/2-px,dy=cell.top+cell.height*.55-py;
         const nearby=pointer.inside && Math.abs(dx)<radius && Math.abs(dy)<radius;
@@ -206,19 +207,20 @@
         const angle=idle*(run.size>=28?.45:.2)+clamp(dx/radius,-1,1)*influence*(run.size>=28?3:1.1);
         cell.angle+=(angle-cell.angle)*angleEase;
         if(!run.floating && !influence && Math.max(Math.abs(cell.x),Math.abs(cell.y),Math.abs(cell.vx),Math.abs(cell.vy),Math.abs(cell.angle))<.01)cell.x=cell.y=cell.vx=cell.vy=cell.angle=0;
+        if(influence || Math.max(Math.abs(cell.x),Math.abs(cell.y),Math.abs(cell.vx),Math.abs(cell.vy),Math.abs(cell.angle))>=.01)run.moving=true;
         const transform=`translate3d(${cell.x.toFixed(2)}px,${cell.y.toFixed(2)}px,0) rotate(${cell.angle.toFixed(2)}deg)`;
         if(cell.transform!==transform){cell.node.style.transform=transform;cell.transform=transform;}
-        const glow=Math.round(((run.floating ? .12+(idle+1)*.055 : 0)+influence*.8)*24)/24;
+        const glow=Math.round(((run.floating ? .16 : 0)+influence*.8)*24)/24;
         if(glow!==cell.glow){cell.glow=glow;const scale=clamp(run.size/55,.3,1);
           cell.node.style.textShadow=glow?`0 0 ${(2+glow*13)*scale}px rgba(255,221,157,${(.1+glow*.4)*scale}),0 0 ${(8+glow*25)*scale}px rgba(237,180,104,${glow*.2*scale})`:'none';
         }
         if(influence>best){best=influence;nearest={run,cell,x,y};}
       }
-      total+=run.cells.length;
+      if(!run.floating && !run.moving)restore(run);else total+=run.cells.length;
     }
     if(nearest && best>.18)sparkle(nearest.run,nearest.cell,nearest.x,nearest.y,now);
-    const state=plans.length?'active':'idle';if(root.dataset.storyTypeState!==state)root.dataset.storyTypeState=state;if(root.dataset.storyTypeVisible!==String(total))root.dataset.storyTypeVisible=String(total);
-    if(plans.length)queue();else{lastTime=0;nextTime=0;}
+    const state=total?'active':'idle';if(root.dataset.storyTypeState!==state)root.dataset.storyTypeState=state;if(root.dataset.storyTypeVisible!==String(total))root.dataset.storyTypeVisible=String(total);
+    if(plans.some(({run})=>run.floating || run.moving)){nextTime=now+1000/(best>0 || plans.some(({run})=>!run.floating && run.moving)?60:30);queue();}else{lastTime=0;nextTime=0;}
   }
   new MutationObserver(records=>{
     let changed=false;const scopes=new Set();
@@ -243,7 +245,7 @@
   new MutationObserver(()=>{pending.add(document.body);dirty();settle();}).observe(root,{attributes:true,attributeFilter:['data-app','data-motion','data-theme','lang','dir']});
   document.addEventListener('pointermove',event=>{
     if(!fine.matches || event.pointerType==='touch' || !enabled())return;
-    pointer={x:event.clientX,y:event.clientY,inside:true};
+    pointer={x:event.clientX,y:event.clientY,inside:true};nextTime=0;
     if(hovered!==event.target){
       for(const run of runs)if(run.parent.contains(event.target) || run.parent.contains(hovered) || event.target.contains?.(run.parent) || hovered?.contains?.(run.parent))run.styleDirty=true;
       hovered=event.target;settle(false);

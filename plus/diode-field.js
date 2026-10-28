@@ -23,13 +23,13 @@
   let width = 0, height = 0, cols = 0, rows = 0, ratio = 1, bounds, copy;
   let frame = 0, lastPaint = 0, clock = 0, nextRunner = 0, nextCapacitor = 4.2, entries = 0;
   let surge, nextSurge = 4, surgeIndex = 0, branches = 0;
-  let visible = false, closed = false, dirty = true, initialized = false;
+  let visible = false, closed = false, dirty = true, initialized = false, boundsDirty = true;
   let theme, palette = [], sprites = [], pointer, lastInduction = -10, lastClick = -10;
   const random = (min, max) => min + Math.random() * (max - min);
   const integer = (min, max) => Math.floor(random(min, max + 1));
   const clamp = (n, min, max) => Math.max(min, Math.min(max, n));
   const reduced = () => motion.matches || root.dataset.motion === 'reduced' || navigator.connection?.saveData === true;
-  const active = () => (product || root.dataset.app === 'neon') && visible && !document.hidden && !closed;
+  const active = () => (product || root.dataset.app === 'neon') && visible && !document.hidden && !closed && !root.dataset.siteScrolling;
   const xy = (col, row) => [OFFSET + col * STEP, OFFSET + row * STEP];
 
   function updateBounds() {
@@ -265,6 +265,7 @@
   function draw(now) {
     frame = 0;
     if (!active() || reduced()) { sync(); return; }
+    if(boundsDirty){updateBounds();boundsDirty=false;}
     const elapsed = now - lastPaint;
     if (elapsed < (compact.matches ? 1000 / 24 : 1000 / 30)) { schedule(); return; }
     const dt = Math.min(.075,elapsed / 1000); lastPaint = now;
@@ -323,7 +324,8 @@
   motion.addEventListener('change',sync);
   document.addEventListener('visibilitychange',sync);
   window.addEventListener('raccoon:appchange',() => { dirty = true; sync(); });
-  window.addEventListener('scroll',() => { if (active()) updateBounds(); },{passive:true});
+  window.addEventListener('scroll',() => { boundsDirty=true; },{passive:true});
+  window.addEventListener('raccoon:scrollstate',sync);
   window.addEventListener('resize',() => { dirty = true; sync(); },{passive:true});
   window.addEventListener('pagehide',() => { closed = true; stop(); });
   window.addEventListener('pageshow',() => { closed = false; sync(); });

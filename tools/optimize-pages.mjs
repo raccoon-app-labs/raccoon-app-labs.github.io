@@ -14,6 +14,7 @@ const core=['product-pages','native-demos','dark-worlds','mobile-layout','native
 const styles=core.map(name=>'/* '+name+'.css */\n'+read('assets/'+name+'.css').replace(/@charset[^;]+;/g,''));
 const css=styles.join('\n');write('assets/product-core.css',css);
 const cssUrl='/assets/product-core.css?v='+hash(css),lazyUrl='/assets/lazy-scripts.js?v='+hash(read('assets/lazy-scripts.js'));
+const motionSource=read('assets/appearance/motion.js'),motionUrl='/assets/appearance/motion.js?v='+hash(motionSource);
 const changed=new Set(execFileSync('git',['diff','--name-only','HEAD'],{cwd:root,encoding:'utf8',stdio:['ignore','pipe','ignore']}).trim().split(/\r?\n/));
 function updateTag(tag){
  const url=tag.match(/(?:\s|^)(?:src|href|data-lazy-src)="(\/[^"?]+)(?:\?[^"<>]*)?"/);
@@ -49,6 +50,10 @@ for(const file of pages()){
     if(!tag.includes('loading='))tag=tag.replace('<img','<img loading="lazy"');
     if(!tag.includes('decoding='))tag=tag.replace('<img','<img decoding="async"');return tag;
    });html=html.slice(0,begin)+demo+html.slice(end);}
+ }
+ if(html.includes('/plus/theme.js?')){
+  html=html.replace(/<script\b[^>]*src="\/assets\/appearance\/motion\.js[^>]*><\/script>/g,'');
+  html=html.replace('</head>',`<script src="${motionUrl}" integrity="${sri(motionSource)}" defer></script></head>`);
  }
  html=html.replace(/<(?:script|link)\b[^>]+>/g,updateTag);
  write(path.relative(root,file),html);

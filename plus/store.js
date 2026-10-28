@@ -1,5 +1,5 @@
 import {apps} from './catalog.js?v=20261026-fast';
-import {installStoreEffects} from './effects.js?v=8227ec1b71ae';
+import {installStoreEffects} from './effects.js?v=ba5301033dd6';
 import {installFaqReveals} from './faq.js?v=20261026-fold';
 import {installTicketTear} from './ticket.js?v=20261026-night';
 

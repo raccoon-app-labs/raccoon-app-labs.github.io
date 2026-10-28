@@ -1,4 +1,4 @@
-import {installComicPointer} from './comic-pointer.js?v=20261027-comic';
+import {installComicPointer} from './comic-pointer.js?v=8772be5591f8';
 
 // Small, temporary flourishes. Native pointers, focus and navigation stay intact.
 export function installStoreEffects({reducedMotion, finePointer}) {
@@ -10,7 +10,7 @@ export function installStoreEffects({reducedMotion, finePointer}) {
   // Stories owns the firefly swarm; Neon owns the comic brush.
   const useSharedTrail = () => {
     const root = document.documentElement;
-    return root.dataset.app !== 'neon' && root.dataset.app !== 'stories' && root.dataset.paymentAtmosphere !== 'stories';
+    return !root.dataset.siteScrolling && root.dataset.app !== 'neon' && root.dataset.app !== 'stories' && root.dataset.paymentAtmosphere !== 'stories';
   };
 
 
@@ -170,6 +170,7 @@ export function installStoreEffects({reducedMotion, finePointer}) {
   window.addEventListener('resize', () => { clear(); resize(); }, {passive:true});
   document.addEventListener('visibilitychange', () => { if (document.hidden) clear(); });
   window.addEventListener('pagehide', clear);
+  window.addEventListener('raccoon:scrollstate',()=>{if(document.documentElement.dataset.siteScrolling)clear();});
   window.addEventListener('raccoon:appchange', clear);
   document.documentElement.addEventListener('pointerleave', () => { lastPoint = pendingPointer = undefined; });
   return {clear};

@@ -6,7 +6,7 @@ export function installComicPointer({reducedMotion, finePointer}) {
   let canvas, ctx, frame = 0, width = 0, height = 0;
   let pending, previous, lastSpark = 0, lastBurst = -Infinity, serial = 0;
   let paletteKey, palette;
-  const enabled = () => (root.dataset.app === 'neon' || root.dataset.siteWorld === 'neon') && finePointer.matches && !reducedMotion() && !document.hidden;
+  const enabled = () => (root.dataset.app === 'neon' || root.dataset.siteWorld === 'neon') && !root.dataset.siteScrolling && finePointer.matches && !reducedMotion() && !document.hidden;
   const ink = '#071426';
   const limit = (list, item, maximum) => { if (list.length >= maximum) list.shift(); list.push(item); };
 
@@ -194,6 +194,7 @@ export function installComicPointer({reducedMotion, finePointer}) {
     wake();
   }, {passive:true});
   window.addEventListener('raccoon:appchange', clear);
+  window.addEventListener('raccoon:scrollstate',()=>{if(root.dataset.siteScrolling)clear();});
   window.addEventListener('blur', clear);
   window.addEventListener('pagehide', clear);
   window.addEventListener('scroll', clear, {passive:true});

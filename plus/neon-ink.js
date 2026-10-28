@@ -12,7 +12,7 @@
   const deep=[[8,103,126],[153,46,86],[125,86,12]];
   let frame=0,lastTime=0,pointer,geometry=[],dirty=true,closed=false,serial=0,selection=false;
   const still=()=>motion.matches || root.dataset.motion==='reduced';
-  const enabled=()=>!closed && !document.hidden && (root.dataset.app==='neon' || root.dataset.siteWorld==='neon') && fine.matches && !selection;
+  const enabled=()=>!closed && !document.hidden && !root.dataset.siteScrolling && (root.dataset.app==='neon' || root.dataset.siteWorld==='neon') && fine.matches && !selection;
   const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
   const mix=(a,b,t)=>'rgb('+a.map((n,i)=>Math.round(n+(b[i]-n)*t)).join(' ')+')';
 
@@ -125,6 +125,7 @@
   },{passive:true});
   root.addEventListener('pointerleave',()=>{pointer=undefined;if(still())clear();else schedule();});
   document.addEventListener('scroll',()=>{clear();dirty=true;},{capture:true,passive:true});
+  addEventListener('raccoon:scrollstate',()=>{if(root.dataset.siteScrolling)clear();});
   document.addEventListener('selectionchange',()=>{selection=!getSelection()?.isCollapsed;if(selection)clear();});
   document.addEventListener('visibilitychange',()=>{if(document.hidden)clear();});
   window.addEventListener('resize',()=>{clear();dirty=true;},{passive:true});

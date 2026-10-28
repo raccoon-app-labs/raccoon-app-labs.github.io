@@ -50,3 +50,7 @@ test('localized pages use one base dictionary and one on-demand language loader'
  }
  assert.equal(count,37);
 });
+
+test('every themed page installs exactly one shared scroll activity controller',()=>{
+ let count=0;for(const page of pages()){const html=read(page);if(!html.includes('/plus/theme.js?'))continue;count++;assert.equal((html.match(/src="\/assets\/appearance\/motion.js\?/g)||[]).length,1,page);}assert.equal(count,38);
+});

@@ -52,7 +52,7 @@
     const nextNight=root.dataset.theme==='dark' || (!root.dataset.theme && !root.hasAttribute('data-site-theme'));
     if(night!==nextNight){night=nextNight;clear();}
     canvas.dataset.palette=night?'night':'day';
-    enabled=!closed && !document.hidden && isStories() && fine.matches && !reduced.matches &&
+    enabled=!closed && !document.hidden && !root.dataset.siteScrolling && isStories() && fine.matches && !reduced.matches &&
       root.dataset.motion!=='reduced' && navigator.connection?.saveData!==true &&
       !document.querySelector('dialog[open]') && !field(document.activeElement);
     canvas.hidden=!enabled;
@@ -132,6 +132,7 @@
   document.addEventListener('pointercancel',()=>{point=null;previous=null;carry=0;},{passive:true});
   addEventListener('resize',resize,{passive:true});
   addEventListener('blur',clear);
+  addEventListener('raccoon:scrollstate',sync);
   document.addEventListener('visibilitychange',sync);
   document.addEventListener('focusin',sync);
   document.addEventListener('focusout',()=>queueMicrotask(sync));
