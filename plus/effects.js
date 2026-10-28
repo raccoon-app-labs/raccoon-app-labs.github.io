@@ -7,6 +7,12 @@ export function installStoreEffects({reducedMotion, finePointer}) {
   let width = 0, height = 0, lastEmission = 0;
   const pieces = [], animations = new Set(), presses = new WeakMap();
   const controls = 'a[href], button, summary';
+  // Stories owns the firefly swarm; Neon owns the comic brush.
+  const useSharedTrail = () => {
+    const root = document.documentElement;
+    return root.dataset.app !== 'neon' && root.dataset.app !== 'stories' && root.dataset.paymentAtmosphere !== 'stories';
+  };
+
 
   function colors() {
     const app = document.documentElement.dataset.app + ':' + document.documentElement.dataset.theme;
@@ -40,7 +46,7 @@ export function installStoreEffects({reducedMotion, finePointer}) {
   }
 
   function wake() {
-    if (!frame && !reducedMotion() && !document.hidden && prepare()) frame = requestAnimationFrame(draw);
+    if (!frame && useSharedTrail() && !reducedMotion() && !document.hidden && prepare()) frame = requestAnimationFrame(draw);
   }
 
   function addPiece(x, y, {burst = false, angle = 0, index = 0} = {}) {
@@ -56,7 +62,7 @@ export function installStoreEffects({reducedMotion, finePointer}) {
 
   function draw(now) {
     frame = 0;
-    if (reducedMotion() || document.hidden) { clear(); return; }
+    if (!useSharedTrail() || reducedMotion() || document.hidden) { clear(); return; }
     if (pendingPointer) {
       const point = pendingPointer; pendingPointer = undefined;
       const distance = lastPoint ? Math.hypot(point.x - lastPoint.x, point.y - lastPoint.y) : 0;
@@ -114,7 +120,7 @@ export function installStoreEffects({reducedMotion, finePointer}) {
   }
 
   document.addEventListener('pointermove', event => {
-    if (document.documentElement.dataset.app === 'neon') return;
+    if (!useSharedTrail()) return;
     if (event.pointerType === 'touch' || !event.isPrimary || !finePointer.matches || reducedMotion()) return;
     pendingPointer = {x:event.clientX, y:event.clientY}; wake();
   }, {passive:true});
@@ -147,7 +153,7 @@ export function installStoreEffects({reducedMotion, finePointer}) {
     const rect = control.getBoundingClientRect();
     const x = event.detail ? event.clientX : rect.left + rect.width / 2;
     const y = event.detail ? event.clientY : rect.top + rect.height / 2;
-    if (document.documentElement.dataset.app !== 'neon') {
+    if (useSharedTrail()) {
       for (let i = 0; i < 12; i++) addPiece(x, y, {burst:true, angle:i / 12 * Math.PI * 2, index:i});
       wake();
     }
