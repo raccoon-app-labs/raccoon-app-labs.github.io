@@ -6,7 +6,7 @@
   root.dataset.neonInkReady='';
   const fine=matchMedia('(hover: hover) and (pointer: fine)'),motion=matchMedia('(prefers-reduced-motion: reduce)');
   const areas=[document.querySelector('.topbar,.site-header'),document.querySelector('.app-nav'),panel,document.querySelector('.store-footer,body[data-product="neon"] footer')].filter(Boolean);
-  const skip='neon-ink,script,style,noscript,svg,canvas,input,textarea,select,option,[contenteditable]:not([contenteditable="false"]),[aria-live],.sr-only,.story-magic-layer';
+  const skip='neon-ink,script,style,noscript,svg,canvas,input,textarea,select,option,[contenteditable]:not([contenteditable="false"]),[aria-live],.sr-only,.story-magic-layer,[data-neon-currency-picker]';
   const runs=new Set(),lit=new Set(),pending=new Set();
   const normal=[[52,227,219],[255,121,107],[255,227,107]];
   const deep=[[8,103,126],[153,46,86],[125,86,12]];
