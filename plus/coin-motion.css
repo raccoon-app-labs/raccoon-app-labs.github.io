@@ -1,0 +1,19 @@
+#neon-panel .coin-card.coin-motion-ready{border-radius:12px;overflow:hidden;isolation:isolate;display:flex;flex-direction:column}
+#neon-panel .coin-motion-ready .coin-stack{height:74px;flex:none;perspective:400px;isolation:isolate}
+#neon-panel .coin-motion-ready .coin-stack i{animation:none!important;left:12px;top:24px;transform-origin:center;z-index:1}
+#neon-panel .coin-motion-ready .coin-stack i:nth-child(2){left:35px;top:13px}
+#neon-panel .coin-motion-ready .coin-stack i:nth-child(3){left:58px;top:26px}
+#neon-panel .coin-motion-ready h3{margin-top:16px;min-height:2.8em;line-height:1.4}
+#neon-panel .coin-motion-ready .neon-buy{margin-top:18px}
+#neon-panel .coin-motion-ready .coin-price{margin-top:auto}
+#neon-panel .coin-choreography{position:absolute;inset:0;pointer-events:none;z-index:0}
+#neon-panel .coin-choreography svg{position:absolute;inset:0 auto auto 0;width:180px;max-width:100%;height:84px;overflow:visible;fill:none;stroke:var(--cyan);stroke-width:1.2;stroke-linecap:round;stroke-linejoin:round;pointer-events:none}
+#neon-panel .coin-halo,#neon-panel .coin-trace{opacity:0;transform-box:fill-box;transform-origin:center}
+#neon-panel .coin-trace{stroke-dasharray:1;stroke-dashoffset:1}
+#neon-panel [data-coin-motion=vault] .coin-choreography svg{stroke:var(--yellow)}
+#neon-panel .coin-spark{position:absolute;left:49px;top:33px;width:4px;height:4px;border-radius:1px;background:var(--cyan);opacity:0;pointer-events:none}
+#neon-panel .coin-spark:nth-of-type(even){background:var(--yellow)}
+#neon-panel .coin-frame-pulse{position:absolute;inset:3px;opacity:0;pointer-events:none;z-index:-1}
+#neon-panel .coin-frame-pulse svg{display:block;width:100%;height:100%;fill:none;stroke:var(--cyan);stroke-width:1.5;overflow:visible}
+#neon-panel .coin-frame-pulse path{vector-effect:non-scaling-stroke;stroke-dasharray:16 84}
+@media(max-width:600px){#neon-panel .coin-motion-ready .coin-stack{height:66px}#neon-panel .coin-motion-ready h3{min-height:2.8em}}
