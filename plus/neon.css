@@ -207,3 +207,14 @@
 #neon-panel[data-neon-currency=USD] .price{font-size:clamp(28px,3vw,40px)}
 #neon-panel .coin-price small{font-size:.7em}
 @media(max-width:600px){#neon-panel .neon-currency-picker{grid-template-columns:1fr;padding:16px;gap:12px}#neon-panel .neon-currency-options a{padding:8px 10px}#neon-panel .neon-currency-options{min-width:0}}
+
+/* Purchase steps have a complete card inset, including at narrow widths. */
+#neon-panel #neon-how-to-buy .steps{gap:18px;align-items:stretch}
+#neon-panel #neon-how-to-buy .steps li{display:grid;grid-template-rows:auto auto 1fr;align-content:start;gap:16px;min-width:0;padding:26px;border:1px solid var(--line);border-radius:12px;background:var(--theme-surface,var(--panel));color:var(--ink)}
+#neon-panel #neon-how-to-buy .steps li>span{display:grid;place-items:center;width:38px;height:32px;border:1px solid color-mix(in srgb,var(--cyan) 30%,transparent);border-radius:6px;background:color-mix(in srgb,var(--cyan) 7%,transparent);color:var(--cyan);font-size:12px;font-weight:800;line-height:1;font-variant-numeric:tabular-nums;letter-spacing:.06em}
+#neon-panel #neon-how-to-buy .steps h3{margin:0;color:var(--ink);font-size:18px;font-weight:750;line-height:1.4;letter-spacing:-.015em;text-wrap:balance}
+#neon-panel #neon-how-to-buy .steps p{margin:0;font-size:14px;line-height:1.75;overflow-wrap:break-word}
+#neon-panel #neon-how-to-buy>.note{margin-top:22px;max-width:85ch;line-height:1.75}
+@media(min-width:761px){#neon-panel #neon-how-to-buy .steps h3{min-height:2.8em}}
+@supports(grid-template-rows:subgrid){@media(min-width:761px){#neon-panel #neon-how-to-buy .steps li{grid-row:span 3;grid-template-rows:subgrid;row-gap:16px}#neon-panel #neon-how-to-buy .steps h3{min-height:0}}}
+@media(max-width:760px){#neon-panel #neon-how-to-buy .steps{gap:14px}#neon-panel #neon-how-to-buy .steps li{padding:22px;gap:14px}}
