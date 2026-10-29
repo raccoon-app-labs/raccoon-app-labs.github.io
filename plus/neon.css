@@ -192,3 +192,18 @@
 #neon-panel .seller-note a:focus-visible{outline:2px solid var(--accent);outline-offset:4px;border-radius:2px}
 @media(prefers-reduced-motion:reduce){#neon-panel{scroll-behavior:auto}
 #neon-panel *,#neon-panel *:before,#neon-panel *:after{animation:none!important;transition:none!important}}
+#neon-panel .neon-currency-picker{display:grid;grid-template-columns:1fr minmax(280px,390px);align-items:center;gap:12px 28px;margin:0 0 32px;padding:20px 24px;border:1px solid var(--line);border-radius:12px;background:var(--panel)}
+#neon-panel .neon-currency-label{margin:0;font-size:16px;font-weight:800;letter-spacing:.02em}
+#neon-panel .neon-currency-options{display:flex;gap:5px;padding:5px;border:1px solid var(--line);border-radius:10px;background:var(--bg)}
+#neon-panel .neon-currency-options a{display:flex;flex:1;align-items:center;gap:10px;min-height:58px;padding:8px 14px;border:1px solid transparent;border-radius:6px;text-decoration:none;transition:background-color .2s,color .2s,border-color .2s}
+#neon-panel .neon-currency-options a>span:first-child{font-size:25px;font-weight:850;line-height:1}
+#neon-panel .neon-currency-options strong,#neon-panel .neon-currency-options small{display:block;line-height:1.4}
+#neon-panel .neon-currency-options strong{font-size:14px}
+#neon-panel .neon-currency-options small{font-size:11px;color:var(--muted)}
+#neon-panel .neon-currency-options a:hover{border-color:var(--cyan)}
+#neon-panel .neon-currency-options a[aria-current=true]{background:var(--yellow);color:var(--bg)}
+#neon-panel .neon-currency-options a[aria-current=true] small{color:inherit;opacity:.75}
+#neon-panel .neon-currency-note{grid-column:1/-1;margin:0;max-width:64em;font-size:12px;line-height:1.6;color:var(--muted)}
+#neon-panel[data-neon-currency=USD] .price{font-size:clamp(28px,3vw,40px)}
+#neon-panel .coin-price small{font-size:.7em}
+@media(max-width:600px){#neon-panel .neon-currency-picker{grid-template-columns:1fr;padding:16px;gap:12px}#neon-panel .neon-currency-options a{padding:8px 10px}#neon-panel .neon-currency-options{min-width:0}}
