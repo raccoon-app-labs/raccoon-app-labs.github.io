@@ -1,6 +1,6 @@
-import {API_BASE, ShopError, validateOffer, purchasableStories, purchaseRequest, confirmationUrl, createApi} from './story-checkout-core.mjs?v=c47f6d210c03';
+import {API_BASE, ShopError, validateOffer, offerPath, purchasableStories, purchaseRequest, confirmationUrl, createApi} from './story-checkout-core.mjs?v=first-purchase-v1';
 import {installBookCoverTilt} from './story-book-tilt.mjs?v=46e546adac41';
-import {installBookPortal} from './story-book-portal.mjs?v=f60acf36c899';
+import {installBookPortal} from './story-book-portal.mjs?v=first-purchase-v1';
 
 const root = document.documentElement;
 const sourcePanel = document.querySelector('#stories-panel') || document.querySelector('.commerce-stories');
@@ -15,8 +15,15 @@ function install() {
   const write = (key, value) => { try { value === null ? sessionStorage.removeItem(key) : sessionStorage.setItem(key, JSON.stringify(value)); } catch { /* Memory-only checkout still works. */ } };
   let session = read(storageKey), pending = read(pendingKey);
   const deviceId = read(deviceKey) || crypto.randomUUID(); write(deviceKey, deviceId);
-  const setSession = value => { session = value; write(storageKey, value); };
-  const api = createApi({getSession:() => session, setSession, deviceId});
+  let accountEpoch = 0, reviewed = null, busyOperation = null;
+  const setSession = (value, newLogin = false) => {
+    const changed = !!session?.accessToken !== !!value?.accessToken ||
+      (session?.userId && value?.userId ? session.userId !== value.userId :
+        session?.email && value?.email ? session.email.toLowerCase() !== value.email.toLowerCase() : false);
+    if (newLogin || changed) { accountEpoch++; reviewed = null; }
+    session = value; write(storageKey, value);
+  };
+  const api = createApi({getSession:() => session, setSession, getSessionEpoch:() => accountEpoch, deviceId});
   let offer, stories = [], selected = null, product = 'premium', step = 'choose', busy = false;
   let email = '', sentAt = 0, error = '', notice = '', catalogError = false, catalogLoaded = false;
   let account = null, owned = new Set(), returnFocus, pollTimer, resendTimer, pollCount = 0, generation = 0, closing = false, renderedStep;
@@ -25,6 +32,37 @@ function install() {
   const t = (r, e) => ru() ? r : e;
   const escape = value => String(value ?? '').replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
   const price = amount => new Intl.NumberFormat(ru() ? 'ru-RU' : 'en-US', {style:'currency', currency:'RUB', maximumFractionDigits:2}).format(amount / 100);
+  const fetchOffer = async (storyId = selected?.id) => validateOffer(await api(offerPath(storyId), {authenticated:!!session?.accessToken}));
+  const scope = () => ({generation, accountEpoch, product, storyId:selected?.id || 0});
+  const current = value => dialog.open && value.generation === generation && value.accountEpoch === accountEpoch && value.product === product && value.storyId === (selected?.id || 0);
+  function freezeReview(context) {
+    if (!current(context) || !offer || !session) return;
+    const quote = structuredClone(offer); quote.bookStoryIds = Object.freeze(quote.bookStoryIds);
+    reviewed = Object.freeze({...context, offer:Object.freeze(quote), product:context.product, story:selected ? Object.freeze(structuredClone(selected)) : null, email:session.email});
+    step = 'review';
+  }
+  const reserved = value => value?.firstPurchaseDiscountReserved === true;
+  function priceMarkup(kind = product, quoted = offer) {
+    if (!quoted) return '…';
+    const amount = kind === 'book' ? quoted.bookAmount : quoted.amount;
+    const regular = kind === 'book' ? quoted.regularBookAmount : quoted.regularAmount;
+    const discount = kind === 'book' ? quoted.bookDiscountPercent : quoted.premiumDiscountPercent;
+    return discount === 20 ? `<s>${price(regular)}</s> ${price(amount)} <small>−20%</small>` : price(amount);
+  }
+  function offerNote(quoted = offer, kind = product) {
+    if (quoted?.firstPurchaseDiscountState === 'sign_in_required') return `<p class="magic-caption">${t('Войдите по почте, чтобы проверить скидку 20% на первую покупку книги или Premium.','Sign in by email to check your 20% first-purchase discount for a book or Premium.')}</p>`;
+    const discount = kind === 'book' ? quoted?.bookDiscountPercent : quoted?.premiumDiscountPercent;
+    if (discount === 20) return `<p class="magic-caption">${kind === 'book' ? t('Скидка 20% на первую покупку. Один платёж.','20% off your first purchase. One payment.') : `${t('Первый месяц со скидкой 20%, затем','First month 20% off, then')} ${price(quoted.renewalAmount)} ${quoted.autoRenew ? t('за календарный месяц.','per calendar month.') : t('при следующей покупке месяца Premium. Автопродления нет.','when you next buy a month of Premium. No automatic renewal.')}`}</p>`;
+    if (quoted?.firstPurchaseDiscountState === 'reserved') return `<p class="magic-caption">${t('За вашим аккаунтом закреплён незавершённый счёт. Проверьте его перед новой покупкой.','Your account has an unfinished invoice. Check it before starting a new purchase.')}</p>`;
+    return '';
+  }
+  async function openSelectedBook() {
+    const context = scope();
+    await run(async captured => { const value = await fetchOffer(captured.storyId); if (current(captured)) offer = value; });
+    if (!current(context)) return;
+    const button = dialog.querySelector(`[data-story-id="${selected?.id}"]`);
+    if (!error && selected && button && offer) bookPortal.open({story:selected, amount:offer.bookAmount, regularAmount:offer.regularBookAmount, discountPercent:offer.bookDiscountPercent, discountState:offer.firstPurchaseDiscountState, available:offer.available && offer.paymentProvider === 'robokassa' && !catalogError, source:button});
+  }
   const dialog = document.createElement('dialog');
   dialog.className = 'magic-checkout'; dialog.dataset.noL10n = ''; dialog.setAttribute('aria-labelledby', 'magic-checkout-title');
   document.body.append(dialog);
@@ -36,7 +74,7 @@ function install() {
     if (closing) return;
     bookPortal.close({immediate:true,restoreFocus:false});
     coverTilt.reset();
-    closing = true; generation++; clearTimers();
+    closing = true; generation++; reviewed = null; busyOperation = null; busy = false; clearTimers();
     const finish = () => { dialog.close(); root.classList.remove('magic-checkout-open'); closing = false; returnFocus?.focus({preventScroll:true}); };
     if (reduced()) finish();
     else dialog.animate([{opacity:1, transform:'translateY(0) scale(1)'}, {opacity:0, transform:'translateY(24px) scale(.97)'}], {duration:190, easing:'ease-in'}).finished.then(finish, finish);
@@ -69,8 +107,9 @@ function install() {
   function premiumArt() {
     return `<div class="magic-orbit" aria-hidden="true"><i class="magic-orbit-ring"></i><i class="magic-orbit-ring"></i><span class="magic-orbit-star">✦</span><span class="magic-orbit-star">✧</span><span class="magic-orbit-moon">☾</span><div class="magic-orbit-book"><span>✦</span><b>MAGIC<br>STORIES</b><small>PREMIUM</small></div></div>`;
   }
-  function summary() {
-    return `<div class="magic-summary">${product === 'book' && selected?.cover ? `<img src="${escape(selected.cover)}" alt="" width="56" height="72">` : '<span class="magic-summary-star" aria-hidden="true">✦</span>'}<div><strong>${escape(product === 'book' ? selected?.title : t('Месяц Premium','One month of Premium'))}</strong><small>${product === 'book' ? t('Ваша навсегда · один платёж','Yours forever · one payment') : offer?.autoRenew ? t('Ежемесячная подписка','Monthly subscription') : t('Календарный месяц · без автопродления','One calendar month · no automatic renewal')}</small></div><b>${offer ? price(product === 'book' ? offer.bookAmount : offer.amount) : '…'}</b></div>`;
+  function summary(snapshot = null) {
+    const quoted = snapshot?.offer || offer, kind = snapshot?.product || product, story = snapshot?.story || selected;
+    return `<div class="magic-summary">${kind === 'book' && story?.cover ? `<img src="${escape(story.cover)}" alt="" width="56" height="72">` : '<span class="magic-summary-star" aria-hidden="true">✦</span>'}<div><strong>${escape(kind === 'book' ? story?.title : t('Месяц Premium','One month of Premium'))}</strong><small>${kind === 'book' ? t('Ваша навсегда · один платёж','Yours forever · one payment') : quoted?.autoRenew ? t('Ежемесячная подписка','Monthly subscription') : t('Календарный месяц · без автопродления','One calendar month · no automatic renewal')}</small></div><b>${priceMarkup(kind, quoted)}</b></div>`;
   }
   function render({animate = false, focus = false} = {}) {
     coverTilt.reset();
@@ -90,10 +129,7 @@ function install() {
     dialog.querySelectorAll('[data-story-id]').forEach(button => button.addEventListener('click', () => {
       if (busy) return;
       selected = stories.find(story => story.id === Number(button.dataset.storyId));
-      dialog.querySelectorAll('[data-story-id]').forEach(node => { const pressed = String(node === button); if (node.getAttribute('aria-pressed') !== pressed) node.setAttribute('aria-pressed', pressed); });
-      const selection = dialog.querySelector('.magic-selection'); if (selection && selection.textContent !== selected.title) selection.textContent = selected.title;
-      const next = dialog.querySelector('[data-action="open-book"]'); const unavailable = !offer?.available || offer.paymentProvider !== 'robokassa'; if (next.disabled !== unavailable) next.disabled = unavailable;
-      bookPortal.open({story:selected, amount:offer.bookAmount, available:offer.available && offer.paymentProvider === 'robokassa' && !catalogError, source:button});
+      openSelectedBook();
     }));
     dialog.querySelector('[data-book-search]')?.addEventListener('input', event => {
       coverTilt.reset();
@@ -103,20 +139,28 @@ function install() {
     });
     dialog.querySelector('[data-email-form]')?.addEventListener('submit', event => { event.preventDefault(); email = new FormData(event.target).get('email').trim(); sendCode(); });
     dialog.querySelector('[data-code-form]')?.addEventListener('submit', event => { event.preventDefault(); confirmCode(new FormData(event.target).get('code')); });
-    dialog.querySelector('[data-review-form]')?.addEventListener('submit', event => { event.preventDefault(); buy(new FormData(event.target).get('consent') === 'on'); });
+    const displayedReview = reviewed;
+    dialog.querySelector('[data-review-form]')?.addEventListener('submit', event => { event.preventDefault(); buy(new FormData(event.target).get('consent') === 'on', displayedReview); });
     dialog.querySelector('[data-open-payment]')?.addEventListener('click', () => { pollCount = 0; schedulePoll(); });
     if (step === 'code') { updateResend(); resendTimer = setInterval(updateResend, 1000); }
     if (animate && !reduced()) dialog.querySelector('.magic-content').animate([{opacity:.15, transform:'perspective(900px) rotateY(-6deg) translateY(12px)'},{opacity:1,transform:'perspective(900px) rotateY(0) translateY(0)'}], {duration:420,easing:'cubic-bezier(.16,1,.3,1)'});
     if (focus) (dialog.querySelector('input:not([type=radio]):not([type=checkbox])') || dialog.querySelector('h1'))?.focus({preventScroll:true});
   }
+  function reviewContent() {
+    const snapshot = reviewed;
+    if (!snapshot || !current(snapshot)) return `<p class="magic-lead">${t('Проверьте актуальное предложение перед оплатой.','Review the current offer before paying.')}</p>${primary(t('Проверить предложение','Review offer'),'data-action="continue"')}`;
+    const {offer, product, story:selected} = snapshot;
+    return `<p class="magic-eyebrow">${t('ПОЧТИ В ВАШЕЙ БИБЛИОТЕКЕ','ALMOST IN YOUR LIBRARY')}</p><h1 id="magic-checkout-title" tabindex="-1">${t('Остался один шаг','Just one more step')}</h1>${summary(snapshot)}${offerNote(offer, product)}<div class="magic-account"><span>✉ ${escape(snapshot.email)}</span><button class="magic-text-button" data-action="logout">${t('Сменить','Change')}</button></div>${providers()}<form data-review-form class="magic-form"><label class="magic-consent"><input type="checkbox" name="consent" required><span>${offer.autoRenew && product === 'premium' ? t('Согласен с ежемесячным автопродлением и','I agree to monthly automatic renewal and the') : t('Принимаю','I accept the')} <a href="${API_BASE}/legal/premium-terms.html" target="_blank" rel="noopener noreferrer">${t('условия покупки','purchase terms')}</a> ${t('и','and')} <a href="${API_BASE}/legal/privacy.html" target="_blank" rel="noopener noreferrer">${t('политику конфиденциальности','privacy policy')}</a>. ${product === 'book' || !offer.autoRenew ? t('Один платёж, без автопродления.','One payment, no automatic renewal.') : `${t('Сейчас','Today')} ${price(offer.amount)}, ${t('затем','then')} ${price(offer.renewalAmount || offer.amount)} ${t('каждый календарный месяц.','each calendar month.')}`}</span></label>${primary(`${t('Оплатить','Pay')} ${price(product === 'book' ? offer.bookAmount : offer.amount)}`)}<p class="magic-caption">${t('Оплата откроется на защищённой странице Robokassa. Данные карты здесь не вводятся.','Payment opens on Robokassa’s secure page. No card details are entered here.')}</p></form><button class="magic-text-button" data-action="choose">← ${t('Изменить выбор','Change selection')}</button>`;
+  }
   function content() {
     if (step === 'loading') return `<div class="magic-loading" role="status">${premiumArt()}<h1 id="magic-checkout-title" tabindex="-1">${t('Собираем немного волшебства…','Gathering a little magic…')}</h1></div>`;
     if (step === 'unavailable') return `<h1 id="magic-checkout-title" tabindex="-1">${t('Чуду нужна минутка','Magic needs a moment')}</h1><p class="magic-lead">${t('Не удалось получить актуальные условия с сервера.','We could not get the latest offer from the server.')}</p>${primary(t('Попробовать снова','Try again'),'data-action="reload"')}`;
-    if (step === 'choose') return `<p class="magic-eyebrow">${t('ИСТОРИИ, КОТОРЫЕ ОСТАЮТСЯ','STORIES THAT STAY WITH YOU')}</p><h1 id="magic-checkout-title" tabindex="-1">${t('Какое чудо выберем?','Which magic will you choose?')}</h1><div class="magic-product-tabs" aria-label="${t('Что купить','Choose a product')}"><button data-product="premium" aria-pressed="${product === 'premium'}">✦ ${t('Подписка Premium','Premium subscription')}</button><button data-product="book" aria-pressed="${product === 'book'}">♡ ${t('Книга навсегда','A book to keep')}</button></div>${product === 'premium' ? `<div class="magic-premium-grid">${premiumArt()}<div><span class="magic-eyebrow">${t('ВСЯ БИБЛИОТЕКА · ОДИН МЕСЯЦ','THE WHOLE LIBRARY · ONE MONTH')}</span><h2>${t('Больше сказок.<br>Ближе друг к другу.','More stories.<br>Closer together.')}</h2><p class="magic-lead">${t('Читайте, слушайте и записывайте сказки голосами вашей семьи.','Read, listen and record stories in your family’s voices.')}</p><ul class="magic-benefits"><li>${t('Вся библиотека сказок','The entire story library')}</li><li>${t('Без рекламы','No ads')}</li><li>${t('Ваши семейные озвучки','Your family’s narrations')}</li></ul><p class="magic-big-price">${price(offer.amount)}<small> / ${t('месяц','month')}</small></p><p class="magic-caption">${offer.autoRenew ? t('Ежемесячное продление. Можно отключить в приложении.','Renews monthly. Cancel in the app.') : t('Один платёж. Без автоматического продления.','One payment. No automatic renewal.')}</p></div></div>` : booksContent()}${product === 'premium' ? providers() : ''}${!offer.available || offer.paymentProvider !== 'robokassa' ? `<p class="magic-notice">${t('Покупки сейчас недоступны. Загляните чуть позже.','Purchases are unavailable right now. Please come back later.')}</p>` : ''}<div class="magic-bottom"><span class="magic-selection">${product === 'book' ? escape(selected?.title || t('Выберите свою сказку','Choose your story')) : t('Пусть сегодня будет сказка','Make today a story day')}</span>${primary(t('Продолжить','Continue'),`data-action="${product === 'book' ? 'open-book' : 'continue'}" ${!offer.available || offer.paymentProvider !== 'robokassa' || (product === 'book' && (!selected || catalogError)) ? 'disabled' : ''}`)}</div>`;
+    if (step === 'choose') return `<p class="magic-eyebrow">${t('ИСТОРИИ, КОТОРЫЕ ОСТАЮТСЯ','STORIES THAT STAY WITH YOU')}</p><h1 id="magic-checkout-title" tabindex="-1">${t('Какое чудо выберем?','Which magic will you choose?')}</h1><div class="magic-product-tabs" aria-label="${t('Что купить','Choose a product')}"><button data-product="premium" aria-pressed="${product === 'premium'}">✦ ${t('Подписка Premium','Premium subscription')}</button><button data-product="book" aria-pressed="${product === 'book'}">♡ ${t('Книга навсегда','A book to keep')}</button></div>${product === 'premium' ? `<div class="magic-premium-grid">${premiumArt()}<div><span class="magic-eyebrow">${t('ВСЯ БИБЛИОТЕКА · ОДИН МЕСЯЦ','THE WHOLE LIBRARY · ONE MONTH')}</span><h2>${t('Больше сказок.<br>Ближе друг к другу.','More stories.<br>Closer together.')}</h2><p class="magic-lead">${t('Читайте, слушайте и записывайте сказки голосами вашей семьи.','Read, listen and record stories in your family’s voices.')}</p><ul class="magic-benefits"><li>${t('Вся библиотека сказок','The entire story library')}</li><li>${t('Без рекламы','No ads')}</li><li>${t('Ваши семейные озвучки','Your family’s narrations')}</li></ul><p class="magic-big-price">${priceMarkup('premium')}<small> / ${t('месяц','month')}</small></p><p class="magic-caption">${offer.autoRenew ? t('Ежемесячное продление. Можно отключить в приложении.','Renews monthly. Cancel in the app.') : t('Один платёж. Без автоматического продления.','One payment. No automatic renewal.')}</p></div></div>` : booksContent()}${offerNote()}${product === 'premium' ? providers() : ''}${!offer.available || offer.paymentProvider !== 'robokassa' ? `<p class="magic-notice">${t('Покупки сейчас недоступны. Загляните чуть позже.','Purchases are unavailable right now. Please come back later.')}</p>` : ''}<div class="magic-bottom"><span class="magic-selection">${product === 'book' ? escape(selected?.title || t('Выберите свою сказку','Choose your story')) : t('Пусть сегодня будет сказка','Make today a story day')}</span>${primary(t('Продолжить','Continue'),`data-action="${product === 'book' ? 'open-book' : 'continue'}" ${!offer.available || offer.paymentProvider !== 'robokassa' || (product === 'book' && (!selected || catalogError)) ? 'disabled' : ''}`)}</div>`;
     if (step === 'email') return `${summary()}<p class="magic-eyebrow">${t('ВАШ БИЛЕТ В СКАЗКУ','YOUR TICKET TO A STORY')}</p><h1 id="magic-checkout-title" tabindex="-1">${t('Куда отправим чудо?','Where shall we send the magic?')}</h1><p class="magic-lead">${t('Укажите ту же почту, что используете в приложении. Пришлём код для входа — пароль не нужен.','Use the same email as in the app. We’ll send you a sign-in code — no password needed.')}</p><form data-email-form class="magic-form"><label for="magic-email">Email</label><input id="magic-email" name="email" type="email" autocomplete="email" maxlength="254" placeholder="you@example.com" value="${escape(email)}" required ${busy ? 'disabled' : ''}><p class="magic-caption">${t('На эту почту будут привязаны покупка и чек.','Your purchase and receipt will be linked to this email.')}</p>${primary(t('Получить код','Get a code'))}</form><button class="magic-text-button" data-action="choose">← ${t('Вернуться к выбору','Back to choosing')}</button>`;
     if (step === 'code') return `<div class="magic-envelope" aria-hidden="true">✉<span>✦</span></div><h1 id="magic-checkout-title" tabindex="-1">${t('Вам волшебное письмо','A little magic in your inbox')}</h1><p class="magic-lead">${t('Введите 6 цифр из письма на','Enter the 6-digit code sent to')} <strong>${escape(email)}</strong></p><form data-code-form class="magic-form"><label for="magic-code">${t('Код из письма','Email code')}</label><input id="magic-code" class="magic-code" name="code" type="text" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" minlength="6" maxlength="6" placeholder="······" required ${busy ? 'disabled' : ''}>${primary(t('Войти и продолжить','Sign in and continue'))}</form><div class="magic-inline-actions"><button class="magic-text-button" data-action="resend" disabled></button><button class="magic-text-button" data-action="email">${t('Другая почта','Use another email')}</button></div>`;
-    if (step === 'review') return `<p class="magic-eyebrow">${t('ПОЧТИ В ВАШЕЙ БИБЛИОТЕКЕ','ALMOST IN YOUR LIBRARY')}</p><h1 id="magic-checkout-title" tabindex="-1">${t('Остался один шаг','Just one more step')}</h1>${summary()}<div class="magic-account"><span>✉ ${escape(session.email)}</span><button class="magic-text-button" data-action="logout">${t('Сменить','Change')}</button></div>${providers()}<form data-review-form class="magic-form"><label class="magic-consent"><input type="checkbox" name="consent" required><span>${offer.autoRenew && product === 'premium' ? t('Согласен с ежемесячным автопродлением и','I agree to monthly automatic renewal and the') : t('Принимаю','I accept the')} <a href="${API_BASE}/legal/premium-terms.html" target="_blank" rel="noopener noreferrer">${t('условия покупки','purchase terms')}</a> ${t('и','and')} <a href="${API_BASE}/legal/privacy.html" target="_blank" rel="noopener noreferrer">${t('политику конфиденциальности','privacy policy')}</a>. ${product === 'book' || !offer.autoRenew ? t('Один платёж, без автопродления.','One payment, no automatic renewal.') : `${price(offer.amount)} ${t('каждый календарный месяц.','each calendar month.')}`}</span></label>${primary(`${t('Оплатить','Pay')} ${price(product === 'book' ? offer.bookAmount : offer.amount)}`)}<p class="magic-caption">${t('Оплата откроется на защищённой странице Robokassa. Данные карты здесь не вводятся.','Payment opens on Robokassa’s secure page. No card details are entered here.')}</p></form><button class="magic-text-button" data-action="choose">← ${t('Изменить выбор','Change selection')}</button>`;
+    if (step === 'review') return reviewContent();
     if (step === 'pending') {
+      if (pending?.status === 'canceled' && reserved(pending)) return `<div class="magic-payment-orb" aria-hidden="true">✧</div><h1 id="magic-checkout-title" tabindex="-1">${t('Проверим первый счёт','Let’s check the first invoice')}</h1><p class="magic-lead">${t('Скидка 20% закреплена за этим счётом. Отмена в браузере не подтверждает, что деньги не были списаны. Проверьте оплату; если статус не меняется, напишите в поддержку. Новый счёт со скидкой пока не создаётся.','Your 20% discount is reserved for this invoice. Canceling in the browser does not confirm that no charge occurred. Check the payment; if its status stays unchanged, contact support. Another discounted invoice cannot be created yet.')}</p><button class="magic-text-button" data-action="check" ${busy ? 'disabled' : ''}>${t('Проверить оплату','Check payment')}</button><a class="magic-text-button" href="mailto:raccoon.app.labs@gmail.com">${t('Написать в поддержку','Contact support')}</a>`;
       if (pending?.status === 'REVIEW') return `<div class="magic-payment-orb" aria-hidden="true">✧</div><h1 id="magic-checkout-title" tabindex="-1">${t('Уточняем статус оплаты','Reviewing your payment')}</h1><p class="magic-lead">${t('Сервер уточняет результат этого платежа. Не оплачивайте повторно. Если ожидание затянулось, напишите в поддержку.','The server is reviewing this payment. Please do not pay again. Contact support if it takes too long.')}</p><button class="magic-text-button" data-action="check">${t('Проверить оплату','Check payment')}</button>`;
       const url = confirmationUrl(pending?.confirmationUrl);
       return `<div class="magic-payment-orb" aria-hidden="true">✦</div><p class="magic-eyebrow">${t('ВАШЕ ЧУДО ЖДЁТ','YOUR MAGIC IS WAITING')}</p><h1 id="magic-checkout-title" tabindex="-1">${t('Продолжим в Robokassa','Continue with Robokassa')}</h1><p class="magic-lead">${t('Завершите оплату в новой вкладке. Эта страница проверит результат на сервере.','Complete payment in a new tab. This page will check the result with the server.')}</p><p class="magic-caption">${escape(session?.email)}</p>${pending?.type === 'BOOK' ? `<p class="magic-caption">${escape(stories.find(s => s.id === pending.storyId)?.title || t('Покупка книги','Book purchase'))}</p>` : ''}${url ? `<a class="magic-primary" href="${escape(url)}" target="_blank" rel="noopener noreferrer" data-open-payment><span>${t('Перейти к оплате','Open payment')}</span><span aria-hidden="true">↗</span></a>` : ''}<div class="magic-payment-status" role="status"><span class="magic-status-dot"></span>${t('Ожидаем подтверждение оплаты','Waiting for payment confirmation')}</div>${notice ? `<p class="magic-notice">${escape(notice)}</p>` : ''}<div class="magic-inline-actions"><button class="magic-text-button" data-action="check" ${busy ? 'disabled' : ''}>${t('Проверить оплату','Check payment')}</button><button class="magic-text-button" data-action="abandon" ${busy ? 'disabled' : ''}>${t('Отменить этот счёт','Cancel this invoice')}</button></div>`;
@@ -127,7 +171,7 @@ function install() {
   function booksContent() {
     if (!catalogLoaded && !catalogError) return `<div class="magic-shelf-loading" role="status"><i></i><i></i><i></i><span>${t('Книги спешат на полку…','The books are finding their shelves…')}</span></div>`;
     if (catalogError) return `<div class="magic-notice"><p>${t('Не удалось загрузить книги с сервера.','Could not load the books from the server.')}</p><button class="magic-text-button" data-action="catalog">${t('Попробовать ещё раз','Try again')}</button></div>`;
-    return `<div class="magic-shelf-heading"><p class="magic-lead">${t('Одна история. Сколько угодно тёплых вечеров.','One story. So many cozy evenings.')} <strong>${price(offer.bookAmount)}</strong></p><label class="magic-search"><span aria-hidden="true">⌕</span><input type="search" data-book-search placeholder="${t('Найти свою сказку','Find your story')}" aria-label="${t('Поиск книг','Search books')}"></label></div><div class="magic-books">${stories.map(story => `<button class="magic-book" data-story-id="${story.id}" data-search="${escape((story.title+' '+(story.category || '')).toLocaleLowerCase())}" aria-pressed="${selected?.id === story.id}" ${owned.has(story.id) ? 'disabled' : ''}><span class="magic-book-art"><span class="magic-book-glare" aria-hidden="true"><span class="magic-book-light"></span></span>${story.cover ? `<img src="${escape(story.cover)}" alt="" width="200" height="260" loading="lazy" decoding="async">` : `<span class="magic-book-fallback" aria-hidden="true">${escape(story.emoji || '✦')}</span>`}<i aria-hidden="true">✓</i><small>${escape(story.age || '')}</small></span><strong>${escape(story.title)}</strong><span>${owned.has(story.id) ? t('Уже ваша','Already yours') : escape(story.category || t('Сказка навсегда','A story to keep'))}</span></button>`).join('')}</div><p class="magic-empty" data-search-empty ${stories.length ? 'hidden' : ''}>${t('Книг не найдено. Попробуйте другой запрос или загляните позже.','No books found. Try another search or come back later.')}</p>`;
+    return `<div class="magic-shelf-heading"><p class="magic-lead">${t('Одна история. Сколько угодно тёплых вечеров.','One story. So many cozy evenings.')} <strong>${priceMarkup('book')}</strong></p><label class="magic-search"><span aria-hidden="true">⌕</span><input type="search" data-book-search placeholder="${t('Найти свою сказку','Find your story')}" aria-label="${t('Поиск книг','Search books')}"></label></div><div class="magic-books">${stories.map(story => `<button class="magic-book" data-story-id="${story.id}" data-search="${escape((story.title+' '+(story.category || '')).toLocaleLowerCase())}" aria-pressed="${selected?.id === story.id}" ${owned.has(story.id) ? 'disabled' : ''}><span class="magic-book-art"><span class="magic-book-glare" aria-hidden="true"><span class="magic-book-light"></span></span>${story.cover ? `<img src="${escape(story.cover)}" alt="" width="200" height="260" loading="lazy" decoding="async">` : `<span class="magic-book-fallback" aria-hidden="true">${escape(story.emoji || '✦')}</span>`}<i aria-hidden="true">✓</i><small>${escape(story.age || '')}</small></span><strong>${escape(story.title)}</strong><span>${owned.has(story.id) ? t('Уже ваша','Already yours') : escape(story.category || t('Сказка навсегда','A story to keep'))}</span></button>`).join('')}</div><p class="magic-empty" data-search-empty ${stories.length ? 'hidden' : ''}>${t('Книг не найдено. Попробуйте другой запрос или загляните позже.','No books found. Try another search or come back later.')}</p>`;
   }
   function updateResend() {
     const button = dialog.querySelector('[data-action="resend"]'); if (!button) return;
@@ -136,87 +180,106 @@ function install() {
     button.textContent = seconds ? `${t('Новый код через','New code in')} ${seconds} ${t('с','s')}` : t('Отправить код ещё раз','Resend code');
   }
   async function run(work) {
-    if (busy) return; busy = true; error = ''; render(); const currentGeneration = generation;
-    try { await work(); } catch (caught) {
-      if (currentGeneration !== generation) return;
+    if (busy) return;
+    const context = scope(), operation = {}; busyOperation = operation; busy = true; error = ''; render();
+    try { await work(context); } catch (caught) {
+      if (!current(context)) return;
       error = caught.code || 'network_error';
-      if (caught.status === 401) { setSession(null); step = 'email'; }
-      if (error === 'offer_changed') { try { offer = validateOffer(await api('/api/premium/offer')); } catch { step = 'unavailable'; } }
+      if (caught.status === 401) {
+        setSession(null); context.accountEpoch = accountEpoch; offer = null; reviewed = null; pending = null; write(pendingKey,null); owned = new Set(); account = null; step = 'email';
+        try { const value = await fetchOffer(context.storyId); if (current(context)) offer = value; } catch { if (current(context)) step = 'unavailable'; }
+      }
+      if (error === 'offer_changed') {
+        try { const value = await fetchOffer(context.storyId); if (!current(context)) return; offer = value; if (step === 'review') freezeReview(context); } catch { if (current(context)) step = 'unavailable'; }
+      }
       if (error === 'payment_pending' || error === 'payment_uncertain') {
         step = 'pending';
-        try { if (await restorePending()) return; } catch { /* Keep the uncertainty visible; do not create another invoice automatically. */ }
+        try { if (await restorePending(context)) return; } catch { /* Do not create another invoice automatically. */ }
       }
-      if (['already_owned','premium_active','already_active'].includes(error)) { step = 'owned'; error = ''; }
-    } finally { busy = false; if (currentGeneration === generation && dialog.open) render({animate:true, focus:true}); }
+      if (current(context) && ['already_owned','premium_active','already_active'].includes(error)) { step = 'owned'; reviewed = null; error = ''; }
+    } finally {
+      if (busyOperation === operation) { busyOperation = null; busy = false; if (current(context)) render({animate:true, focus:true}); }
+    }
   }
   async function loadCatalog() {
     if (catalogLoaded || !offer) return;
-    const currentGeneration = generation; catalogError = false;
+    const context = scope(), catalogOffer = offer; catalogError = false;
     try {
       const [catalog, covers] = await Promise.all([api('/v1/catalog/ru'), api('/v1/catalog/covers').catch(() => ({covers:{}}))]);
-      if (currentGeneration !== generation) return;
-      stories = purchasableStories(catalog, offer, covers.covers); catalogLoaded = true;
-    } catch { if (currentGeneration !== generation) return; catalogError = true; }
+      if (!current(context)) return;
+      stories = purchasableStories(catalog, catalogOffer, covers.covers); catalogLoaded = true;
+    } catch { if (!current(context)) return; catalogError = true; }
     if (step === 'choose' && dialog.open) render();
   }
   async function open(nextProduct = 'premium') {
     if (dialog.open) return;
-    generation++; returnFocus = document.activeElement; product = nextProduct; step = 'loading'; error = ''; notice = '';
+    generation++; busyOperation = null; busy = false; reviewed = null; returnFocus = document.activeElement; product = nextProduct; step = 'loading'; error = ''; notice = '';
     dialog.showModal(); root.classList.add('magic-checkout-open'); render();
     if (!reduced()) dialog.animate([{opacity:0,transform:'translateY(38px) scale(.94)'},{opacity:1,transform:'translateY(0) scale(1)'}], {duration:420,easing:'cubic-bezier(.16,1,.3,1)'});
-    const currentGeneration = generation;
+    const context = scope();
     try {
-      offer = validateOffer(await api('/api/premium/offer'));
-      if (currentGeneration !== generation) return;
-      step = 'choose'; render({focus:true});
+      const value = await fetchOffer(context.storyId);
+      if (!current(context)) return;
+      offer = value; step = 'choose'; render({focus:true});
       if (product === 'book') loadCatalog();
-      if (session && pending) await run(async () => { await restorePending(); });
-    } catch { if (currentGeneration === generation) { step = 'unavailable'; error = 'offer_unavailable'; render(); } }
+      if (session && pending) await run(async captured => { await restorePending(captured); });
+    } catch { if (current(context)) { step = 'unavailable'; error = 'offer_unavailable'; render(); } }
   }
   async function sendCode() {
-    await run(async () => { const currentGeneration = generation; await api('/api/auth/request-code',{method:'POST',body:{email}}); if (currentGeneration !== generation) return; sentAt = Date.now(); step = 'code'; });
+    await run(async context => { await api('/api/auth/request-code',{method:'POST',body:{email}}); if (!current(context)) return; sentAt = Date.now(); step = 'code'; });
   }
   async function confirmCode(code) {
-    await run(async () => {
+    await run(async context => {
       const result = await api('/api/auth/confirm-code',{method:'POST',body:{email,code,deviceId,deviceName:'Магазин · браузер'}});
-      setSession(result); await reviewAccount();
+      if (!current(context)) return;
+      setSession(result, true); context.accountEpoch = accountEpoch; await reviewAccount(context);
     });
   }
-  async function restorePending() {
+  async function restorePending(context = scope()) {
+    const paymentId = pending?.paymentId;
     try {
-      if (pending?.paymentId) {
+      if (paymentId) {
         try {
-          const saved = await api(`/api/payments/${encodeURIComponent(pending.paymentId)}`,{authenticated:true});
-          if (saved.status === 'succeeded') { pending = null; write(pendingKey,null); step = 'success'; return true; }
-          if (!['canceled','REFUNDED'].includes(saved.status)) {
-            pending = {...pending,...saved}; write(pendingKey,pending); step = 'pending';
+          const saved = await api(`/api/payments/${encodeURIComponent(paymentId)}`,{authenticated:true});
+          if (!current(context) || pending?.paymentId !== paymentId) return false;
+          if (saved.status === 'succeeded') { pending = null; write(pendingKey,null); reviewed = null; step = 'success'; return true; }
+          if (reserved(saved) || !['canceled','REFUNDED'].includes(saved.status)) {
+            pending = {...pending,...saved}; write(pendingKey,pending); reviewed = null; step = 'pending';
             if (saved.status !== 'REVIEW') schedulePoll();
             return true;
           }
-        } catch (caught) { if (caught.code !== 'payment_not_found' && caught.status !== 404) throw caught; }
+        } catch (caught) { if (!current(context) || pending?.paymentId !== paymentId) return false; if (caught.code !== 'payment_not_found' && caught.status !== 404) throw caught; }
+        if (!current(context) || pending?.paymentId !== paymentId) return false;
         pending = null; write(pendingKey,null);
       }
       const value = await api('/api/payments/pending',{authenticated:true});
-      if (['succeeded','canceled','REFUNDED'].includes(value.status)) {
-        if (value.status === 'succeeded') { pending = null; write(pendingKey,null); step = 'success'; return true; }
-        pending = null; write(pendingKey,null); return false;
+      if (!current(context) || pending) return false;
+      if (!reserved(value) && ['succeeded','canceled','REFUNDED'].includes(value.status)) {
+        if (value.status === 'succeeded') { reviewed = null; step = 'success'; return true; }
+        return false;
       }
-      pending = value; write(pendingKey,value); step = 'pending'; if (value.status !== 'REVIEW') schedulePoll(); return true;
-    } catch (caught) { if (caught.code === 'payment_not_found' || caught.status === 404) { pending = null; write(pendingKey,null); return false; } throw caught; }
+      pending = value; write(pendingKey,value); reviewed = null; step = 'pending'; if (value.status !== 'REVIEW') schedulePoll(); return true;
+    } catch (caught) {
+      if (!current(context)) return false;
+      if (caught.code === 'payment_not_found' || caught.status === 404) return false;
+      throw caught;
+    }
   }
-  async function reviewAccount() {
-    const currentGeneration = generation;
-    const [status, books] = await Promise.all([api('/api/subscription',{authenticated:true}),api('/api/books',{authenticated:true})]);
-    if (currentGeneration !== generation) return;
-    account = status; owned = new Set(books.storyIds || []);
-    if (await restorePending()) return;
-    step = account.premium || (product === 'book' && owned.has(selected?.id)) ? 'owned' : 'review';
+  async function reviewAccount(context = scope()) {
+    const [status, books, personalOffer] = await Promise.all([api('/api/subscription',{authenticated:true}),api('/api/books',{authenticated:true}),fetchOffer(context.storyId)]);
+    if (!current(context)) return;
+    account = status; owned = new Set(books.storyIds || []); offer = personalOffer;
+    if (await restorePending(context) || !current(context)) return;
+    if (account.premium || (context.product === 'book' && owned.has(context.storyId))) { reviewed = null; step = 'owned'; }
+    else freezeReview(context);
   }
-  async function buy(accepted) {
-    await run(async () => {
-      const request = purchaseRequest(product, selected, offer, accepted);
+  async function buy(accepted, snapshot = reviewed) {
+    await run(async context => {
+      if (!snapshot || snapshot !== reviewed || !current(snapshot)) throw new ShopError('offer_changed');
+      const request = purchaseRequest(snapshot.product, snapshot.story, snapshot.offer, accepted);
       const value = await api(request.path,{method:'POST',body:request.body,authenticated:true});
-      pending = {...value,type:product === 'book' ? 'BOOK' : 'INITIAL',storyId:selected?.id || 0}; write(pendingKey,pending);
+      if (!current(context)) return;
+      pending = {...value,type:snapshot.product === 'book' ? 'BOOK' : 'INITIAL',storyId:snapshot.story?.id || 0}; write(pendingKey,pending); reviewed = null;
       if (value.status === 'succeeded') { step = 'success'; pending = null; write(pendingKey,null); }
       else { step = 'pending'; schedulePoll(); }
     });
@@ -228,43 +291,61 @@ function install() {
   }
   async function checkPayment(manual = true) {
     if (busy) { schedulePoll(); return; }
-    const check = async () => {
-      const currentGeneration = generation;
-      if (!pending?.paymentId) { if (!await restorePending()) { step = 'review'; notice = ''; } return; }
-      const value = await api(`/api/payments/${encodeURIComponent(pending.paymentId)}`,{authenticated:true});
-      if (currentGeneration !== generation) return;
+    const check = async context => {
+      const paymentId = pending?.paymentId;
+      if (!paymentId) { if (!await restorePending(context) && current(context)) await reviewAccount(context); return; }
+      const value = await api(`/api/payments/${encodeURIComponent(paymentId)}`,{authenticated:true});
+      if (!current(context) || pending?.paymentId !== paymentId) return;
       pending = {...pending,...value}; write(pendingKey,pending);
-      if (value.status === 'succeeded') { step = 'success'; pending = null; write(pendingKey,null); clearTimeout(pollTimer); render({animate:true,focus:true}); }
-      else if (['canceled','REFUNDED'].includes(value.status)) { pending = null; write(pendingKey,null); step = product === 'book' && !selected ? 'choose' : 'review'; error = ''; notice = ''; render(); }
+      if (value.status === 'succeeded') { reviewed = null; step = 'success'; pending = null; write(pendingKey,null); clearTimeout(pollTimer); render({animate:true,focus:true}); }
+      else if (['canceled','REFUNDED'].includes(value.status) && !reserved(value)) {
+        pending = null; write(pendingKey,null); const quote = await fetchOffer(context.storyId);
+        if (!current(context) || pending) return;
+        offer = quote; error = ''; notice = '';
+        if (context.product === 'book' && !selected) { reviewed = null; step = 'choose'; } else freezeReview(context);
+        render();
+      }
+      else if (reserved(value) && value.status === 'canceled') { clearTimeout(pollTimer); render(); }
       else if (value.status === 'REVIEW') { clearTimeout(pollTimer); notice = t('Сервер уточняет статус. Не оплачивайте повторно. Если ожидание затянулось, напишите в поддержку.','The server is reviewing this payment. Please do not pay again. Contact support if it takes too long.'); render(); }
       else { if (manual) notice = t('Подтверждение ещё не пришло. Если вы уже оплатили, подождите немного.','Confirmation has not arrived yet. If you paid, please wait a little.'); schedulePoll(); }
     };
     if (manual) await run(check);
-    else { try { await check(); } catch { /* Background checks never overwrite a visible form or create a new payment. */ schedulePoll(); } }
+    else { const context = scope(); try { await check(context); } catch { if (current(context)) schedulePoll(); } }
   }
   function action(name) {
     if (name === 'close') return close();
     if (busy) return;
     if (name === 'open-book') {
-      const button = dialog.querySelector(`[data-story-id="${selected?.id}"]`);
-      if (selected && button && offer) bookPortal.open({story:selected, amount:offer.bookAmount, available:offer.available && offer.paymentProvider === 'robokassa' && !catalogError, source:button});
+      if (selected && offer) return openSelectedBook();
       return;
     }
     if (name === 'reload') { dialog.close(); root.classList.remove('magic-checkout-open'); return open(product); }
     if (name === 'catalog') { catalogError = false; render(); return loadCatalog(); }
-    if (name === 'continue') { if (product === 'book' && !selected) return; return run(async () => { if (session) await reviewAccount(); else step = 'email'; }); }
+    if (name === 'continue') { if (product === 'book' && !selected) return; return run(async context => { if (session) await reviewAccount(context); else step = 'email'; }); }
     if (name === 'resend') return sendCode();
     if (name === 'check') return checkPayment();
-    if (name === 'abandon' && pending?.paymentId) return run(async () => {
-      const value = await api(`/api/payments/${encodeURIComponent(pending.paymentId)}/abandon`,{method:'POST',authenticated:true});
-      if (value.status === 'succeeded') step = 'success'; else step = 'choose';
-      pending = null; write(pendingKey,null); clearTimeout(pollTimer);
+    if (name === 'abandon' && pending?.paymentId) return run(async context => {
+      const paymentId = pending.paymentId;
+      const value = await api(`/api/payments/${encodeURIComponent(paymentId)}/abandon`,{method:'POST',authenticated:true});
+      if (!current(context) || pending?.paymentId !== paymentId) return;
+      clearTimeout(pollTimer); reviewed = null;
+      if (reserved(value)) { pending = {...pending,...value}; write(pendingKey,pending); step = 'pending'; }
+      else {
+        step = value.status === 'succeeded' ? 'success' : 'choose'; pending = null; write(pendingKey,null);
+        const quote = await fetchOffer(context.storyId); if (current(context) && !pending) offer = quote;
+      }
     });
-    if (name === 'logout') return run(async () => {
+    if (name === 'logout') return run(async context => {
       await api('/api/auth/logout',{method:'POST',body:{refreshToken:session.refreshToken},authenticated:true});
-      setSession(null); owned = new Set(); account = null; email = ''; step = 'email';
+      if (!current(context)) return;
+      setSession(null); context.accountEpoch = accountEpoch; offer = null; reviewed = null; pending = null; write(pendingKey,null); owned = new Set(); account = null; email = ''; step = 'email';
+      const quote = await fetchOffer(context.storyId); if (current(context)) offer = quote;
     });
-    if (name === 'choose' || name === 'email') { step = name; error = ''; notice = ''; render({animate:true,focus:true}); if (name === 'choose' && product === 'book') loadCatalog(); }
+    if (name === 'choose') return run(async context => {
+      const quote = await fetchOffer(context.storyId); if (!current(context)) return;
+      offer = quote; reviewed = null; step = 'choose'; notice = ''; if (product === 'book') loadCatalog();
+    });
+    if (name === 'email') { step = name; error = ''; notice = ''; render({animate:true,focus:true}); if (name === 'choose' && product === 'book') loadCatalog(); }
   }
   function localizeSource() {
     sourcePanel?.querySelectorAll('[data-story-purchase]').forEach(link => {

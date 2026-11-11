@@ -165,3 +165,10 @@
 @media(prefers-reduced-motion:reduce){.magic-checkout *,.magic-checkout *:before{animation:none!important;transition:none!important;scroll-behavior:auto!important}.magic-book-art{transform:none!important}.magic-book-glare{opacity:0!important}}
 html[data-motion=reduced] .magic-checkout *,html[data-motion=reduced] .magic-checkout *:before{animation:none!important;transition:none!important}
 html[data-motion=reduced] .magic-book-art{transform:none!important}html[data-motion=reduced] .magic-book-glare{opacity:0!important}
+
+/* Keep regular/introductory prices readable on narrow checkout and portal layouts. */
+.magic-big-price s{font:16px system-ui;color:var(--magic-muted);margin-right:8px;white-space:nowrap}
+.magic-summary>b{white-space:normal;text-align:right;flex:0 0 auto;max-width:45%}
+.magic-summary>b s{display:block;font:12px system-ui;color:var(--magic-muted);white-space:nowrap}
+.magic-book-price>strong{white-space:normal;min-width:0}
+.magic-book-price s{display:block;font:15px/1.4 system-ui;color:var(--page-muted);white-space:nowrap}

@@ -1,4 +1,10 @@
 export const API_BASE = 'https://reserve.volshebnye-istorii.ru';
+export const PRICING_VERSION = 'first_purchase_v1';
+export function offerPath(storyId) {
+  const query = new URLSearchParams({pricingVersion:PRICING_VERSION});
+  if (Number.isSafeInteger(storyId) && storyId > 0) query.set('storyId', String(storyId));
+  return `/api/premium/offer?${query}`;
+}
 export const PROVIDERS = Object.freeze([
   {id:'robokassa', name:'Robokassa', available:true},
   {id:'lava', name:'Lava.top', available:false}
@@ -19,6 +25,21 @@ export function validateOffer(value) {
       typeof value.termsVersion !== 'string' || !value.termsVersion || typeof value.autoRenew !== 'boolean' ||
       !Array.isArray(value.bookStoryIds) || value.bookStoryIds.some(id => !Number.isSafeInteger(id) || id <= 0)) {
     throw new ShopError('offer_unavailable');
+  }
+  if (value.pricingVersion !== undefined) {
+    const validMoney = amount => Number.isSafeInteger(amount) && amount > 0;
+    const validPrice = (amount, regular, discount) => validMoney(regular) && amount <= regular &&
+      [0,20].includes(discount) && (discount === 20
+        ? amount === Number((BigInt(regular) * 80n + 50n) / 100n || 1n)
+        : amount === regular);
+    if (value.pricingVersion !== PRICING_VERSION || !validMoney(value.renewalAmount) ||
+        !validPrice(value.amount, value.regularAmount, value.premiumDiscountPercent) ||
+        !validPrice(value.bookAmount, value.regularBookAmount, value.bookDiscountPercent) ||
+        !['sign_in_required','available','reserved','used'].includes(value.firstPurchaseDiscountState) ||
+        typeof value.firstPurchaseDiscountEligible !== 'boolean' ||
+        value.firstPurchaseDiscountEligible !== (value.firstPurchaseDiscountState === 'available')) {
+      throw new ShopError('offer_unavailable');
+    }
   }
   return value;
 }
@@ -42,12 +63,14 @@ export function purchaseRequest(product, story, offer, accepted, provider = 'rob
   validateOffer(offer);
   if (provider !== 'robokassa' || offer.paymentProvider !== provider || !offer.available) throw new ShopError('sales_unavailable');
   if (!accepted) throw new ShopError('consent_required');
+  const pricing = offer.pricingVersion === PRICING_VERSION ? {pricingVersion:PRICING_VERSION} : {};
+  if (offer.pricingVersion === PRICING_VERSION && offer.firstPurchaseDiscountState === 'sign_in_required') throw new ShopError('login_required');
   if (product === 'book') {
     if (!story || !offer.bookStoryIds.includes(story.id)) throw new ShopError('story_not_for_sale');
-    return {path:`/api/books/${story.id}/create`, body:{termsVersion:offer.termsVersion, amount:offer.bookAmount, termsAccepted:true}};
+    return {path:`/api/books/${story.id}/create`, body:{termsVersion:offer.termsVersion, amount:offer.bookAmount, termsAccepted:true, ...pricing}};
   }
   if (product !== 'premium') throw new ShopError('invalid_product');
-  return {path:'/api/subscription/create', body:{termsVersion:offer.termsVersion, amount:offer.amount, autoRenewConsent:offer.autoRenew && accepted}};
+  return {path:'/api/subscription/create', body:{termsVersion:offer.termsVersion, amount:offer.amount, autoRenewConsent:offer.autoRenew && accepted, ...pricing}};
 }
 
 export function confirmationUrl(raw) {
@@ -60,39 +83,64 @@ export function confirmationUrl(raw) {
   return '';
 }
 
-export function createApi({fetcher = globalThis.fetch, getSession, setSession, deviceId}) {
-  let refresh;
-  async function request(path, {method = 'GET', body, authenticated = false, retry = true, networkRetries = 1} = {}) {
+export function createApi({fetcher = globalThis.fetch, getSession, setSession, deviceId, getSessionEpoch = () => 0}) {
+  let refresh, refreshEpoch, observed = fingerprint(getSession()), inferredEpoch = 0;
+  function fingerprint(value) { return [value?.userId, value?.email, value?.accessToken, value?.refreshToken].join('\0'); }
+  function epoch() {
+    const next = fingerprint(getSession());
+    if (next !== observed) { inferredEpoch++; observed = next; }
+    return getSessionEpoch() + ':' + inferredEpoch;
+  }
+  function requireEpoch(expected) { if (epoch() !== expected) throw new ShopError('account_changed', 409); }
+  function persistRefresh(value, expected) {
+    requireEpoch(expected);
+    setSession(value);
+    observed = fingerprint(getSession()); // A verified refresh rotates tokens within the same account.
+  }
+  async function request(path, {method = 'GET', body, authenticated = false, retry = true, networkRetries = 1, sessionEpoch = epoch()} = {}) {
+    requireEpoch(sessionEpoch);
     const session = getSession();
     if (authenticated && !session?.accessToken) throw new ShopError('login_required', 401);
     let response;
     try {
       response = await fetcher(API_BASE + path, {
         method, mode:'cors', credentials:'omit', cache:'no-store', referrerPolicy:'no-referrer',
-        headers:{...(body ? {'Content-Type':'application/json'} : {}), ...(authenticated ? {Authorization:`Bearer ${session.accessToken}`} : {})},
+        headers:{...(body ? {'Content-Type':'application/json'} : {}), ...(authenticated ? {Authorization:'Bearer ' + session.accessToken} : {})},
         ...(body ? {body:JSON.stringify(body)} : {}), signal:AbortSignal.timeout(25000)
       });
     } catch {
-      if (method === 'GET' && networkRetries > 0) return request(path, {method, body, authenticated, retry, networkRetries:networkRetries - 1});
+      requireEpoch(sessionEpoch);
+      if (method === 'GET' && networkRetries > 0) return request(path, {method, body, authenticated, retry, networkRetries:networkRetries - 1, sessionEpoch});
       throw new ShopError(method === 'POST' && path.includes('/create') ? 'payment_uncertain' : 'network_error');
     }
     const data = await response.json().catch(() => ({}));
+    requireEpoch(sessionEpoch);
     if (response.status === 401 && authenticated && retry && session.refreshToken) {
-      if (getSession()?.accessToken !== session.accessToken) return request(path, {method, body, authenticated, retry:false});
-      if (!refresh) {
+      if (getSession()?.accessToken !== session.accessToken) return request(path, {method, body, authenticated, retry:false, sessionEpoch});
+      if (!refresh || refreshEpoch !== sessionEpoch) {
         const latest = getSession();
         const requestId = latest.refreshRequestId || crypto.randomUUID();
-        setSession({...latest, refreshRequestId:requestId});
-        refresh = request('/api/auth/refresh', {method:'POST', body:{refreshToken:latest.refreshToken, requestId, deviceId, deviceName:'Магазин · браузер'}})
-          .then(value => { setSession(value); return value; }).catch(error => {
-            if (error.status === 401 || error.status === 400) setSession(null);
+        persistRefresh({...latest, refreshRequestId:requestId}, sessionEpoch);
+        refreshEpoch = sessionEpoch;
+        const inFlight = request('/api/auth/refresh', {method:'POST', body:{refreshToken:latest.refreshToken, requestId, deviceId, deviceName:'Магазин · браузер'}, sessionEpoch})
+          .then(value => {
+            requireEpoch(sessionEpoch);
+            if (!value?.accessToken || !value?.refreshToken) throw new ShopError('login_required', 401);
+            if ((latest.userId && value.userId && latest.userId !== value.userId) ||
+                (latest.email && value.email && latest.email !== value.email)) throw new ShopError('account_changed', 409);
+            persistRefresh(value, sessionEpoch); return value;
+          }).catch(error => {
+            requireEpoch(sessionEpoch);
+            if (error.status === 400 || error.status === 401) throw new ShopError('login_required', 401);
             throw error;
-          }).finally(() => { refresh = null; });
+          }).finally(() => { if (refresh === inFlight) { refresh = null; refreshEpoch = null; } });
+        refresh = inFlight;
       }
       await refresh;
-      return request(path, {method, body, authenticated, retry:false});
+      requireEpoch(sessionEpoch);
+      return request(path, {method, body, authenticated, retry:false, sessionEpoch});
     }
-    if (!response.ok) throw new ShopError(data.error || data.message || data.reason || `http_${response.status}`, response.status);
+    if (!response.ok) throw new ShopError(data.error || data.message || data.reason || 'http_' + response.status, response.status);
     return data;
   }
   return request;
