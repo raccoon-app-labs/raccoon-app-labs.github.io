@@ -2,7 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import vm from 'node:vm';
-import {buildLogoVoxels,logoScrollAngle,rotationMatrix,createSceneLoop} from '../assets/studio-logo-model.mjs';
+import {buildLogoVoxels,logoScrollAngle,rotationMatrix,createSceneLoop,createPointerMotion,advancePointer,satellitePose,projectScenePoint} from '../assets/studio-logo-model.mjs';
+import {SATELLITE_ORDER,buildSatelliteModel} from '../assets/studio-satellite-models.mjs';
 
 const near=(actual,expected,tolerance=1e-5)=>assert.ok(Math.abs(actual-expected)<tolerance,`${actual} is not close to ${expected}`);
 
@@ -127,7 +128,7 @@ test('reduced motion redraws a requested static frame without keeping an idle an
 
 // Execute the actual renderer with browser/GPU boundaries replaced, rather than
 // reimplementing its initialization or cleanup logic in the test.
-const rendererSource=readFileSync(new URL('../assets/studio-logo-scene.mjs',import.meta.url),'utf8').replace(/^import[^\n]*\n/,'');
+const rendererSource=readFileSync(new URL('../assets/studio-logo-scene.mjs',import.meta.url),'utf8').replace(/^import[^;\n]*;\r?\n/gm,'');
 
 function eventTarget(){
   const handlers=new Map();
@@ -139,8 +140,8 @@ function eventTarget(){
   };
 }
 
-async function rendererFixture({missingObserver,failShader=0,failLink=0,noWebGL=false}={}){
-  const pending=new Map(),canvases=[],observers=[];
+async function rendererFixture({missingObserver,failShader=0,failLink=0,noWebGL=false,reducedMotion=false,withSatellites=false}={}){
+  const pending=new Map(),canvases=[],observers=[],meshFrames=[],uniforms=new Map();
   const live={shaders:new Set(),programs:new Set(),buffers:new Set(),arrays:new Set()};
   let serial=0,shaderCount=0,programCount=0,draws=0;
   const allocate=(kind,extra={})=>{const resource={id:++serial,...extra};live[kind].add(resource);return resource;};
@@ -154,40 +155,48 @@ async function rendererFixture({missingObserver,failShader=0,failLink=0,noWebGL=
     createBuffer:()=>allocate('buffers'),deleteBuffer:b=>live.buffers.delete(b),
     createVertexArray:()=>allocate('arrays'),deleteVertexArray:a=>live.arrays.delete(a),
     getUniformLocation:(program,name)=>({program,name}),getError:()=>0,
-    drawArraysInstanced(){draws++;},drawArrays(){draws++;}
+    drawArraysInstanced(){draws++;meshFrames.push(new Map(uniforms));},drawArrays(){draws++;}
   };
   for(const name of ['shaderSource','compileShader','attachShader','linkProgram','bindBuffer','bufferData','bindVertexArray',
     'enableVertexAttribArray','vertexAttribPointer','vertexAttribDivisor','viewport','clearColor','clear','enable','depthMask',
-    'disable','useProgram','uniformMatrix3fv','uniform2f','uniform1f','blendFunc'])gl[name]=()=>{};
+    'disable','useProgram','uniform2f','uniform1f','uniform3f','uniform4f','blendFunc'])gl[name]=()=>{};
+  gl.uniformMatrix3fv=(location,transpose,value)=>uniforms.set(location.name,Array.from(value));
+  gl.uniform4f=(location,...values)=>uniforms.set(location.name,values);
+  gl.uniform3f=(location,...values)=>uniforms.set(location.name,values);
+  gl.uniform1f=(location,value)=>uniforms.set(location.name,value);
   const rgba=new Uint8ClampedArray(80*80*4);rgba.set([245,235,255,255],(10*80+10)*4);
   const image={complete:true,naturalWidth:80};
-  const root={dataset:{siteWorld:'studio'}};
-  const visual={...eventTarget(),dataset:{},children:[],querySelector:selector=>selector==='.core-logo'?image:null,
-    getBoundingClientRect:()=>({top:160,height:400}),append(node){this.children.push(node);node.parent=this;}};
-  const document={...eventTarget(),documentElement:root,hidden:false,fonts:{ready:Promise.resolve()},
+  const root={...eventTarget(),dataset:{siteWorld:'studio'}};
+  const satellites=withSatellites?SATELLITE_ORDER.map(()=>{
+    const properties=new Map(),link={closest:()=>link};
+    return {properties,link,style:{setProperty:(key,value)=>properties.set(key,value)},contains:node=>node===link};
+  }):[];
+  const visual={...eventTarget(),dataset:{},children:[],querySelector:selector=>selector==='.core-logo'?image:null,querySelectorAll:()=>satellites,closest:()=>null,
+    getBoundingClientRect:()=>({top:160,left:100,width:400,height:400}),append(node){this.children.push(node);node.parent=this;}};
+  const document={...eventTarget(),documentElement:root,hidden:false,readyState:'complete',activeElement:null,fonts:{ready:Promise.resolve()},
     querySelector:selector=>selector==='.visual'?visual:null,
     createElement(tag){
       assert.equal(tag,'canvas');
-      const canvas={...eventTarget(),className:'',parent:null,setAttribute(){},getBoundingClientRect:()=>({width:464,height:464}),
+      const canvas={...eventTarget(),className:'',parent:null,setAttribute(){},getBoundingClientRect:()=>({left:68,top:128,width:464,height:464}),
         getContext(type){return type==='2d'?{drawImage(){},getImageData:()=>({data:rgba})}:noWebGL?null:gl;},
         remove(){if(this.parent){this.parent.children=this.parent.children.filter(node=>node!==this);this.parent=null;}}};
       canvases.push(canvas);return canvas;
     }};
   const window={...eventTarget()};
-  const media={...eventTarget(),matches:false};
+  const media={...eventTarget(),matches:reducedMotion};
   function observerClass(){return class{
     constructor(callback){this.callback=callback;this.disconnected=false;observers.push(this);}
     observe(){}disconnect(){this.disconnected=true;}
   };}
   const context={document,window,matchMedia:()=>media,IntersectionObserver:observerClass(),ResizeObserver:observerClass(),MutationObserver:observerClass(),
-    scrollY:0,innerHeight:800,devicePixelRatio:1,
+    scrollY:0,innerWidth:1280,innerHeight:800,devicePixelRatio:1,
     requestAnimationFrame:fn=>{pending.set(++serial,fn);return serial;},cancelAnimationFrame:id=>pending.delete(id),
-    buildLogoVoxels,logoScrollAngle,rotationMatrix,createSceneLoop};
+    buildLogoVoxels,logoScrollAngle,rotationMatrix,createSceneLoop,createPointerMotion,advancePointer,satellitePose,projectScenePoint,SATELLITE_ORDER,buildSatelliteModel};
   if(missingObserver)context[missingObserver]=undefined;
   vm.runInNewContext(rendererSource,context);
   // Let boot's rejection handler and the real fonts.ready continuation settle.
   await new Promise(resolve=>setImmediate(resolve));
-  return {visual,image,window,document,media,canvases,observers,live,pending,draws:()=>draws,
+  return {root,visual,image,window,document,media,canvases,observers,live,pending,meshFrames,uniforms,satellites,draws:()=>draws,
     step(time=100){const jobs=[...pending.values()];pending.clear();for(const fn of jobs)fn(time);}};
 }
 
@@ -214,6 +223,8 @@ test('an unavailable WebGL context keeps the image without starting background w
   assertFallback(f);assertNoGpuResources(f);
   assert.equal(f.observers.length,0);
   assert.equal(f.window.listenerCount(),0);
+  assert.equal(f.root.listenerCount(),0);
+  assert.equal(f.root.listenerCount(),0);
 });
 
 test('shader and program-link failures release earlier GPU allocations without scheduling leaked frames',async()=>{
@@ -239,6 +250,7 @@ test('context loss removes a successfully rendered scene, restores the image, an
   assertFallback(f);assertNoGpuResources(f);
   assert.ok(f.observers.every(observer=>observer.disconnected));
   assert.equal(f.window.listenerCount(),0);
+  assert.equal(f.root.listenerCount(),0);
   assert.equal(f.document.listenerCount(),0);
   assert.equal(f.media.listenerCount(),0);
   assert.equal(f.visual.listenerCount(),0);
@@ -248,4 +260,72 @@ test('context loss removes a successfully rendered scene, restores the image, an
   f.step(240);
   assert.equal(f.draws(),2,'no detached renderer continues to draw after context loss');
   assert.equal(f.pending.size,0);
+});
+
+test('mouse movement changes the rendered gaze and head while touch input leaves the scene undisturbed',async()=>{
+  const mouse=await rendererFixture(),touch=await rendererFixture(),control=await rendererFixture();
+  for(const f of [mouse,touch,control])f.step(100);
+  const event={clientX:440,clientY:250,target:mouse.visual,pointerType:'mouse',preventDefault(){assert.fail('pointer tracking must not cancel page input');}};
+  mouse.window.emit('pointermove',event);
+  touch.window.emit('pointermove',{...event,target:touch.visual,pointerType:'touch'});
+  for(let time=140;time<=1100;time+=40)for(const f of [mouse,touch,control])f.step(time);
+  const frame=f=>f.meshFrames.at(-1);
+  const attention=frame(mouse).get('attention');
+  assert.ok(attention[0]>.5&&attention[1]>.3&&attention[2]>.2,'the visible gaze must react to a mouse near the face');
+  assert.notDeepEqual(frame(mouse).get('rotation'),frame(control).get('rotation'));
+  assert.ok(mouse.uniforms.get('attractor')[3]>.2,'fireflies should receive the same active pointer attraction');
+  assert.deepEqual(frame(touch).get('attention'),frame(control).get('attention'));
+  assert.deepEqual(frame(touch).get('rotation'),frame(control).get('rotation'));
+  mouse.root.emit('pointerleave');
+  for(let time=1140;time<=4140;time+=40)mouse.step(time);
+  assert.ok(frame(mouse).get('attention').slice(0,3).every(value=>Math.abs(value)<1e-6),'leaving the page must release the gaze and attraction');
+});
+
+test('the actual renderer ignores pointer movement in reduced motion and returns to one static frame after a preference change',async()=>{
+  const f=await rendererFixture({reducedMotion:true});f.step(100);
+  assert.equal(f.pending.size,0);
+  const event={clientX:440,clientY:250,target:f.visual,pointerType:'mouse'};
+  f.window.emit('pointermove',event);
+  assert.equal(f.pending.size,0,'mouse tracking must not restart animation in reduced mode');
+  assert.deepEqual(f.meshFrames.at(-1).get('attention'),[0,0,0,1]);
+  f.media.matches=false;f.media.emit('change');f.step(140);f.window.emit('pointermove',event);
+  for(let time=180;time<=580;time+=40)f.step(time);
+  assert.ok(f.meshFrames.at(-1).get('attention')[0]>.3);
+  f.media.matches=true;f.media.emit('change');f.step(620);
+  assert.deepEqual(f.meshFrames.at(-1).get('attention'),[0,0,0,1]);
+  assert.equal(f.pending.size,0);
+  f.window.emit('pointermove',event);f.window.emit('scroll');
+  assert.equal(f.pending.size,0);
+});
+
+test('all seven real miniatures share the scene and their link targets follow the same depth projection',async()=>{
+  const f=await rendererFixture({withSatellites:true});f.step(100);f.step(140);
+  assert.equal(f.visual.dataset.satelliteScene,'ready');
+  assert.equal(f.visual.children.length,1,'miniatures must reuse the existing canvas');
+  assert.equal(f.draws(),18,'each frame draws one head, seven miniature meshes, and fireflies');
+  const frames=f.meshFrames.slice(-8);
+  for(let i=0;i<7;i++){
+    const frame=frames[i+1],[x,y,z]=frame.get('placement'),bob=frame.get('bob');
+    const screen=projectScenePoint({x,y:y+bob,z},464);
+    near(parseFloat(f.satellites[i].properties.get('--satellite-x')),screen.x,.006);
+    near(parseFloat(f.satellites[i].properties.get('--satellite-y')),screen.y,.006);
+  }
+  f.visual.children[0].emit('webglcontextlost');
+  assert.equal(f.visual.dataset.satelliteScene,undefined,'failed graphics must restore the original linked icons too');
+  assertFallback(f);assertNoGpuResources(f);
+});
+
+test('hover and keyboard focus pause orbital travel so miniature links remain stable targets',async()=>{
+  const f=await rendererFixture({withSatellites:true});f.step(100);f.step(140);
+  const latestPose=index=>f.meshFrames.slice(-8)[index+1].get('placement');
+  f.window.emit('pointermove',{clientX:300,clientY:360,target:f.satellites[2].link,pointerType:'mouse'});
+  f.step(180);const hoveredPose=latestPose(2);f.step(220);
+  assert.deepEqual(latestPose(2),hoveredPose);
+  f.window.emit('scroll');f.step(260);
+  assert.notDeepEqual(latestPose(2),hoveredPose,'scrolling must release stale hover when the icon moves away from a stationary pointer');
+  f.visual.emit('focusin',{target:f.satellites[1].link});
+  f.step(300);const focusedPose=latestPose(1);f.step(340);
+  assert.deepEqual(latestPose(1),focusedPose);
+  f.visual.emit('focusout',{relatedTarget:null});f.step(380);
+  assert.notDeepEqual(latestPose(1),focusedPose,'orbits resume after the target is released');
 });

@@ -10,6 +10,12 @@
 .visual[data-logo-scene=ready] .studio-satellites{z-index:3}
 .visual[data-logo-scene=ready] .orbit,.visual[data-logo-scene=ready] .studio-rings{opacity:.25}
 .visual[data-logo-scene=ready] .spark{display:none}
+.visual[data-satellite-scene=ready] .studio-satellites,.visual[data-satellite-scene=ready] .studio-satellite{animation:none}
+.visual[data-satellite-scene=ready] .studio-satellite{left:50%!important;top:50%!important;width:56px;height:56px;margin:-28px;transform:translate3d(var(--satellite-x,0px),var(--satellite-y,0px),0)}
+.visual[data-satellite-scene=ready] .studio-satellite img{opacity:0}
+.visual[data-satellite-scene=ready] .studio-satellite a{border-color:transparent;background:transparent;box-shadow:none;border-radius:50%;transition:background .2s}
+.visual[data-satellite-scene=ready] .studio-satellite a:hover,.visual[data-satellite-scene=ready] .studio-satellite a:focus-visible{scale:1;box-shadow:none;background:#bb9fff0d;outline:1px dashed #bb9fff88}
+@media(max-width:600px){.visual[data-satellite-scene=ready] .studio-satellite{width:46px;height:46px;margin:-23px}}
 .studio-orbit .core-logo{transition:filter .4s,scale .6s cubic-bezier(.2,.8,.2,1)}
 .studio-orbit:hover .core-logo{scale:1.08;filter:drop-shadow(0 0 27px #b79bff88)}
 .studio-rings{position:absolute;inset:4%;border:1px solid #bca6ff38;border-radius:50%;pointer-events:none;box-shadow:0 0 80px #b494ff0a,inset 0 0 35px #b494ff0a}

@@ -28,9 +28,39 @@ export function logoScrollAngle(scrollY,sceneTop,sceneHeight,viewportHeight,redu
   return -.25+clamp((scrollY-start)/span,0,1)*1.55;
 }
 
-export function rotationMatrix(yaw,pitch){
+export function rotationMatrix(yaw,pitch,roll=0){
   const cy=Math.cos(yaw),sy=Math.sin(yaw),cx=Math.cos(pitch),sx=Math.sin(pitch);
-  return new Float32Array([cy,0,-sy,sy*sx,cx,cy*sx,sy*cx,-sx,cy*cx]);
+  const matrix=new Float32Array([cy,0,-sy,sy*sx,cx,cy*sx,sy*cx,-sx,cy*cx]);
+  if(roll){const c=Math.cos(roll),s=Math.sin(roll);for(let col=0;col<3;col++){const i=col*3,x=matrix[i],y=matrix[i+1];matrix[i]=c*x-s*y;matrix[i+1]=s*x+c*y;}}
+  return matrix;
+}
+
+export function createPointerMotion(){return {x:0,y:0,vx:0,vy:0,strength:0};}
+
+export function advancePointer(state,target,dt,reduced=false){
+  if(reduced){Object.assign(state,createPointerMotion());return state;}
+  dt=clamp(Number.isFinite(dt)?dt:0,0,.05);
+  const omega=10,decay=Math.exp(-omega*dt);
+  for(const [axis,velocity] of [['x','vx'],['y','vy']]){
+    const aim=clamp(Number.isFinite(target[axis])?target[axis]:0,-1,1);
+    const offset=state[axis]-aim,temp=(state[velocity]+omega*offset)*dt;
+    state[axis]=aim+(offset+temp)*decay;
+    state[velocity]=(state[velocity]-omega*temp)*decay;
+  }
+  const strength=clamp(Number.isFinite(target.strength)?target.strength:0,0,1);
+  state.strength+=(strength-state.strength)*(1-Math.exp(-6*dt));
+  return state;
+}
+
+export function satellitePose(index,time,count=7){
+  const angle=index/count*Math.PI*2-Math.PI/2+time*Math.PI*2/70;
+  return {x:Math.cos(angle)*1.22,y:-Math.sin(angle)*1.16,z:Math.sin(angle)*.24,
+    yaw:-.24+Math.sin(angle)*.12,pitch:.14+Math.cos(angle)*.08,scale:.16};
+}
+
+export function projectScenePoint(position,canvasHeight){
+  const unit=.66*canvasHeight*.5*(4.8/(4.8-position.z));
+  return {x:position.x*unit,y:-position.y*unit};
 }
 
 export function createSceneLoop({requestFrame,cancelFrame,render}){
