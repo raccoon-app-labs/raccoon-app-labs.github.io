@@ -83,7 +83,7 @@ export function mountCheckout(root, options = {}) {
     <button class="button" type="submit" data-auth-submit></button><button class="button secondary" type="button" data-auth-back data-copy="back"></button></form>
     <div class="neon-account" hidden><p class="neon-recipient"></p><div class="neon-account-actions"><button class="button secondary" type="button" data-refresh data-copy="refresh"></button><button class="button secondary" type="button" data-logout data-copy="logout"></button></div></div>
     <div class="neon-selected" hidden><h3></h3><p class="neon-selected-contents"></p><p class="neon-selected-price"></p><p data-copy="rate"></p>
-    <p class="neon-legal"><a data-terms target="_blank" rel="noopener" data-copy="terms"></a> · <a href="privacy/" target="_blank" rel="noopener" data-copy="privacy"></a></p>
+    <p class="neon-legal"><a data-terms target="_blank" rel="noopener" data-copy="terms"></a> · <a href="/apps/neon-cyber-wall-kicker/shop/privacy/" target="_blank" rel="noopener" data-copy="privacy"></a></p>
     <label class="neon-consent"><input type="checkbox" data-consent><span data-copy="consent"></span></label><button class="button" type="button" data-pay data-copy="pay" disabled></button></div>
     <p class="neon-choose" data-copy="choose"></p><section class="neon-pending" hidden><h3 data-copy="pending"></h3><p class="neon-order-id"></p><p class="neon-order-summary"></p>
     <div class="neon-account-actions"><button class="button secondary" type="button" data-check data-copy="check"></button><button class="button secondary" type="button" data-resume data-copy="resume"></button><button class="button secondary" type="button" data-cancel data-copy="cancel"></button></div></section>
