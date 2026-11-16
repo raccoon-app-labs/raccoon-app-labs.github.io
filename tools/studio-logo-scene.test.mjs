@@ -141,13 +141,13 @@ function eventTarget(){
 }
 
 async function rendererFixture({missingObserver,failShader=0,failLink=0,noWebGL=false,reducedMotion=false,withSatellites=false}={}){
-  const pending=new Map(),canvases=[],observers=[],meshFrames=[],uniforms=new Map();
+  const pending=new Map(),canvases=[],observers=[],meshFrames=[],uniforms=new Map(),styleWrites=[];
   const live={shaders:new Set(),programs:new Set(),buffers:new Set(),arrays:new Set()};
   let serial=0,shaderCount=0,programCount=0,draws=0;
   const allocate=(kind,extra={})=>{const resource={id:++serial,...extra};live[kind].add(resource);return resource;};
   const gl={
     VERTEX_SHADER:1,FRAGMENT_SHADER:2,COMPILE_STATUS:3,LINK_STATUS:4,ARRAY_BUFFER:5,STATIC_DRAW:6,FLOAT:7,
-    COLOR_BUFFER_BIT:8,DEPTH_BUFFER_BIT:16,DEPTH_TEST:17,BLEND:18,TRIANGLES:19,POINTS:20,SRC_ALPHA:21,ONE:22,NO_ERROR:0,
+    COLOR_BUFFER_BIT:8,DEPTH_BUFFER_BIT:16,DEPTH_TEST:17,BLEND:18,TRIANGLES:19,POINTS:20,SRC_ALPHA:21,ONE:22,NO_ERROR:0,ELEMENT_ARRAY_BUFFER:23,UNSIGNED_SHORT:24,CULL_FACE:25,
     createShader:type=>allocate('shaders',{type,order:++shaderCount}),deleteShader:s=>live.shaders.delete(s),
     getShaderParameter:s=>s.order!==failShader,
     createProgram:()=>allocate('programs',{order:++programCount}),deleteProgram:p=>live.programs.delete(p),
@@ -155,7 +155,7 @@ async function rendererFixture({missingObserver,failShader=0,failLink=0,noWebGL=
     createBuffer:()=>allocate('buffers'),deleteBuffer:b=>live.buffers.delete(b),
     createVertexArray:()=>allocate('arrays'),deleteVertexArray:a=>live.arrays.delete(a),
     getUniformLocation:(program,name)=>({program,name}),getError:()=>0,
-    drawArraysInstanced(){draws++;meshFrames.push(new Map(uniforms));},drawArrays(){draws++;}
+    drawElementsInstanced(mode,count,type,offset,instances){assert.equal(mode,gl.TRIANGLES);assert.equal(count,36);assert.equal(type,gl.UNSIGNED_SHORT);assert.equal(offset,0);assert.ok(instances>0);draws++;meshFrames.push(new Map(uniforms));},drawArrays(){draws++;}
   };
   for(const name of ['shaderSource','compileShader','attachShader','linkProgram','bindBuffer','bufferData','bindVertexArray',
     'enableVertexAttribArray','vertexAttribPointer','vertexAttribDivisor','viewport','clearColor','clear','enable','depthMask',
@@ -169,7 +169,7 @@ async function rendererFixture({missingObserver,failShader=0,failLink=0,noWebGL=
   const root={...eventTarget(),dataset:{siteWorld:'studio'}};
   const satellites=withSatellites?SATELLITE_ORDER.map(()=>{
     const properties=new Map(),link={closest:()=>link};
-    return {properties,link,style:{setProperty:(key,value)=>properties.set(key,value)},contains:node=>node===link};
+    return {properties,link,style:{setProperty:(key,value)=>{styleWrites.push([key,value]);properties.set(key,value);},getPropertyValue:key=>properties.get(key)||'',removeProperty:key=>properties.delete(key)},contains:node=>node===link};
   }):[];
   const visual={...eventTarget(),dataset:{},children:[],querySelector:selector=>selector==='.core-logo'?image:null,querySelectorAll:()=>satellites,closest:()=>null,
     getBoundingClientRect:()=>({top:160,left:100,width:400,height:400}),append(node){this.children.push(node);node.parent=this;}};
@@ -196,7 +196,7 @@ async function rendererFixture({missingObserver,failShader=0,failLink=0,noWebGL=
   vm.runInNewContext(rendererSource,context);
   // Let boot's rejection handler and the real fonts.ready continuation settle.
   await new Promise(resolve=>setImmediate(resolve));
-  return {root,visual,image,window,document,media,canvases,observers,live,pending,meshFrames,uniforms,satellites,draws:()=>draws,
+  return {root,visual,image,window,document,media,canvases,observers,live,pending,meshFrames,uniforms,satellites,styleWrites,draws:()=>draws,
     step(time=100){const jobs=[...pending.values()];pending.clear();for(const fn of jobs)fn(time);}};
 }
 
@@ -307,12 +307,22 @@ test('all seven real miniatures share the scene and their link targets follow th
   for(let i=0;i<7;i++){
     const frame=frames[i+1],[x,y,z]=frame.get('placement'),bob=frame.get('bob');
     const screen=projectScenePoint({x,y:y+bob,z},464);
-    near(parseFloat(f.satellites[i].properties.get('--satellite-x')),screen.x,.006);
-    near(parseFloat(f.satellites[i].properties.get('--satellite-y')),screen.y,.006);
+    const transform=f.satellites[i].properties.get('transform').match(/^translate3d\(([-\d.]+)px,([-\d.]+)px,0\)$/);
+    assert.ok(transform,'each visible mesh needs a matching composited link transform');
+    near(Number(transform[1]),screen.x,.006);near(Number(transform[2]),screen.y,.006);
   }
   f.visual.children[0].emit('webglcontextlost');
   assert.equal(f.visual.dataset.satelliteScene,undefined,'failed graphics must restore the original linked icons too');
+  assert.ok(f.satellites.every(el=>!el.properties.has('transform')),'fallback icon positions must be restored after context loss');
   assertFallback(f);assertNoGpuResources(f);
+});
+
+test('redrawing an unchanged static scene preserves link targets without redundant style mutation',async()=>{
+  const f=await rendererFixture({withSatellites:true,reducedMotion:true});f.step(100);
+  const writes=f.styleWrites.length;
+  assert.equal(writes,7,'one non-inherited transform per linked miniature is sufficient');
+  f.visual.emit('focusin',{target:f.satellites[1].link});f.step(140);
+  assert.equal(f.styleWrites.length,writes,'static focus redraw must not invalidate link styles again');
 });
 
 test('hover and keyboard focus pause orbital travel so miniature links remain stable targets',async()=>{

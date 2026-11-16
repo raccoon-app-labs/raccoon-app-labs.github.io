@@ -11,7 +11,7 @@
 .visual[data-logo-scene=ready] .orbit,.visual[data-logo-scene=ready] .studio-rings{opacity:.25}
 .visual[data-logo-scene=ready] .spark{display:none}
 .visual[data-satellite-scene=ready] .studio-satellites,.visual[data-satellite-scene=ready] .studio-satellite{animation:none}
-.visual[data-satellite-scene=ready] .studio-satellite{left:50%!important;top:50%!important;width:56px;height:56px;margin:-28px;transform:translate3d(var(--satellite-x,0px),var(--satellite-y,0px),0)}
+.visual[data-satellite-scene=ready] .studio-satellite{left:50%!important;top:50%!important;width:56px;height:56px;margin:-28px}
 .visual[data-satellite-scene=ready] .studio-satellite img{opacity:0}
 .visual[data-satellite-scene=ready] .studio-satellite a{border-color:transparent;background:transparent;box-shadow:none;border-radius:50%;transition:background .2s}
 .visual[data-satellite-scene=ready] .studio-satellite a:hover,.visual[data-satellite-scene=ready] .studio-satellite a:focus-visible{scale:1;box-shadow:none;background:#bb9fff0d;outline:1px dashed #bb9fff88}

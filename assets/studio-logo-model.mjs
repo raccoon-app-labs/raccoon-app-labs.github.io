@@ -28,9 +28,9 @@ export function logoScrollAngle(scrollY,sceneTop,sceneHeight,viewportHeight,redu
   return -.25+clamp((scrollY-start)/span,0,1)*1.55;
 }
 
-export function rotationMatrix(yaw,pitch,roll=0){
+export function rotationMatrix(yaw,pitch,roll=0,matrix=new Float32Array(9)){
   const cy=Math.cos(yaw),sy=Math.sin(yaw),cx=Math.cos(pitch),sx=Math.sin(pitch);
-  const matrix=new Float32Array([cy,0,-sy,sy*sx,cx,cy*sx,sy*cx,-sx,cy*cx]);
+  matrix[0]=cy;matrix[1]=0;matrix[2]=-sy;matrix[3]=sy*sx;matrix[4]=cx;matrix[5]=cy*sx;matrix[6]=sy*cx;matrix[7]=-sx;matrix[8]=cy*cx;
   if(roll){const c=Math.cos(roll),s=Math.sin(roll);for(let col=0;col<3;col++){const i=col*3,x=matrix[i],y=matrix[i+1];matrix[i]=c*x-s*y;matrix[i+1]=s*x+c*y;}}
   return matrix;
 }
@@ -52,15 +52,17 @@ export function advancePointer(state,target,dt,reduced=false){
   return state;
 }
 
-export function satellitePose(index,time,count=7){
+export function satellitePose(index,time,count=7,result={}){
   const angle=index/count*Math.PI*2-Math.PI/2+time*Math.PI*2/70;
-  return {x:Math.cos(angle)*1.22,y:-Math.sin(angle)*1.16,z:Math.sin(angle)*.24,
-    yaw:-.24+Math.sin(angle)*.12,pitch:.14+Math.cos(angle)*.08,scale:.16};
+  const sine=Math.sin(angle),cosine=Math.cos(angle);
+  result.x=cosine*1.22;result.y=-sine*1.16;result.z=sine*.24;
+  result.yaw=-.24+sine*.12;result.pitch=.14+cosine*.08;result.scale=.16;
+  return result;
 }
 
-export function projectScenePoint(position,canvasHeight){
+export function projectScenePoint(position,canvasHeight,result={}){
   const unit=.66*canvasHeight*.5*(4.8/(4.8-position.z));
-  return {x:position.x*unit,y:-position.y*unit};
+  result.x=position.x*unit;result.y=-position.y*unit;return result;
 }
 
 export function createSceneLoop({requestFrame,cancelFrame,render}){

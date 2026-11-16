@@ -88,3 +88,14 @@ test('projected click targets use the same perspective and vertical orientation 
     near(large.x,small.x*2);near(large.y,small.y*2);
   }
 });
+
+test('reused math storage produces the same rotations, orbits and projection without retaining stale coordinates',()=>{
+  const matrix=new Float32Array(9),pose={},point={};
+  for(const t of [0,.5,23,71]){
+    const angles=[t*.1,-.1,.045];
+    assert.equal(rotationMatrix(...angles,matrix),matrix);
+    assert.deepEqual(matrix,rotationMatrix(...angles));
+    assert.equal(satellitePose(2,t,7,pose),pose);assert.deepEqual(pose,satellitePose(2,t));
+    assert.equal(projectScenePoint(pose,464,point),point);assert.deepEqual(point,projectScenePoint(pose,464));
+  }
+});

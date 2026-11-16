@@ -1,4 +1,4 @@
-import {buildLogoVoxels,logoScrollAngle,rotationMatrix,createSceneLoop,createPointerMotion,advancePointer,satellitePose,projectScenePoint} from './studio-logo-model.mjs?v=fb1074ae16d1';
+import {buildLogoVoxels,logoScrollAngle,rotationMatrix,createSceneLoop,createPointerMotion,advancePointer,satellitePose,projectScenePoint} from './studio-logo-model.mjs?v=db29803b3d39';
 import {SATELLITE_ORDER,buildSatelliteModel} from './studio-satellite-models.mjs?v=1da3c54d0e6a';
 
 const root=document.documentElement;
@@ -45,9 +45,15 @@ async function boot(){
       out vec3 tint;out vec3 face;out float emission;
       void main(){
         vec3 local=vec3(vertex.xy*cell,vertex.z*voxel.w)+voxel.xyz;
-        if(color.a>.1)local.xy+=attention.xy*vec2(.05,.035)*attention.w;
-        float ripple=sin(length(voxel.xy-attention.xy*.7)*11.-sceneTime*3.5)*.014;
-        local.z+=ripple*attention.z*attention.w;
+        // These draw-uniform branches avoid evaluating face animation for the
+        // seven solid miniatures, whose attention.w is always zero.
+        if(attention.w>.5){
+          if(color.a>.1)local.xy+=attention.xy*vec2(.05,.035);
+          if(attention.z>0.){
+            float ripple=sin(length(voxel.xy-attention.xy*.7)*11.-sceneTime*3.5)*.014;
+            local.z+=ripple*attention.z;
+          }
+        }
         vec3 p=rotation*local*modelSize+placement;
         p.y+=bob;float perspective=4.8/(4.8-p.z);
         gl_Position=vec4(p.xy*scale*perspective,-p.z*.14,1.);
@@ -81,14 +87,18 @@ async function boot(){
         vec3 color=mix(vec3(1.,.78,.32),vec3(.52,1.,.81),mint);
         pixel=vec4(color,(halo+core*.9)*sparkle);
       }`);
-    function buffer(data){const b=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,b);gl.bufferData(gl.ARRAY_BUFFER,data,gl.STATIC_DRAW);resources.push(()=>gl.deleteBuffer(b));return b;}
-    const vertices=[];
+    function buffer(data,target=gl.ARRAY_BUFFER){const b=gl.createBuffer();gl.bindBuffer(target,b);gl.bufferData(target,data,gl.STATIC_DRAW);resources.push(()=>gl.deleteBuffer(b));return b;}
+    const vertices=[],indices=[];
     for(const [n,u,v] of [ [[1,0,0],[0,1,0],[0,0,1]],[[-1,0,0],[0,0,1],[0,1,0]],[[0,1,0],[0,0,1],[1,0,0]],[[0,-1,0],[1,0,0],[0,0,1]],[[0,0,1],[1,0,0],[0,1,0]],[[0,0,-1],[0,1,0],[1,0,0]] ]){
-      for(const [a,b] of [[-1,-1],[1,-1],[1,1],[-1,-1],[1,1],[-1,1]])vertices.push(...n.map((c,i)=>(c+u[i]*a+v[i]*b)*.5),...n);
+      const base=vertices.length/6;
+      for(const [a,b] of [[-1,-1],[1,-1],[1,1],[-1,1]])vertices.push(...n.map((c,i)=>(c+u[i]*a+v[i]*b)*.5),...n);
+      indices.push(base,base+1,base+2,base,base+2,base+3);
     }
     const cubeBuffer=buffer(new Float32Array(vertices));
+    const cubeIndices=buffer(new Uint16Array(indices),gl.ELEMENT_ARRAY_BUFFER);
     function model(data,cell){
       const array=gl.createVertexArray();gl.bindVertexArray(array);resources.push(()=>gl.deleteVertexArray(array));
+      gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,cubeIndices);
       gl.bindBuffer(gl.ARRAY_BUFFER,cubeBuffer);
       gl.enableVertexAttribArray(0);gl.vertexAttribPointer(0,3,gl.FLOAT,false,24,0);
       gl.enableVertexAttribArray(1);gl.vertexAttribPointer(1,3,gl.FLOAT,false,24,12);
@@ -98,6 +108,8 @@ async function boot(){
     }
     const head=model(voxels,2.4/79*.96);
     const satellites=[...(visual.querySelectorAll?.('.studio-satellite')??[])];
+    const originalTransforms=satellites.map(el=>el.style.getPropertyValue?.('transform')||'');
+    resources.push(()=>satellites.forEach((el,i)=>{if(originalTransforms[i])el.style.setProperty('transform',originalTransforms[i]);else if(el.style.removeProperty)el.style.removeProperty('transform');else el.style.setProperty('transform','');}));
     const miniatures=satellites.length===SATELLITE_ORDER.length?SATELLITE_ORDER.map(name=>{const shape=buildSatelliteModel(name);return model(shape.voxels,shape.cell);}):[];
     const fireflyArray=gl.createVertexArray();gl.bindVertexArray(fireflyArray);resources.push(()=>gl.deleteVertexArray(fireflyArray));
     const seeds=new Float32Array(42*4);for(let i=0;i<42;i++)seeds.set([(i*.6180339)%1,(i*.371)%1,(i*.219)%1,.65+(i%7)*.09],i*4);
@@ -107,6 +119,11 @@ async function boot(){
     const reduced=matchMedia('(prefers-reduced-motion: reduce)');
     let width=1,height=1,density=1,sceneTop=0,sceneLeft=0,sceneWidth=1,sceneHeight=1,canvasHeight=1,viewportHeight=1,last=0,time=0,orbitTime=0,lastPaint=-1000,pulse=0,ready=false,hovered=-1,focused=-1,lastPointer=null;
     const pointer=createPointerMotion(),target={x:0,y:0,strength:0};
+    const matrix=new Float32Array(9),poses=miniatures.map(()=>({})),screen={x:0,y:0},transforms=miniatures.map(()=>null);
+    let lastCell=NaN,lastSize=NaN,lastGlow=NaN,lastAlive=null;
+    // All voxel prisms are closed, opaque and counter-clockwise outside.
+    // Their back-facing triangles never contribute to the visible image.
+    gl.enable(gl.CULL_FACE);gl.enable(gl.DEPTH_TEST);gl.clearColor(0,0,0,0);
     visual.append(canvas);
     function measure(){
       if(disposed)return;
@@ -118,13 +135,18 @@ async function boot(){
       // Bound the backing store on large monitors as well as high-DPI phones.
       const cap=Math.min(1,720/Math.max(width,height));width=Math.round(width*cap);height=Math.round(height*cap);density*=cap;
       if(canvas.width!==width||canvas.height!==height){canvas.width=width;canvas.height=height;}
+      gl.viewport(0,0,width,height);
       updatePointer();loop.invalidate();
     }
-    function drawModel(shape,{x=0,y=0,z=0,size=1,yaw=0,pitch=0,roll=0,bob=0,alive=false,glow=0}={}){
-      gl.bindVertexArray(shape.array);gl.uniformMatrix3fv(m.rotation,false,rotationMatrix(yaw,pitch,roll));
-      gl.uniform3f(m.placement,x,y,z);gl.uniform1f(m.modelSize,size);gl.uniform1f(m.bob,bob);gl.uniform1f(m.cell,shape.cell);
-      gl.uniform4f(m.attention,pointer.x,pointer.y,pointer.strength,alive?1:0);gl.uniform1f(m.pulse,glow);
-      gl.drawArraysInstanced(gl.TRIANGLES,0,36,shape.count);
+    function drawModel(shape,x,y,z,size,yaw,pitch,roll,bob,alive,glow){
+      gl.bindVertexArray(shape.array);gl.uniformMatrix3fv(m.rotation,false,rotationMatrix(yaw,pitch,roll,matrix));
+      gl.uniform3f(m.placement,x,y,z);gl.uniform1f(m.bob,bob);
+      if(size!==lastSize){gl.uniform1f(m.modelSize,size);lastSize=size;}
+      if(shape.cell!==lastCell){gl.uniform1f(m.cell,shape.cell);lastCell=shape.cell;}
+      if(alive||lastAlive!==false)gl.uniform4f(m.attention,alive?pointer.x:0,alive?pointer.y:0,alive?pointer.strength:0,alive?1:0);
+      lastAlive=alive;
+      if(glow!==lastGlow){gl.uniform1f(m.pulse,glow);lastGlow=glow;}
+      gl.drawElementsInstanced(gl.TRIANGLES,36,gl.UNSIGNED_SHORT,0,shape.count);
     }
     function draw(now){
       if(disposed)return;
@@ -134,16 +156,16 @@ async function boot(){
       advancePointer(pointer,target,dt,reduced.matches);
       if(!reduced.matches&&hovered<0&&focused<0)orbitTime+=dt;
       const yaw=logoScrollAngle(scrollY,sceneTop,sceneHeight,viewportHeight,reduced.matches)+pointer.x*.23;
-      gl.viewport(0,0,width,height);gl.clearColor(0,0,0,0);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
-      gl.enable(gl.DEPTH_TEST);gl.depthMask(true);gl.disable(gl.BLEND);
+      gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);gl.disable(gl.BLEND);
       gl.useProgram(mesh);gl.uniform2f(m.scale,.66*height/width,.66);gl.uniform1f(m.sceneTime,time);
-      drawModel(head,{x:pointer.x*.025,y:pointer.y*.018,yaw,pitch:-.1-pointer.y*.17+(reduced.matches?0:Math.sin(time*.3)*.025),roll:-pointer.x*.045,bob:reduced.matches?0:Math.sin(time*.7)*.024,alive:true,glow:pulse+pointer.strength*.6});
-      miniatures.forEach((shape,index)=>{
-        const pose=satellitePose(index,orbitTime),over=!reduced.matches&&(index===hovered||index===focused);
-        drawModel(shape,{...pose,size:pose.scale*(over?1.16:1),yaw:pose.yaw+(over?.9:0),bob:reduced.matches?0:Math.sin(time*.9+index)*.018,glow:over?.35:0});
-        const screen=projectScenePoint({...pose,y:pose.y+(reduced.matches?0:Math.sin(time*.9+index)*.018)},canvasHeight);
-        satellites[index].style.setProperty('--satellite-x',screen.x.toFixed(2)+'px');satellites[index].style.setProperty('--satellite-y',screen.y.toFixed(2)+'px');
-      });
+      drawModel(head,pointer.x*.025,pointer.y*.018,0,1,yaw,-.1-pointer.y*.17+(reduced.matches?0:Math.sin(time*.3)*.025),-pointer.x*.045,reduced.matches?0:Math.sin(time*.7)*.024,true,pulse+pointer.strength*.6);
+      for(let index=0;index<miniatures.length;index++){
+        const shape=miniatures[index],pose=satellitePose(index,orbitTime,7,poses[index]),over=!reduced.matches&&(index===hovered||index===focused),bob=reduced.matches?0:Math.sin(time*.9+index)*.018;
+        drawModel(shape,pose.x,pose.y,pose.z,pose.scale*(over?1.16:1),pose.yaw+(over?.9:0),pose.pitch,0,bob,false,over?.35:0);
+        pose.y+=bob;projectScenePoint(pose,canvasHeight,screen);
+        const transform='translate3d('+screen.x.toFixed(2)+'px,'+screen.y.toFixed(2)+'px,0)';
+        if(transform!==transforms[index]){satellites[index].style.setProperty('transform',transform);transforms[index]=transform;}
+      }
       gl.enable(gl.BLEND);gl.blendFunc(gl.SRC_ALPHA,gl.ONE);gl.depthMask(false);
       gl.useProgram(flies);gl.bindVertexArray(fireflyArray);gl.uniform1f(f.time,time);gl.uniform2f(f.scale,.66*height/width,.66);gl.uniform1f(f.density,density);gl.uniform1f(f.pulse,pulse);
       gl.uniform4f(f.attractor,pointer.x*1.15,pointer.y*1.15,1.1,pointer.strength);
