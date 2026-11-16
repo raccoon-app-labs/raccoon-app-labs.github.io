@@ -27,7 +27,9 @@
   const canvas=document.createElement('canvas');canvas.className='studio-field';canvas.setAttribute('aria-hidden','true');document.body.prepend(canvas);const ctx=canvas.getContext('2d');if(!ctx)return;
   let width=1,height=1,frame=0,last=0,time=0,burst=0,closed=false,pointer={x:-1000,y:-1000},scrollOffset=0;
   const stars=Array.from({length:88},(_,i)=>({x:((i*137.51)%997)/997,y:((i*253.79)%991)/991,phase:i*2.399,accent:i%12===0,size:i%12===0?1.45:.75+(i%3)*.14}));
-  const colors=()=>root.dataset.theme==='light'?['111,99,142','87,123,117']:['175,172,200','146,176,172'];
+  const points=stars.map(s=>({x:0,y:0,baseX:0,baseY:0,s}));
+  const lightColors=['111,99,142','87,123,117'],darkColors=['175,172,200','146,176,172'];
+  const colors=()=>root.dataset.theme==='light'?lightColors:darkColors;
   let glowKey='',glows=[];
   function glowSprites(palette){
     const key=palette.join('|');if(key===glowKey)return glows;glowKey=key;
@@ -40,16 +42,25 @@
       paint.fillStyle=light;paint.fillRect(0,0,64,64);return sprite;
     });return glows;
   }
-  function size(){width=innerWidth;height=innerHeight;const dpr=Math.min(devicePixelRatio||1,1.5);canvas.width=width*dpr;canvas.height=height*dpr;ctx.setTransform(dpr,0,0,dpr,0,0);draw(0);}
+  function size(){
+    // This immediate resize paint replaces, rather than duplicates, our queued frame.
+    cancelAnimationFrame(frame);frame=0;width=innerWidth;height=innerHeight;
+    for(const p of points){p.baseX=p.s.x*width;p.baseY=p.s.y*height;}
+    const dpr=Math.min(devicePixelRatio||1,1.5);canvas.width=width*dpr;canvas.height=height*dpr;ctx.setTransform(dpr,0,0,dpr,0,0);draw(0);
+  }
   function schedule(){if(!frame&&!closed&&!document.hidden&&!root.dataset.siteScrolling&&!reduced.matches)frame=requestAnimationFrame(draw);}
   function draw(now){
     frame=0;if(closed||document.hidden||root.dataset.siteScrolling)return;
     if(now && now-last<32){schedule();return;}last=now;time+=reduced.matches?0:.012;burst*=.94;ctx.clearRect(0,0,width,height);
     scrollOffset+=(scrollY*.025-scrollOffset)*.1;
     const palette=colors(),glow=glowSprites(palette),scroll=scrollOffset,sweepX=(time*.1)%1.4-.2;
-    const points=stars.map((s,i)=>({x:s.x*width+Math.sin(time*.18+s.phase)*10,y:(s.y*height+scroll*(i%2?1:-1)+height*20)%height,s}));
     for(let i=0;i<points.length;i++){
-      const p=points[i],distance=Math.hypot(p.x-pointer.x,p.y-pointer.y),near=Math.max(0,1-distance/195);
+      const p=points[i];p.x=p.baseX+Math.sin(time*.18+p.s.phase)*10;p.y=(p.baseY+scroll*(i%2?1:-1)+height*20)%height;
+    }
+    for(let i=0;i<points.length;i++){
+      const p=points[i],pointerX=p.x-pointer.x,pointerY=p.y-pointer.y;
+      // Outside this square the original circular influence is exactly zero.
+      const near=pointerX>195||pointerX< -195||pointerY>195||pointerY< -195?0:Math.max(0,1-Math.hypot(pointerX,pointerY)/195);
       const twinkle=.5+.5*Math.sin(time*.7+p.s.phase),sweep=Math.exp(-(((p.x/width-sweepX)/.22)**2));
       const alpha=.29+twinkle*.1+(p.s.accent ? .08 : 0)+near*.16+sweep*.035+burst*.025;
       const radius=p.s.size+twinkle*.06+near*.25+burst*.12;
@@ -60,7 +71,11 @@
       }
       ctx.fillStyle=`rgba(${palette[i%2]},${alpha})`;ctx.beginPath();ctx.arc(p.x,p.y,radius,0,Math.PI*2);ctx.fill();
       for(let j=i+1;j<Math.min(i+6,points.length);j++){
-        const q=points[j],d=Math.hypot(q.x-p.x,q.y-p.y);if(d>160)continue;
+        const q=points[j],dx=q.x-p.x,dy=q.y-p.y;
+        // Keep the original distance for every visible link; reject only pairs
+        // that cannot reach the 160px circle, before evaluating its square root.
+        if(dx>160||dx< -160||dy>160||dy< -160)continue;
+        const d=Math.hypot(dx,dy);if(d>160)continue;
         ctx.strokeStyle=`rgba(${palette[i%2]},${(1-d/160)*(.065+near*.08+sweep*.02)})`;ctx.lineWidth=.55;ctx.beginPath();ctx.moveTo(p.x,p.y);ctx.lineTo(q.x,q.y);ctx.stroke();
         const travel=(time*.18+p.s.phase)%1;ctx.fillStyle=`rgba(${palette[i%2]},${.22+near*.1})`;ctx.beginPath();ctx.arc(p.x+(q.x-p.x)*travel,p.y+(q.y-p.y)*travel,.8,0,Math.PI*2);ctx.fill();
       }
@@ -72,7 +87,7 @@
     }
     schedule();
   }
-  document.addEventListener('pointermove',e=>{pointer={x:e.clientX,y:e.clientY};},{passive:true});root.addEventListener('pointerleave',()=>pointer={x:-1000,y:-1000});
+  document.addEventListener('pointermove',e=>{pointer.x=e.clientX;pointer.y=e.clientY;},{passive:true});root.addEventListener('pointerleave',()=>{pointer.x=-1000;pointer.y=-1000;});
   addEventListener('resize',size,{passive:true});addEventListener('scroll',()=>{if(reduced.matches)draw(0);},{passive:true});
   function activity(){if(document.hidden || root.dataset.siteScrolling){cancelAnimationFrame(frame);frame=0;}else{last=0;schedule();}}
   document.addEventListener('visibilitychange',activity);addEventListener('raccoon:scrollstate',activity);
