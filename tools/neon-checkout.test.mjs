@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {PRODUCT_IDS,validateCatalog,purchaseRequest,confirmationUrl,validateOrder,createClient} from '../plus/neon-checkout-core.mjs';
 const id='be14bd1c-9d0d-49f1-bdb4-5453cc604e91';
-const fixture=()=>({currency:'RUB',enabled:true,channel_allowed:true,test:false,seller:{terms_version:'v1',terms_url:'https://raccoon-app-labs.github.io/apps/neon-cyber-wall-kicker/shop/offer/'},products:PRODUCT_IDS.map((id,i)=>({id,ru:id,en:id,price:14900+i,coins:3000,kind:i<2?'bundle':'coins',once:i<2}))});
+const fixture=()=>({currency:'RUB',enabled:true,channel_allowed:true,test:false,seller:{terms_version:'v1',terms_url:'https://neonwallkicker.ru/apps/neon-cyber-wall-kicker/shop/offer/'},products:PRODUCT_IDS.map((id,i)=>({id,ru:id,en:id,price:14900+i,coins:3000,kind:i<2?'bundle':'coins',once:i<2}))});
 test('only the published server catalogue can supply the selected product, amount and terms',()=>{
  const c=fixture(),p=purchaseRequest(c,'starter','rustore',true,id);
  assert.equal(p.expected_amount,14900);assert.equal(p.terms_version,'v1');assert.equal(p.channel,'rustore');assert.equal(p.product_id,'starter');

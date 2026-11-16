@@ -1,5 +1,5 @@
 export const API_BASE = 'https://reserve.volshebnye-istorii.ru';
-export const LEGAL_BASE = 'https://raccoon-app-labs.github.io/apps/magical-stories/legal';
+export const LEGAL_BASE = 'https://neonwallkicker.ru/apps/magical-stories/legal';
 export const PROVIDERS = Object.freeze([
   {id:'robokassa', name:'Robokassa', available:true},
   {id:'lava', name:'Lava.top', available:false}
@@ -92,7 +92,7 @@ export function createApi({fetcher = globalThis.fetch, getSession, setSession, d
     if (authenticated && !session?.accessToken) throw new ShopError('login_required', 401);
     let response;
     try {
-      response = await fetcher(API_BASE + path, {
+      response = await fetcher((globalThis.location?.origin === 'https://neonwallkicker.ru' ? '/services/stories' : API_BASE) + path, {
         method, mode:'cors', credentials:'omit', cache:'no-store', referrerPolicy:'no-referrer',
         headers:{...(body ? {'Content-Type':'application/json'} : {}), ...(authenticated ? {Authorization:`Bearer ${session.accessToken}`} : {})},
         ...(body ? {body:JSON.stringify(body)} : {}), signal:AbortSignal.timeout(25000)

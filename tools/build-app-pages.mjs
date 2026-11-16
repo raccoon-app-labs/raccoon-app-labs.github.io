@@ -4,7 +4,7 @@ import {fileURLToPath} from 'node:url';
 import {apps} from './app-content.mjs';
 import {nativeDemo} from './native-demos.mjs';
 const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
-const origin='https://raccoon-app-labs.github.io';
+const origin='https://neonwallkicker.ru';
 const esc=s=>String(s).replaceAll('&','&amp;').replaceAll('"','&quot;').replaceAll('<','&lt;').replaceAll('>','&gt;');
 const href=(slug,lang)=>`${lang==='en'?'/en':''}/apps/${slug}/`;
 const label=(lang,ru,en)=>lang==='ru'?ru:en;

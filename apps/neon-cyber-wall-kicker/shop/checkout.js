@@ -140,7 +140,7 @@ export function mountCheckout(root, options = {}) {
       const terms = state.pending?.terms ?? state.catalog?.seller;
       const link = terms?.terms_url ? new URL(terms.terms_url) : null;
       el('[data-terms]').removeAttribute('href');
-      if (link?.protocol === 'https:' && link.hostname === 'raccoon-app-labs.github.io') el('[data-terms]').href = link.href;
+      if (link && ['https://neonwallkicker.ru', 'https://raccoon-app-labs.github.io'].includes(link.origin)) el('[data-terms]').href = link.href;
     }
     el('.neon-pending').hidden = !state.pending?.id;
     el('.neon-order-id').textContent = copy('id') + (state.pending?.id || '');

@@ -1,4 +1,4 @@
-import {PRODUCT_IDS,ShopError,validateCatalog,purchaseRequest,confirmationUrl,validateOrder,createClient} from './neon-checkout-core.mjs?v=4bf04424c4e4';
+import {PRODUCT_IDS,ShopError,validateCatalog,purchaseRequest,confirmationUrl,validateOrder,createClient} from './neon-checkout-core.mjs?v=47b847483d84';
 
 const root=document.documentElement,panel=document.querySelector('#neon-panel');
 if(panel)install();

@@ -83,7 +83,7 @@
     const headers = {Accept:'application/json', 'X-Hanzi-Region':'ru'};
     if (token) headers['X-Hanzi-Session'] = token;
     if (data !== undefined) headers['Content-Type'] = 'application/json';
-    const response = await fetch(api + route, {method:data === undefined ? 'GET' : 'POST', headers,
+    const response = await fetch((location.origin === 'https://neonwallkicker.ru' ? '/services/hanzi-ru' : api) + route, {method:data === undefined ? 'GET' : 'POST', headers,
       body:data === undefined ? undefined : JSON.stringify(data), credentials:'omit', cache:'no-store',
       redirect:'error', signal:AbortSignal.timeout(30000)});
     if (!response.ok) throw new Failure(response.status);

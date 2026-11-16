@@ -1,7 +1,7 @@
-import {apps} from './catalog.js?v=20261026-fast';
+import {apps} from './catalog.js?v=6300d19b110e';
 import {installStoreEffects} from './effects.js?v=ba5301033dd6';
-import {installFaqReveals} from './faq.js?v=20261026-fold';
-import {installTicketTear} from './ticket.js?v=20261026-night';
+import {installFaqReveals} from './faq.js?v=73e6bdc65fd5';
+import {installTicketTear} from './ticket.js?v=c8d017e50eea';
 
 const el = id => document.getElementById(id);
 // Independent shops share navigation, never the Hanzi billing catalog.

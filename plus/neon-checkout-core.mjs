@@ -10,7 +10,7 @@ export function validateCatalog(data){
     if(seen.has(p.id)||!Number.isSafeInteger(p.price)||p.price<=0||!Number.isSafeInteger(p.coins)||p.coins<=0||!['bundle','coins'].includes(p.kind)||typeof p.ru!=='string'||typeof p.en!=='string')throw new ShopError('catalog_unavailable');
     seen.add(p.id);
   }
-  if(seen.size!==PRODUCT_IDS.length || !data.seller?.terms_version || data.seller.terms_url!=='https://raccoon-app-labs.github.io/apps/neon-cyber-wall-kicker/shop/offer/')throw new ShopError('catalog_unavailable');
+  if(seen.size!==PRODUCT_IDS.length || !data.seller?.terms_version || data.seller.terms_url!=='https://neonwallkicker.ru/apps/neon-cyber-wall-kicker/shop/offer/')throw new ShopError('catalog_unavailable');
   return {...data,products};
 }
 export function purchaseRequest(catalog,productId,channel,accepted,requestKey,owned=[]){

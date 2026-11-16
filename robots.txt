@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://raccoon-app-labs.github.io/sitemap.xml
+Sitemap: https://neonwallkicker.ru/sitemap.xml
