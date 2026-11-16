@@ -14,37 +14,39 @@ export function compatibleCatalog(catalog) {
       && JSON.stringify([...product.rights].sort()) === JSON.stringify(BUNDLE_RIGHTS[product.id]))));
 }
 const text = {
-  ru: { title: 'Покупка для твоего аккаунта', intro: 'Войди с той же почтой, что используешь в игре. Покупка попадёт в этот аккаунт.',
-    email: 'Почта игрового аккаунта', code: 'Код из письма', send: 'Получить код', verify: 'Войти', back: 'Другой адрес', logout: 'Выйти',
+  ru: { title: 'Покупка', intro: 'Войди с почтой из игры — покупка появится в этом аккаунте.',
+    email: 'Почта из игры', code: 'Код из письма', send: 'Получить код', verify: 'Подтвердить почту', back: 'Другая почта', logout: 'Выйти',
     refresh: 'Обновить покупки', loading: 'Проверяем доступность сервера…', offline: 'Сервис покупок недоступен. Оплата заблокирована. Попробуй позже.',
-    ready: 'Сервис доступен. Покупка будет сохранена за твоим аккаунтом.', choose: 'Выбери монеты или набор выше.', buy: 'Выбрать покупку',
-    consent: 'Принимаю условия покупки', terms: 'Условия покупки', privacy: 'Конфиденциальность', pay: 'Перейти к оплате',
+    ready: '', choose: 'Выбери монеты или набор в каталоге выше.', buy: 'Выбрать покупку',
+    consent: 'Принимаю', terms: 'условия покупки', privacy: 'Конфиденциальность', pay: 'Перейти к оплате',
+    details: 'Об оплате и зачислении', edit: 'Изменить', codeIntro: 'Введи код, отправленный на ',
     checking: 'Проверяем аккаунт и сохраняем заказ…', changed: 'Предложение обновилось. Проверь состав и цену и подтверди условия заново.',
-    sent: 'Код отправлен. Проверь почту, включая папку «Спам».', account: 'Получатель покупки: ', coins: ' монет',
-    rate: 'Евро — ориентир по курсу ЦБ. Точная сумма заказа указана в рублях; итоговую сумму в евро подтверждает Робокасса.',
+    sent: 'Нет письма? Проверь папку «Спам».', account: 'Получатель покупки: ', coins: ' монет',
+    rate: 'Цена в евро — ориентир по курсу ЦБ. Заказ выставляется в рублях; окончательную сумму в евро покажет Робокасса.',
     pending: 'Есть незавершённый заказ. Сначала проверь его или отмени. Повторно платить не нужно.',
     check: 'Проверить заказ', resume: 'Продолжить этот заказ', cancel: 'Отменить неоплаченный заказ',
     paid: 'Покупка начислена. Вернись в игру и нажми «Обновить покупки».', review: 'Платёж проверяется. Повторно платить не нужно. Обратись в поддержку с номером заказа.',
     cancelled: 'Заказ отменён. Не оплачивай старую ссылку.', refunded: 'Возврат подтверждён.', id: 'Заказ: ',
     storage: 'Браузер не позволяет сохранить сеанс. Разреши хранение данных сайта или используй обычную вкладку.',
-    expiry: 'Ссылка на оплату действует 5 минут. После сбоя заказ можно проверить и продолжить с сайта.',
+    expiry: 'Оплата — на защищённой странице Робокассы. Ссылка действует 5 минут. Заказ можно проверить и продолжить здесь.',
     delay: 'Если связь пропадёт после оплаты, заказ сохранится. После восстановления сервиса проверка начислит покупку один раз. Если покупка не появилась в течение 24 часов, напиши в поддержку.',
     error: 'Не удалось выполнить действие. Обнови покупки и попробуй ещё раз.', codeError: 'Код неверный или устарел.', wait: 'Подожди минуту перед повторной отправкой кода.',
     history: 'Последние покупки', minimum: 'Сумма старого заказа ниже €1. Отмени его и выбери новую покупку.', paused: 'Покупки временно недоступны. Оплата заблокирована.' },
-  en: { title: 'Purchase for your game account', intro: 'Sign in with the same email you use in the game. Your purchase will belong to that account.',
-    email: 'Game account email', code: 'Email code', send: 'Send code', verify: 'Sign in', back: 'Use another email', logout: 'Sign out',
+  en: { title: 'Checkout', intro: 'Use your in-game email. Your purchase will appear in that account.',
+    email: 'In-game email', code: 'Email code', send: 'Send code', verify: 'Confirm email', back: 'Another email', logout: 'Sign out',
     refresh: 'Refresh purchases', loading: 'Checking the purchase service…', offline: 'The purchase service is unavailable. Payment is blocked. Please try later.',
-    ready: 'The service is available. Your purchase will be saved to your account.', choose: 'Choose a coin pack or bundle above.', buy: 'Choose purchase',
-    consent: 'I accept the purchase terms', terms: 'Purchase terms', privacy: 'Privacy', pay: 'Continue to payment',
+    ready: '', choose: 'Choose a coin pack or bundle from the catalogue above.', buy: 'Choose purchase',
+    consent: 'I accept the', terms: 'purchase terms', privacy: 'Privacy', pay: 'Continue to payment',
+    details: 'Payment & delivery', edit: 'Change', codeIntro: 'Enter the code sent to ',
     checking: 'Checking your account and saving the order…', changed: 'The offer changed. Review the contents and price, then accept the terms again.',
-    sent: 'Code sent. Check your inbox and spam folder.', account: 'Purchase recipient: ', coins: ' coins',
+    sent: 'No email? Check your spam folder.', account: 'Purchase recipient: ', coins: ' coins',
     rate: 'Euros are an estimate at the CBR rate. The exact order total is in RUB; Robokassa confirms the final euro charge.',
     pending: 'You have an unfinished order. Check or cancel it first. Do not pay again.',
     check: 'Check order', resume: 'Continue this order', cancel: 'Cancel unpaid order',
     paid: 'Your purchase was granted. Return to the game and refresh purchases.', review: 'The payment is under review. Do not pay again. Contact support with your order number.',
     cancelled: 'Order cancelled. Do not pay the old link.', refunded: 'Refund confirmed.', id: 'Order: ',
     storage: 'Your browser cannot save this session. Allow site storage or use a regular browser tab.',
-    expiry: 'The payment link lasts 5 minutes. After an interruption, check and continue your order on the website.',
+    expiry: 'Pay on Robokassa’s secure page. The payment link lasts 5 minutes. You can check and resume your order here.',
     delay: 'If connection is lost after payment, the saved order remains. Once service returns, verification grants the purchase once. If it has not arrived within 24 hours, contact support.',
     error: 'The action could not be completed. Refresh purchases and try again.', codeError: 'The code is invalid or expired.', wait: 'Wait a minute before requesting another code.',
     history: 'Recent purchases', minimum: 'The old order is below €1. Cancel it and choose a new purchase.', paused: 'Purchases are temporarily unavailable. Payment is blocked.' },
@@ -76,22 +78,24 @@ export function mountCheckout(root, options = {}) {
   if (!saved || typeof saved !== 'object' || Array.isArray(saved)) saved = {};
   const state = { token: typeof saved.token === 'string' ? saved.token : '', email: typeof saved.email === 'string' ? saved.email : '',
     pending: saved.pending && typeof saved.pending === 'object' ? saved.pending : null, catalog: null, wallet: null, selected: null, busy: false, ready: false, codeSent: Boolean(saved.codeSent), lastOutcome: '' };
-  root.innerHTML = `<div class="neon-checkout-head"><h2 data-copy="title"></h2><div class="neon-checkout-languages"><button type="button" data-lang="ru">RU</button><button type="button" data-lang="en">EN</button></div></div>
-    <p data-copy="intro"></p><p class="neon-checkout-status" role="status" aria-live="polite"></p>
-    <form class="neon-auth"><label><span data-copy="email"></span><input name="email" type="email" autocomplete="email" required maxlength="254"></label>
+  root.innerHTML = `<div class="neon-checkout-head"><h2 data-copy="title"></h2><div class="neon-checkout-languages" role="group" aria-label="RU / EN"><button type="button" data-lang="ru" lang="ru">RU</button><button type="button" data-lang="en" lang="en">EN</button></div></div>
+    <div class="neon-selected" hidden><div class="neon-selected-heading"><div><h3></h3><p class="neon-selected-contents"></p></div><p class="neon-selected-price"></p></div><a class="neon-edit" href="#coins" data-copy="edit"></a></div>
+    <p class="neon-choose" data-copy="choose"></p>
+    <p class="neon-checkout-status" role="status" aria-live="polite"></p>
+    <p class="neon-intro" data-copy="intro"></p>
+    <form class="neon-auth"><label class="neon-email-label"><span data-copy="email"></span><input name="email" type="email" autocomplete="email" required maxlength="254" placeholder="you@example.com"></label>
     <label class="neon-code"><span data-copy="code"></span><input name="code" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" minlength="6" maxlength="6"></label>
     <button class="button" type="submit" data-auth-submit></button><button class="button secondary" type="button" data-auth-back data-copy="back"></button></form>
     <div class="neon-account" hidden><p class="neon-recipient"></p><div class="neon-account-actions"><button class="button secondary" type="button" data-refresh data-copy="refresh"></button><button class="button secondary" type="button" data-logout data-copy="logout"></button></div></div>
-    <div class="neon-selected" hidden><h3></h3><p class="neon-selected-contents"></p><p class="neon-selected-price"></p><p data-copy="rate"></p>
-    <p class="neon-legal"><a data-terms target="_blank" rel="noopener" data-copy="terms"></a> · <a href="/apps/neon-cyber-wall-kicker/shop/privacy/" target="_blank" rel="noopener" data-copy="privacy"></a></p>
-    <label class="neon-consent"><input type="checkbox" data-consent><span data-copy="consent"></span></label><button class="button" type="button" data-pay data-copy="pay" disabled></button></div>
-    <p class="neon-choose" data-copy="choose"></p><section class="neon-pending" hidden><h3 data-copy="pending"></h3><p class="neon-order-id"></p><p class="neon-order-summary"></p>
+    <div class="neon-payment" hidden><label class="neon-consent"><input type="checkbox" data-consent><span><span data-copy="consent"></span> <a data-terms target="_blank" rel="noopener" data-copy="terms"></a></span></label><button class="button" type="button" data-pay data-copy="pay" disabled></button></div>
+    <section class="neon-pending" hidden><h3 data-copy="pending"></h3><p class="neon-order-id"></p><p class="neon-order-summary"></p>
     <div class="neon-account-actions"><button class="button secondary" type="button" data-check data-copy="check"></button><button class="button secondary" type="button" data-resume data-copy="resume"></button><button class="button secondary" type="button" data-cancel data-copy="cancel"></button></div></section>
-    <p class="neon-checkout-small" data-copy="expiry"></p><p class="neon-checkout-small" data-copy="delay"></p><section class="neon-history" hidden><h3 data-copy="history"></h3><div></div></section>`;
+    <details class="neon-checkout-details"><summary data-copy="details"></summary><div><p class="neon-rate" data-copy="rate"></p><p data-copy="expiry"></p><p data-copy="delay"></p><a href="/apps/neon-cyber-wall-kicker/shop/privacy/" target="_blank" rel="noopener" data-copy="privacy"></a></div></details>
+    <section class="neon-history" hidden><h3 data-copy="history"></h3><div></div></section>`;
   const el = selector => root.querySelector(selector);
   const copy = key => text[language][key] ?? text[language].error;
   let statusKey = 'loading', statusBad = false;
-  const status = (key, bad = false) => { statusKey = key; statusBad = bad; el('.neon-checkout-status').textContent = copy(key); el('.neon-checkout-status').dataset.error = String(bad); };
+  const status = (key, bad = false) => { statusKey = key; statusBad = bad; const node = el('.neon-checkout-status'); node.textContent = copy(key); node.dataset.error = String(bad); node.hidden = key === 'ready'; };
   const money = (minor, currency) => new Intl.NumberFormat(language, { style: 'currency', currency }).format(minor / 100);
   function price(product, target) {
     target.replaceChildren();
@@ -117,8 +121,12 @@ export function mountCheckout(root, options = {}) {
     root.lang = language;
     status(statusKey, statusBad);
     root.querySelectorAll('[data-copy]').forEach(node => { node.textContent = copy(node.dataset.copy); });
-    el('.neon-auth').hidden = Boolean(state.token);
+    root.querySelectorAll('[data-lang]').forEach(button => button.setAttribute('aria-pressed', String(button.dataset.lang === language)));
+    el('.neon-auth').hidden = Boolean(state.token) || !state.selected;
     el('.neon-account').hidden = !state.token;
+    el('.neon-intro').hidden = Boolean(state.token) || !state.selected;
+    if (state.codeSent) el('.neon-intro').textContent = copy('codeIntro') + state.email;
+    el('.neon-email-label').hidden = state.codeSent;
     el('.neon-code').hidden = !state.codeSent;
     el('input[name=email]').value = state.email;
     el('input[name=email]').readOnly = state.codeSent;
@@ -127,8 +135,12 @@ export function mountCheckout(root, options = {}) {
     el('[data-auth-submit]').textContent = copy(state.codeSent ? 'verify' : 'send');
     el('.neon-recipient').textContent = copy('account') + state.email;
     el('.neon-selected').hidden = !state.selected;
+    el('.neon-payment').hidden = !state.selected || !state.token;
     el('.neon-choose').hidden = Boolean(state.selected);
+    el('.neon-rate').hidden = state.catalog?.display_currency !== 'EUR';
+    el('[data-retry-service]')?.toggleAttribute('hidden', state.ready);
     if (state.selected) {
+      el('.neon-edit').href = state.selected.kind === 'bundle' ? '#bundles' : '#coins';
       el('.neon-selected h3').textContent = state.selected[language] || state.selected.en;
       el('.neon-selected-contents').textContent = new Intl.NumberFormat(language).format(state.selected.coins) + copy('coins');
       if (state.selected.kind === 'bundle') {
@@ -240,11 +252,16 @@ export function mountCheckout(root, options = {}) {
   }
   document.querySelectorAll('[data-neon-buy]').forEach(button => button.addEventListener('click', () => choose(button.dataset.neonBuy)));
   root.querySelectorAll('[data-lang]').forEach(button => button.addEventListener('click', () => { language = button.dataset.lang; render(); }));
+  el('input[name=email]').addEventListener('input', event => { state.email = event.target.value; });
   el('.neon-auth').addEventListener('submit', event => { event.preventDefault(); guard(async () => {
     if (!state.codeSent) { state.email = el('input[name=email]').value.trim().toLowerCase(); await api('/v1/auth/request', { email: state.email }); state.codeSent = true; persist(); status('sent'); render(); el('input[name=code]').focus(); }
     else { const data = await api('/v1/auth/verify', { email: state.email, code: el('input[name=code]').value }); state.token = data.token; state.codeSent = false; persist(); await synchronize(); }
   }); });
-  el('[data-auth-back]').addEventListener('click', () => { state.codeSent = false; persist(); render(); });
+  el('[data-auth-back]').addEventListener('click', () => {
+    state.codeSent = false; el('input[name=code]').value = '';
+    if (persist()) status(state.ready ? 'ready' : 'offline', !state.ready);
+    render(); el('input[name=email]').focus();
+  });
   el('[data-refresh]').addEventListener('click', () => guard(async () => { await synchronize(); if (state.token) await history(); }));
   el('[data-logout]').addEventListener('click', () => guard(async () => { await api('/v1/auth/logout', {}); state.token = ''; state.pending = null; state.wallet = null; state.selected = null; persist(); await synchronize(); }));
   el('[data-consent]').addEventListener('change', controls);
