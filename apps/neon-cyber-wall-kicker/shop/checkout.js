@@ -174,7 +174,7 @@ export function mountCheckout(root, options = {}) {
   }
   async function synchronize() {
     state.ready = false;
-    if (!(await api('/ready')).ok) throw new Error('not_ready');
+    if (!(await api('/v1/catalog?channel=website&ready=1')).ok) throw new Error('not_ready');
     state.catalog = await api('/v1/catalog?channel=website&pricing=first_purchase_20');
     if (!state.catalog.enabled || !state.catalog.website_checkout_available || !state.catalog.pricing_available) { status('paused', true); render(); return; }
     if (!compatibleCatalog(state.catalog)) throw new Error('incompatible_catalog');
@@ -206,7 +206,7 @@ export function mountCheckout(root, options = {}) {
     const pending = state.pending ?? { request_key: win.crypto.randomUUID(), offer, terms };
     state.pending = pending;
     if (!persist()) throw new Error('storage');
-    if (!(await api('/ready')).ok) throw new Error('not_ready');
+    if (!(await api('/v1/catalog?channel=website&ready=1')).ok) throw new Error('not_ready');
     await api('/v1/wallet');
     const body = { channel: 'website', language, product_id: offer.id, request_key: pending.request_key,
       accept_terms: true, expected_amount: offer.price, expected_offer_version: offer.offer_version, terms_version: terms.terms_version };
@@ -218,7 +218,7 @@ export function mountCheckout(root, options = {}) {
     const url = paymentUrl(order, offer, terms);
     // A second, authenticated check is performed immediately before leaving
     // the site. No provider URL is cached or offered when this check fails.
-    if (!(await api('/ready')).ok) throw new Error('not_ready');
+    if (!(await api('/v1/catalog?channel=website&ready=1')).ok) throw new Error('not_ready');
     const current = await api('/v1/orders/' + encodeURIComponent(order.id));
     if (current.state === 'paid') { await inspectPending(); return; }
     if (current.state !== 'pending' || current.amount !== offer.price || current.offer_version !== offer.offer_version) throw new Error('order_changed');
