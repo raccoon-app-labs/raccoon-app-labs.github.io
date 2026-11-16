@@ -70,7 +70,9 @@ export function paymentUrl(order, offer, terms, now = Date.now()) {
 export function mountCheckout(root, options = {}) {
   const document = root.ownerDocument;
   const win = document.defaultView;
-  const apiOrigin = options.apiOrigin ?? API_ORIGIN;
+  // Reuse the site's working HTTPS connection instead of opening a second
+  // cross-origin connection for checkout. Other hosts retain the public API.
+  const apiOrigin = options.apiOrigin ?? (win.location?.origin === 'https://neonwallkicker.ru' ? '/services/neon' : API_ORIGIN);
   const navigate = options.navigate ?? (url => win.location.assign(url));
   let language = (document.documentElement.lang || win.navigator.language).startsWith('ru') ? 'ru' : 'en';
   let saved = {}, durable = true;
@@ -170,7 +172,7 @@ export function mountCheckout(root, options = {}) {
   }
   async function api(path, body) {
     const response = await win.fetch(apiOrigin + path, { method: body ? 'POST' : 'GET', cache: 'no-store', credentials: 'omit', redirect: 'error',
-      headers: { 'Content-Type': 'application/json', ...(state.token ? { Authorization: 'Bearer ' + state.token } : {}) },
+      headers: { ...(body ? { 'Content-Type': 'application/json' } : {}), ...(state.token ? { Authorization: 'Bearer ' + state.token } : {}) },
       body: body ? JSON.stringify(body) : undefined, signal: AbortSignal.timeout(12000) });
     const data = await response.json();
     if (!response.ok) { const error = new Error(data.error || 'service_error'); error.status = response.status; error.details = data; throw error; }

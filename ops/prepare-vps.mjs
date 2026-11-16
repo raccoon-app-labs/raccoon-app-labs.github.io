@@ -11,7 +11,7 @@ const archive=relative=>relative.startsWith('yandex_')||relative.includes('/arch
 let changed=0;
 for(const file of files()){
   const relative=path.relative(root,file).replaceAll('\\','/');
-  if(relative.startsWith('ops/')||relative.startsWith('assets/locales/')||archive(relative)||! /\.(html|js|mjs|json|xml|txt)$/.test(file))continue;
+  if(relative.startsWith('ops/')||relative.startsWith('tools/')||relative.startsWith('assets/locales/')||archive(relative)||! /\.(html|js|mjs|json|xml|txt)$/.test(file))continue;
   let text=fs.readFileSync(file,'utf8').replaceAll('\r\n','\n'),original=text;
   // Keep the explicitly named legacy host in compatibility code.
   if(relative!=='assets/vps-redirect.js'&&relative!=='apps/neon-cyber-wall-kicker/shop/checkout.js')text=text.replaceAll(oldOrigin,newOrigin);

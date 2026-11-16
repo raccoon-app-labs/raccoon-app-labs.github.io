@@ -30,25 +30,26 @@ class Element {
 const product=()=>({id:'coins_2000',kind:'coins',ru:'Горсть монет',en:'Pocket change',coins:3000,price:14900,euro:{cents:164},offer_version:'a'.repeat(64)});
 const catalog=()=>({enabled:true,website_checkout_available:true,pricing_available:true,currency:'RUB',display_currency:'EUR',products:[product()],seller:{terms_version:'v1',terms_url:'https://neonwallkicker.ru/apps/neon-cyber-wall-kicker/shop/offer/'}});
 async function settled(controller){for(let count=0;controller.state.busy&&count<30;count++)await new Promise(resolve=>setImmediate(resolve));assert.equal(controller.state.busy,false,'checkout action settled');}
-async function fixture({signedIn=false,offline=false,paused=false}={}){
+async function fixture({signedIn=false,offline=false,paused=false,origin='https://neonwallkicker.ru',apiOrigin,authRequestFails=false}={}){
   const calls=[],navigation=[],storage=new Map();let available=!offline,offerChanged=false,badCode=false,currentCatalog=catalog();
   if(paused)currentCatalog.website_checkout_available=false;
   if(signedIn)storage.set('neon-website-purchases-v1',JSON.stringify({token:'session',email:'player@example.invalid'}));
   const document={documentElement:{lang:'en'},createElement:tag=>new Element(tag,document)};
   const page=new Element('main',document);page.innerHTML='<article data-neon-product="coins_2000"><span data-neon-price></span><span data-neon-coins></span><button data-neon-buy="coins_2000"></button></article><section data-neon-web-checkout></section>';
   document.querySelector=selector=>page.querySelector(selector);document.querySelectorAll=selector=>page.querySelectorAll(selector);
-  document.defaultView={navigator:{language:'en'},crypto:{randomUUID},sessionStorage:{getItem:key=>storage.get(key)??null,setItem:(key,value)=>storage.set(key,value)},fetch:async(url,options)=>{
-    const path=new URL(url).pathname,body=options.body?JSON.parse(options.body):null;calls.push({path,url,body});assert.equal(options.credentials,'omit');assert.equal(options.redirect,'error');
+  const location=new URL(origin+'/apps/neon-cyber-wall-kicker/shop/');
+  document.defaultView={location,navigator:{language:'en'},crypto:{randomUUID},sessionStorage:{getItem:key=>storage.get(key)??null,setItem:(key,value)=>storage.set(key,value)},fetch:async(url,options)=>{
+    const requested=new URL(url,location),path=requested.pathname.replace(/^\/services\/neon(?=\/)/,''),body=options.body?JSON.parse(options.body):null;calls.push({path,url,resolvedUrl:requested.href,body,method:options.method,headers:options.headers});assert.equal(options.credentials,'omit');assert.equal(options.redirect,'error');
     let data,status=200;
     if(path==='/v1/catalog'){if(!available)throw Error('offline');data=url.includes('ready=1')?{ok:true}:structuredClone(currentCatalog);}
     else if(path==='/v1/wallet')data={pricing_available:true,owned_products:[],unresolved_orders:[]};
-    else if(path==='/v1/auth/request')data={ok:true};
+    else if(path==='/v1/auth/request'){if(authRequestFails)throw Error('offline');data={ok:true};}
     else if(path==='/v1/auth/verify'){data=badCode?{error:'invalid_code'}:{token:'session'};if(badCode)status=400;}
     else if(path==='/v1/orders'&&offerChanged){data={error:'offer_changed',no_order_for_request_key:true};status=409;}
     else throw Error('Unexpected test API call: '+path);
     return {ok:status===200,status,json:async()=>data};
   }};
-  const root=document.querySelector('[data-neon-web-checkout]'),controller=mountCheckout(root,{navigate:url=>navigation.push(url)});await settled(controller);
+  const root=document.querySelector('[data-neon-web-checkout]'),controller=mountCheckout(root,{apiOrigin,navigate:url=>navigation.push(url)});await settled(controller);
   const el=selector=>{const node=root.querySelector(selector);assert.ok(node,selector);return node;};
   return {root,controller,el,calls,navigation,choose:()=>document.querySelector('[data-neon-buy]').click(),buyButton:document.querySelector('[data-neon-buy]'),setOffline:()=>{available=false;},setBadCode:value=>{badCode=value;},changeOffer:()=>{offerChanged=true;currentCatalog.products[0].price=15900;currentCatalog.products[0].offer_version='b'.repeat(64);}};
 }
@@ -94,4 +95,34 @@ test('offer changes refresh the visible price and require new consent before ret
   const f=await fixture({signedIn:true});f.choose();f.el('[data-consent]').checked=true;f.el('[data-consent]').emit('change');f.changeOffer();f.el('[data-pay]').click();await settled(f.controller);
   const orders=f.calls.filter(call=>call.path==='/v1/orders');assert.equal(orders.length,1);assert.equal(orders[0].body.preflight,true);assert.equal(orders[0].body.accept_terms,true);
   assert.equal(f.controller.state.selected.price,15900);assert.match(f.el('.neon-selected-price small').textContent,/159.*00/);assert.equal(f.el('[data-consent]').checked,false);assert.equal(f.el('[data-pay]').disabled,true);assert.equal(f.navigation.length,0);
+});
+
+test('the primary HTTPS site reuses its origin and GET requests omit the JSON content type',async()=>{
+  const f=await fixture({signedIn:true});
+  assert.equal(f.controller.state.ready,true);
+  assert.equal(f.calls.length,3,'readiness, catalogue and authenticated wallet remain checked');
+  for(const call of f.calls){
+    assert.ok(call.url.startsWith('/services/neon/'));
+    assert.equal(new URL(call.resolvedUrl).origin,'https://neonwallkicker.ru');
+    assert.equal(call.method,'GET');assert.equal(call.headers['Content-Type'],undefined);
+    assert.equal(call.headers.Authorization,'Bearer session');
+  }
+});
+
+test('other page origins retain the fixed public API and explicit test overrides remain supported',async()=>{
+  for(const origin of ['http://neonwallkicker.ru','https://www.neonwallkicker.ru','https://neonwallkicker.ru:444','https://raccoon-app-labs.github.io','http://127.0.0.1:8721','https://neonwallkicker.ru.attacker.invalid']){
+    const f=await fixture({origin});assert.equal(f.controller.state.ready,true);
+    for(const call of f.calls)assert.equal(new URL(call.resolvedUrl).origin,'https://api.neonwallkicker.ru');
+  }
+  const custom=await fixture({apiOrigin:'https://preview-api.example.invalid'});
+  for(const call of custom.calls)assert.equal(new URL(call.resolvedUrl).origin,'https://preview-api.example.invalid');
+});
+
+test('same-origin writes retain JSON bodies and a failed auth POST is sent only once',async()=>{
+  const f=await fixture({authRequestFails:true});f.choose();f.el('input[name=email]').value='Player@example.invalid';f.el('.neon-auth').emit('submit');await settled(f.controller);
+  const writes=f.calls.filter(call=>call.method==='POST');assert.equal(writes.length,1);
+  assert.equal(writes[0].url,'/services/neon/v1/auth/request');
+  assert.equal(writes[0].headers['Content-Type'],'application/json');
+  assert.deepEqual(writes[0].body,{email:'player@example.invalid'});
+  assert.equal(f.controller.state.ready,false);assert.equal(f.el('[data-pay]').disabled,true);assert.equal(f.navigation.length,0);
 });
