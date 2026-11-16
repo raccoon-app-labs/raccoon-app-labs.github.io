@@ -90,7 +90,8 @@ export function mountCheckout(root, options = {}) {
     <p class="neon-checkout-small" data-copy="expiry"></p><p class="neon-checkout-small" data-copy="delay"></p><section class="neon-history" hidden><h3 data-copy="history"></h3><div></div></section>`;
   const el = selector => root.querySelector(selector);
   const copy = key => text[language][key] ?? text[language].error;
-  const status = (key, bad = false) => { el('.neon-checkout-status').textContent = copy(key); el('.neon-checkout-status').dataset.error = String(bad); };
+  let statusKey = 'loading', statusBad = false;
+  const status = (key, bad = false) => { statusKey = key; statusBad = bad; el('.neon-checkout-status').textContent = copy(key); el('.neon-checkout-status').dataset.error = String(bad); };
   const money = (minor, currency) => new Intl.NumberFormat(language, { style: 'currency', currency }).format(minor / 100);
   function price(product, target) {
     target.replaceChildren();
@@ -113,6 +114,8 @@ export function mountCheckout(root, options = {}) {
     document.querySelectorAll('[data-neon-buy]').forEach(button => { button.disabled = state.busy || !state.ready || state.wallet?.owned_products?.includes(button.dataset.neonBuy); });
   }
   function render() {
+    root.lang = language;
+    status(statusKey, statusBad);
     root.querySelectorAll('[data-copy]').forEach(node => { node.textContent = copy(node.dataset.copy); });
     el('.neon-auth').hidden = Boolean(state.token);
     el('.neon-account').hidden = !state.token;
@@ -128,6 +131,11 @@ export function mountCheckout(root, options = {}) {
     if (state.selected) {
       el('.neon-selected h3').textContent = state.selected[language] || state.selected.en;
       el('.neon-selected-contents').textContent = new Intl.NumberFormat(language).format(state.selected.coins) + copy('coins');
+      if (state.selected.kind === 'bundle') {
+        const names = language === 'ru' ? { starter: 'Рифт-лис · Шов реальности · Осколки измерения', supporter: 'Маэстро затмения · Горизонт событий · Последнее солнце' }
+          : { starter: 'Rift Fox · Rift Stitch · Rift Bloom', supporter: 'Eclipse Maestro · Event Horizon · Eclipse Finale' };
+        el('.neon-selected-contents').textContent += ' · ' + names[state.selected.id];
+      }
       price(state.selected, el('.neon-selected-price'));
       const terms = state.pending?.terms ?? state.catalog?.seller;
       const link = terms?.terms_url ? new URL(terms.terms_url) : null;
@@ -250,7 +258,7 @@ export function mountCheckout(root, options = {}) {
     for (const row of data.orders || []) { const item = document.createElement('p'); item.textContent = row.id + ' · ' + row.state + ' · ' + money(row.amount, 'RUB'); list.append(item); }
   }
   const refresh = document.createElement('button'); refresh.type = 'button'; refresh.className = 'button secondary';
-  refresh.textContent = copy('refresh'); refresh.dataset.retryService = ''; refresh.addEventListener('click', () => guard(synchronize)); root.append(refresh);
+  refresh.textContent = copy('refresh'); refresh.dataset.copy = 'refresh'; refresh.dataset.retryService = ''; refresh.addEventListener('click', () => guard(synchronize)); root.append(refresh);
   render(); status('loading'); guard(synchronize);
   return { refresh: () => guard(synchronize), state };
 }
