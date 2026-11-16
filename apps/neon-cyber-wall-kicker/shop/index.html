@@ -3,6 +3,9 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="referrer" content="no-referrer">
+  <link rel="stylesheet" href="checkout.css?v=20261116-web1">
+  <script type="module" src="checkout.js?v=20261116-web1"></script>
   <meta name="theme-color" content="#081426">
   <title>Лавка невозможного — Neon Cyber Wall Kicker</title>
   <meta name="description" content="Монеты и эксклюзивные наборы Neon Cyber Wall Kicker: Рифт-лис и Маэстро затмения. Состав, цены, условия покупки и восстановления.">
@@ -44,58 +47,60 @@
         <span class="art-stamp">ДВА ГЕРОЯ.<br>ДВЕ ВСЕЛЕННЫЕ.</span>
       </div>
     </section>
-    <aside class="wrap availability" aria-label="Доступность покупок"><span class="status-dot" aria-hidden="true"></span><p><strong>Лавка готовится к открытию.</strong> Сейчас оплата в игре и на сайте недоступна. Ниже — состав и цены планируемых покупок.</p></aside>
+    <aside class="wrap availability" aria-label="Доступность покупок"><span class="status-dot" aria-hidden="true"></span><p><strong>Покупки для твоего игрового аккаунта.</strong> Войди с той же почтой, что и в игре. Касса проверит доступность сервера перед оплатой. <a href="#purchase">К оформлению заказа ↓</a></p></aside>
     <section class="wrap section" id="bundles" aria-labelledby="bundles-title">
       <div class="section-heading"><div><p class="eyebrow">Не просто новый образ</p><h2 id="bundles-title">Целая маленькая вселенная.</h2></div><p>Герой, анимированный след, эффект взрыва.<br>И монеты для следующей идеи.</p></div>
       <div class="bundle-grid">
-        <article class="bundle fox">
+        <article class="bundle fox" data-neon-product="starter">
           <div class="card-top"><span class="tag">Эксклюзив набора</span><span class="issue">№ 01</span></div>
           <div class="character-stage"><span class="stage-word" aria-hidden="true">RIFT</span><img src="assets/rift-fox.webp" alt="Рифт-лис: белая маска, бирюзовые кристаллические хвосты и тёмный костюм с коралловыми акцентами" width="643" height="659"><span class="stage-line" aria-hidden="true"></span></div>
-          <div class="bundle-copy"><p class="coin-bonus"><span class="coin-icon" aria-hidden="true"></span>3 000 <span>монет внутри</span></p><h3>Первый тираж</h3><p class="flavour">Прорежь реальность. Оставь свой след.</p>
+          <div class="bundle-copy"><p class="coin-bonus"><span class="coin-icon" aria-hidden="true"></span><span data-neon-coins data-no-l10n>3 000</span> <span>монет внутри</span></p><h3>Первый тираж</h3><p class="flavour">Прорежь реальность. Оставь свой след.</p>
           <dl class="contents"><div><dt>Герой</dt><dd>Рифт-лис</dd></div><div><dt>След</dt><dd>Шов реальности</dd></div><div><dt>Взрыв</dt><dd>Осколки измерения</dd></div></dl>
-          <div class="price-line"><span class="price">149 <small>₽</small></span><span>Разовая покупка<br>Один раз на аккаунт</span></div></div>
-        </article>
-        <article class="bundle maestro">
+          <div class="price-line"><span class="price" data-neon-price data-no-l10n translate="no">Проверяем цену…</span><span>Разовая покупка<br>Один раз на аккаунт</span></div></div>
+        <button class="button" type="button" data-neon-buy="starter" data-no-l10n translate="no" disabled>Выбрать покупку</button></article>
+        <article class="bundle maestro" data-neon-product="supporter">
           <div class="card-top"><span class="tag">Эксклюзив набора</span><span class="issue">№ 02</span></div>
           <div class="character-stage"><span class="stage-word" aria-hidden="true">CHAOS</span><img src="assets/eclipse-maestro.webp" alt="Маэстро затмения: герой с тёмным лицом, солнечной короной, дирижёрской палочкой и коралловыми фалдами" width="643" height="644"><span class="stage-line" aria-hidden="true"></span></div>
-          <div class="bundle-copy"><p class="coin-bonus"><span class="coin-icon" aria-hidden="true"></span>5 000 <span>монет внутри</span></p><h3>Соавтор хаоса</h3><p class="flavour">Пусть даже затмение играет по твоим правилам.</p>
+          <div class="bundle-copy"><p class="coin-bonus"><span class="coin-icon" aria-hidden="true"></span><span data-neon-coins data-no-l10n>5 000</span> <span>монет внутри</span></p><h3>Соавтор хаоса</h3><p class="flavour">Пусть даже затмение играет по твоим правилам.</p>
           <dl class="contents"><div><dt>Герой</dt><dd>Маэстро затмения</dd></div><div><dt>След</dt><dd>Горизонт событий</dd></div><div><dt>Взрыв</dt><dd>Последнее солнце</dd></div></dl>
-          <div class="price-line"><span class="price">399 <small>₽</small></span><span>Разовая покупка<br>Один раз на аккаунт</span></div></div>
-        </article>
+          <div class="price-line"><span class="price" data-neon-price data-no-l10n translate="no">Проверяем цену…</span><span>Разовая покупка<br>Один раз на аккаунт</span></div></div>
+        <button class="button" type="button" data-neon-buy="supporter" data-no-l10n translate="no" disabled>Выбрать покупку</button></article>
       </div>
       <p class="note">Все три косметических предмета каждого набора эксклюзивны: за обычные игровые монеты они не продаются. Набор выдаёт указанные предметы и монеты; случайных наград нет. Образы и эффекты не меняют управление и характеристики героя.</p>
     </section>
     <section class="wrap section" id="coins" aria-labelledby="coins-title">
       <div class="section-heading"><div><p class="eyebrow">На новые образы и идеи</p><h2 id="coins-title">Чуть больше возможностей.</h2></div><p>Монеты для покупок в игровом каталоге.<br>Без подписки и автосписаний.</p></div>
       <div class="coins-grid">
-        <article class="coin-card"><span class="coin-stack stack-1" aria-hidden="true"><i></i><i></i><i></i></span><h3>Горсть монет</h3><p class="coin-amount">2 000 <span>монет</span></p><p class="coin-price">79 ₽</p></article>
-        <article class="coin-card"><span class="coin-stack stack-2" aria-hidden="true"><i></i><i></i><i></i></span><h3>Запас монет</h3><p class="coin-amount">6 000 <span>монет</span></p><p class="coin-price">199 ₽</p></article>
-        <article class="coin-card"><span class="coin-stack stack-3" aria-hidden="true"><i></i><i></i><i></i></span><h3>Сейф монет</h3><p class="coin-amount">14 000 <span>монет</span></p><p class="coin-price">399 ₽</p></article>
-        <article class="coin-card"><span class="coin-stack stack-4" aria-hidden="true"><i></i><i></i><i></i></span><h3>Неоновый банк</h3><p class="coin-amount">32 000 <span>монет</span></p><p class="coin-price">799 ₽</p></article>
+        <article class="coin-card" data-neon-product="coins_2000"><span class="coin-stack stack-1" aria-hidden="true"><i></i><i></i><i></i></span><h3>Горсть монет</h3><p class="coin-amount"><span data-neon-coins data-no-l10n>3 000</span> <span>монет</span></p><p class="coin-price" data-neon-price data-no-l10n translate="no">Проверяем цену…</p><button class="button" type="button" data-neon-buy="coins_2000" data-no-l10n translate="no" disabled>Выбрать покупку</button></article>
+        <article class="coin-card" data-neon-product="coins_6000"><span class="coin-stack stack-2" aria-hidden="true"><i></i><i></i><i></i></span><h3>Запас монет</h3><p class="coin-amount"><span data-neon-coins data-no-l10n>9 000</span> <span>монет</span></p><p class="coin-price" data-neon-price data-no-l10n translate="no">Проверяем цену…</p><button class="button" type="button" data-neon-buy="coins_6000" data-no-l10n translate="no" disabled>Выбрать покупку</button></article>
+        <article class="coin-card" data-neon-product="coins_14000"><span class="coin-stack stack-3" aria-hidden="true"><i></i><i></i><i></i></span><h3>Сейф монет</h3><p class="coin-amount"><span data-neon-coins data-no-l10n>21 000</span> <span>монет</span></p><p class="coin-price" data-neon-price data-no-l10n translate="no">Проверяем цену…</p><button class="button" type="button" data-neon-buy="coins_14000" data-no-l10n translate="no" disabled>Выбрать покупку</button></article>
+        <article class="coin-card" data-neon-product="coins_32000"><span class="coin-stack stack-4" aria-hidden="true"><i></i><i></i><i></i></span><h3>Неоновый банк</h3><p class="coin-amount"><span data-neon-coins data-no-l10n>48 000</span> <span>монет</span></p><p class="coin-price" data-neon-price data-no-l10n translate="no">Проверяем цену…</p><button class="button" type="button" data-neon-buy="coins_32000" data-no-l10n translate="no" disabled>Выбрать покупку</button></article>
       </div>
-      <p class="note">Монеты — внутриигровая единица. Их нельзя вывести в деньги, перевести другому игроку или использовать вне игры. Пакеты монет можно приобретать повторно после открытия оплаты.</p>
+      <p class="note">Монеты — внутриигровая единица. Их нельзя вывести в деньги, перевести другому игроку или использовать вне игры. Пакеты монет можно приобретать повторно.</p>
     </section>
     <section class="wrap section" id="how-to-buy" aria-labelledby="how-title">
-      <div class="section-heading"><div><p class="eyebrow">После открытия лавки</p><h2 id="how-title">Из игры — в твой комплект.</h2></div></div>
-      <ol class="steps"><li><span>01</span><h3>Выбери в игре</h3><p>Открой лавку, выбери монеты или набор и войди по коду из письма. Проверь состав, итоговую цену и условия покупки.</p></li><li><span>02</span><h3>Оплати через Робокассу</h3><p>Игра откроет защищённую страницу платёжного сервиса. Здесь на сайте банковские данные не вводятся.</p></li><li><span>03</span><h3>Возвращайся за наградой</h3><p>После подтверждения платежа сервером монеты и предметы появятся в аккаунте. Комплект выбирается в разделе «Стиль».</p></li></ol>
-      <p class="note">Покупки планируются в версии RuStore, а в Google Play — только для пользователей в России после проверки доступности. Если оплата недоступна в установленной версии, оформить покупку нельзя. На этом сайте отдельной кассы нет.</p>
+      <div class="section-heading"><div><p class="eyebrow">Один аккаунт на сайте и в игре</p><h2 id="how-title">Выбери. Оплати. Играй.</h2></div></div>
+      <ol class="steps"><li><span>01</span><h3>Войди на сайте</h3><p>Выбери монеты или набор. Войди по коду из письма с той же почтой, что используешь в игре. Проверь получателя, состав, цену и условия.</p></li><li><span>02</span><h3>Оплати через Робокассу</h3><p>Сайт сохранит заказ за аккаунтом и проверит сервер ещё раз перед переходом. При недоступном сервисе оплата блокируется. Данные карты вводятся только у платёжного сервиса.</p></li><li><span>03</span><h3>Обнови покупки в игре</h3><p>Сервер проверит оплату и начислит монеты и предметы. В игре войди с той же почтой и нажми «Обновить покупки». Комплект выбирается в разделе «Стиль».</p></li></ol>
+      <p class="note">На сайте доступны разовые покупки для игрового аккаунта. Доступность иностранных карт и итоговую конвертацию определяют Робокасса и банк. Для иностранных покупателей крупно показана ориентировочная цена в евро, ниже — точная сумма заказа в рублях. Минимум после скидок — эквивалент €1 по проверенному курсу ЦБ. Если связь пропадёт уже на странице платёжного сервиса, платёж может пройти: не плати повторно, проверь сохранённый заказ после восстановления связи. Без подтверждения оплаты начисления нет.</p>
     </section>
+    <section class="wrap section" id="purchase" data-neon-web-checkout data-no-l10n translate="no" aria-label="Оформление покупки / Checkout"><noscript>Для безопасной проверки сервера и оформления заказа включи JavaScript. Без проверки оплата недоступна.</noscript></section>
     <section class="wrap section" id="terms" aria-labelledby="terms-title">
       <div class="section-heading"><div><p class="eyebrow">Всё понятно до оплаты</p><h2 id="terms-title">Условия покупки.</h2></div></div>
       <div class="terms-grid">
         <article><h3>Что приобретается</h3><p>Дополнительные цифровые возможности Neon Cyber Wall Kicker: указанное количество монет и, для набора, три косметических предмета. Физическая доставка не требуется.</p></article>
         <article><h3>Когда начисляется</h3><p>После подтверждения оплаты, не позднее 24 часов. Если начисление задержалось, обратись в поддержку с номером заказа и датой покупки.</p></article>
         <article><h3>Как восстановить</h3><p>Войди в тот же игровой аккаунт по той же почте. Восстанавливаются права на купленные предметы и остаток купленных монет. Потраченные монеты повторно не начисляются; локальный прогресс и заработанные в забегах монеты не входят в это восстановление.</p></article>
-        <article><h3>Если нужен возврат</h3><p>Напиши на <a href="mailto:raccoon.app.labs@gmail.com">raccoon.app.labs@gmail.com</a>. Рассмотрим неначисление, повторное списание, отказ от покупки и другие основания по закону. Условия — в <a href="offer/#refunds">оферте</a>.</p></article>
+        <article><h3>Если нужен возврат</h3><p>Напиши на <a href="mailto:raccoon.app.labs@gmail.com">raccoon.app.labs@gmail.com</a>. Рассмотрим неначисление, повторное списание, отказ от покупки и другие основания по закону. Условия — в <a href="offer/2026-11-16/#refunds">оферте</a>.</p></article>
       </div>
-      <div class="legal-links"><a class="button secondary" href="offer/">Публичная оферта <span aria-hidden="true">↗</span></a><a class="button secondary" href="privacy/">Конфиденциальность <span aria-hidden="true">↗</span></a></div>
+      <div class="legal-links"><a class="button secondary" href="offer/2026-11-16/">Публичная оферта <span aria-hidden="true">↗</span></a><a class="button secondary" href="privacy/">Конфиденциальность <span aria-hidden="true">↗</span></a></div>
     </section>
     <section class="wrap section contacts" id="contacts" aria-labelledby="contacts-title">
       <div><p class="eyebrow">На связи</p><h2 id="contacts-title">Есть вопрос?<br><span>Давай разберёмся.</span></h2><a class="contact-email" href="mailto:raccoon.app.labs@gmail.com">raccoon.app.labs@gmail.com</a><p>Поддержка игры, вопросы о покупке и восстановлении.</p></div>
-      <div class="seller-note"><p>Условия покупки и сведения о продавце доступны в документах магазина.</p><a href="offer/#seller">Реквизиты продавца</a></div>
+      <div class="seller-note"><p>Условия покупки и сведения о продавце доступны в документах магазина.</p><a href="offer/2026-11-16/#seller">Реквизиты продавца</a></div>
     </section>
     <section class="wrap download"><div><p class="eyebrow">А пока — ещё один прыжок</p><h2>Рекорд сам себя не побьёт.</h2></div><div class="download-links"><a class="button" href="https://www.rustore.ru/catalog/app/com.enotessa.neoncyberwallkicker">Игра в RuStore <span aria-hidden="true">↗</span></a><a class="button secondary" href="https://play.google.com/store/apps/details?id=com.enotessa.neoncyberwallkicker&amp;hl=ru">Google Play <span aria-hidden="true">↗</span></a></div></section>
   </main>
-  <footer class="wrap footer"><span>© 2026 Raccoon App Labs</span><a href="../">Об игре</a><a href="offer/">Оферта</a><a href="privacy/">Конфиденциальность</a><a href="offer/#seller">Реквизиты продавца</a></footer>
+  <footer class="wrap footer"><span>© 2026 Raccoon App Labs</span><a href="../">Об игре</a><a href="offer/2026-11-16/">Оферта</a><a href="privacy/">Конфиденциальность</a><a href="offer/2026-11-16/#seller">Реквизиты продавца</a></footer>
 </body>
 </html>
+
