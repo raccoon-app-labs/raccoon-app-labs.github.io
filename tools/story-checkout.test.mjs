@@ -1,8 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {catalogTitle, validateOffer, purchasableStories, purchaseRequest, confirmationUrl, createApi, API_BASE} from '../assets/commerce/story-checkout-core.mjs';
+import {catalogTitle, validateOffer, purchasableStories, purchaseRequest, confirmationUrl, createApi, API_BASE, LEGAL_BASE, billingDateTime, legalDocumentUrl} from '../assets/commerce/story-checkout-core.mjs';
 
 const offer = {available:true,amount:19900,bookAmount:2900,currency:'RUB',termsVersion:'2',autoRenew:false,bookStoryIds:[4,5,7],paymentProvider:'robokassa'};
+const recurring = {...offer, autoRenew:true, renewalAmount:24900, autoRenewConsentVersion:'recurring-v1',
+  autoRenewConsentText:'Первый платёж 199 ₽, далее 249 ₽ каждый календарный месяц до отмены.',
+  autoRenewConsentTextEn:'First payment 199 RUB, then 249 RUB each calendar month until cancelled.', billingPeriod:'P1M'};
 
 test('personalization tokens are resolved for a public catalog without a child name', () => {
   assert.equal(catalogTitle('{m:Лягушонок|Лягушечка} {child}'),'Лягушонок');
@@ -24,8 +27,29 @@ test('malformed offer/catalog and unsafe remote cover paths fail closed', () => 
 });
 test('subscription uses the authoritative amount and supports explicit recurring consent', () => {
   assert.deepEqual(purchaseRequest('premium',null,offer,true),{path:'/api/subscription/create',body:{termsVersion:'2',amount:19900,autoRenewConsent:false}});
-  assert.equal(purchaseRequest('premium',null,{...offer,autoRenew:true},true).body.autoRenewConsent,true);
+  assert.deepEqual(purchaseRequest('premium',null,recurring,true).body,{termsVersion:'2',amount:19900,
+    autoRenewConsent:true,autoRenewConsentVersion:'recurring-v1',renewalAmount:24900});
   assert.throws(() => purchaseRequest('premium',null,offer,false));
+  assert.throws(() => purchaseRequest('premium',null,recurring,false),error=>error.code==='consent_required');
+});
+test('recurring checkout requires a complete server consent and monthly renewal quote',()=>{
+  for(const field of ['autoRenewConsentVersion','autoRenewConsentText','autoRenewConsentTextEn','renewalAmount','billingPeriod']){
+    assert.throws(()=>validateOffer({...recurring,[field]:undefined}),error=>error.code==='offer_unavailable');
+  }
+  assert.throws(()=>validateOffer({...recurring,renewalAmount:0}));
+  assert.throws(()=>validateOffer({...recurring,billingPeriod:'P1Y'}));
+});
+test('billing dates include server time zone, exact time and offset, independently of the device zone',()=>{
+  const result=billingDateTime(Date.parse('2026-12-18T09:00:00Z'),'Europe/Moscow','en-US');
+  assert.match(result,/12:00/);assert.match(result,/GMT\+03:00/);assert.match(result,/Europe\/Moscow/);
+  assert.equal(billingDateTime(0),'');assert.equal(billingDateTime(-1),'');
+  assert.equal(billingDateTime(Date.now(),'invalid-zone'),'');
+});
+test('legal documents allow HTTPS only and safely fall back for older offers',()=>{
+  assert.equal(legalDocumentUrl('https://reserve.volshebnye-istorii.ru/legal/premium-terms.html','premium-terms.html'),`${API_BASE}/legal/premium-terms.html`);
+  for(const raw of [undefined,'javascript:alert(1)','http://example.test/offer','https://user:pass@example.test/offer']){
+    assert.equal(legalDocumentUrl(raw,'privacy.html'),`${LEGAL_BASE}/privacy.html`);
+  }
 });
 test('book and payment provider cannot be substituted by UI inputs', () => {
   assert.deepEqual(purchaseRequest('book',{id:4},offer,true),{path:'/api/books/4/create',body:{termsVersion:'2',amount:2900,termsAccepted:true}});

@@ -1,4 +1,5 @@
 export const API_BASE = 'https://reserve.volshebnye-istorii.ru';
+export const LEGAL_BASE = 'https://raccoon-app-labs.github.io/apps/magical-stories/legal';
 export const PROVIDERS = Object.freeze([
   {id:'robokassa', name:'Robokassa', available:true},
   {id:'lava', name:'Lava.top', available:false}
@@ -20,7 +21,28 @@ export function validateOffer(value) {
       !Array.isArray(value.bookStoryIds) || value.bookStoryIds.some(id => !Number.isSafeInteger(id) || id <= 0)) {
     throw new ShopError('offer_unavailable');
   }
+  if (value.autoRenew && (!Number.isSafeInteger(value.renewalAmount) || value.renewalAmount <= 0 ||
+      typeof value.autoRenewConsentVersion !== 'string' || !value.autoRenewConsentVersion ||
+      typeof value.autoRenewConsentText !== 'string' || !value.autoRenewConsentText.trim() ||
+      typeof value.autoRenewConsentTextEn !== 'string' || !value.autoRenewConsentTextEn.trim() ||
+      value.billingPeriod !== 'P1M')) throw new ShopError('offer_unavailable');
   return value;
+}
+
+export function billingDateTime(timestamp, timeZone = 'Europe/Moscow', locale = 'ru-RU') {
+  if (!Number.isSafeInteger(timestamp) || timestamp <= 0) return '';
+  try {
+    return `${new Intl.DateTimeFormat(locale, {year:'numeric',month:'long',day:'numeric',hour:'2-digit',minute:'2-digit',
+      hourCycle:'h23',timeZone,timeZoneName:'longOffset'}).format(timestamp)} (${timeZone})`;
+  } catch { return ''; }
+}
+
+export function legalDocumentUrl(raw, fallback) {
+  try {
+    const url = new URL(raw);
+    if (url.protocol === 'https:' && !url.username && !url.password && !url.port) return url.href;
+  } catch { /* Older offers use the published app legal documents. */ }
+  return `${LEGAL_BASE}/${fallback}`;
 }
 
 export function purchasableStories(catalog, offer, covers = {}) {
@@ -47,7 +69,10 @@ export function purchaseRequest(product, story, offer, accepted, provider = 'rob
     return {path:`/api/books/${story.id}/create`, body:{termsVersion:offer.termsVersion, amount:offer.bookAmount, termsAccepted:true}};
   }
   if (product !== 'premium') throw new ShopError('invalid_product');
-  return {path:'/api/subscription/create', body:{termsVersion:offer.termsVersion, amount:offer.amount, autoRenewConsent:offer.autoRenew && accepted}};
+  return {path:'/api/subscription/create', body:{termsVersion:offer.termsVersion, amount:offer.amount,
+    autoRenewConsent:offer.autoRenew && accepted, ...(offer.autoRenew ? {
+      autoRenewConsentVersion:offer.autoRenewConsentVersion, renewalAmount:offer.renewalAmount
+    } : {})}};
 }
 
 export function confirmationUrl(raw) {

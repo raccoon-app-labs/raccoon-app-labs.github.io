@@ -112,7 +112,11 @@
 .magic-form>input::placeholder,.magic-search input::placeholder{color:#9d8eac}
 .magic-form>.magic-primary{width:100%;margin-top:12px}
 .magic-consent{display:flex;align-items:flex-start;gap:12px;line-height:1.8;color:var(--magic-muted);font-size:12px;cursor:pointer}
-.magic-consent input{margin:5px 0 0;width:19px;height:19px;flex-shrink:0;accent-color:var(--magic-gold)}
+.magic-consent input{margin:5px 0 0;width:19px;height:19px;flex-shrink:0;accent-color:var(--magic-gold);color-scheme:light}
+.magic-renewal-disclosure{padding:18px;border:1px solid color-mix(in srgb,var(--magic-gold) 35%,transparent);border-radius:18px;background:color-mix(in srgb,var(--magic-gold) 6%,transparent)}
+.magic-renewal-disclosure strong{display:block;color:var(--magic-gold);font-size:16px;line-height:1.7}
+.magic-renewal-disclosure p{margin:12px 0 0;color:var(--magic-muted);font-size:13px;line-height:1.8}
+.magic-legal-links{display:flex;flex-wrap:wrap;gap:8px 16px}
 .magic-form .magic-code{font-size:30px;letter-spacing:.4em;text-align:center;padding-left:calc(18px + .4em)}
 .magic-text-button{display:inline-block;color:var(--magic-gold);border:0;background:transparent;padding:12px 0;text-decoration:underline;text-underline-offset:5px;font-size:12px!important}
 .magic-inline-actions{display:flex;justify-content:center;gap:24px;flex-wrap:wrap}
