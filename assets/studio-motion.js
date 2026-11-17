@@ -25,37 +25,61 @@
   }
   const sections=[...document.querySelectorAll('.showcase,.values,.project-pages')];sections.forEach(n=>n.classList.add('studio-section'));
   const reveal=new IntersectionObserver(entries=>{for(const entry of entries)entry.target.classList.toggle('is-awake',entry.isIntersecting);},{threshold:.12});sections.forEach(n=>reveal.observe(n));
-  // Gradients animate through CSS transforms. JavaScript only eases a small
-  // parallax offset after input, and stops as soon as that offset has settled.
+  // Gradients and a few twinkling accents animate in CSS. Pointer input shares
+  // one short-lived frame loop for parallax and nearby star highlights.
   const atmosphere=document.createElement('div');atmosphere.className='studio-atmosphere';
   atmosphere.setAttribute('aria-hidden','true');atmosphere.setAttribute('inert','');atmosphere.dataset.noL10n='';
   const depth=document.createElement('div');depth.className='studio-atmosphere-depth';
   for(const color of ['violet','mint','rose']){const layer=document.createElement('span');layer.className='studio-gradient studio-gradient-'+color;depth.append(layer);}
-  atmosphere.append(depth);document.body.prepend(atmosphere);
-  let width=Math.max(1,innerWidth),height=Math.max(1,innerHeight),frame=0,last=0,closed=false,focused=true,x=0,y=0,targetX=0,targetY=0;
+  const starfield=document.createElement('div');starfield.className='studio-stars';
+  const stars=Array.from({length:88},(_,index)=>{
+    const node=document.createElement('span');node.className='studio-star';
+    const x=((index*137.51)%997)/997,y=((index*253.79)%991)/991,size=index%12===0?1.45:.75+(index%3)*.14;
+    node.style.left=x*100+'%';node.style.top=y*100+'%';node.style.width=node.style.height=size*2+'px';
+    node.style.setProperty('--star-alpha',index%12===0?'.46':(.29+(index%5)*.025).toFixed(3));
+    node.style.setProperty('--star-delay',(-index*.41).toFixed(2)+'s');node.style.setProperty('--star-near','0');
+    starfield.append(node);return {node,x,y,near:0};
+  });
+  atmosphere.append(depth,starfield);document.body.prepend(atmosphere);
+  let width=Math.max(1,innerWidth),height=Math.max(1,innerHeight),frame=0,last=0,closed=false,focused=true,x=0,y=0,targetX=0,targetY=0,pointerX=0,pointerY=0,pointerActive=false,starsDirty=false;
   const paused=()=>closed||!focused||document.hidden||!!root.dataset.siteScrolling||quiet();
+  function paintStars(){
+    for(const star of stars){
+      let near=0;
+      if(pointerActive){
+        const dx=star.x*width-pointerX,dy=star.y*height-pointerY;
+        if(Math.abs(dx)<195&&Math.abs(dy)<195)near=Math.max(0,1-Math.hypot(dx,dy)/195);
+      }
+      near=Math.round(near*1000)/1000;
+      if(near!==star.near){star.node.style.setProperty('--star-near',String(near));star.near=near;}
+    }
+    starsDirty=false;
+  }
+  function clearStarHover(){pointerActive=false;starsDirty=true;paintStars();}
   function paint(){depth.style.transform='translate3d('+x.toFixed(3)+'px,'+y.toFixed(3)+'px,0)';}
   function stop(){cancelAnimationFrame(frame);frame=0;last=0;}
-  function schedule(){if(!frame&&!paused()&&(Math.abs(targetX-x)>.025||Math.abs(targetY-y)>.025))frame=requestAnimationFrame(tick);}
+  function schedule(){if(!frame&&!paused()&&(starsDirty||Math.abs(targetX-x)>.025||Math.abs(targetY-y)>.025))frame=requestAnimationFrame(tick);}
   function tick(now){
     frame=0;if(paused())return;
+    if(starsDirty)paintStars();
     const dt=last?Math.min((now-last)/1000,.05):1/60;last=now;
     const ease=1-Math.exp(-dt*9);x+=(targetX-x)*ease;y+=(targetY-y)*ease;
     if(Math.abs(targetX-x)<=.025&&Math.abs(targetY-y)<=.025){x=targetX;y=targetY;paint();last=0;return;}
     paint();schedule();
   }
-  function center(){targetX=targetY=0;schedule();}
+  function center(){targetX=targetY=0;clearStarHover();schedule();}
   function activity(){
-    stop();atmosphere.dataset.paused=paused()?'true':'false';
-    if(quiet()){x=y=targetX=targetY=0;paint();}else if(!paused())center();
+    stop();clearStarHover();atmosphere.dataset.paused=paused()?'true':'false';
+    if(quiet()){x=y=targetX=targetY=0;paint();}else if(!paused()){targetX=targetY=0;schedule();}
   }
   document.addEventListener('pointermove',event=>{
     if(!fine.matches||event.pointerType==='touch'||paused())return;
+    pointerX=event.clientX;pointerY=event.clientY;pointerActive=true;starsDirty=true;
     targetX=Math.max(-.5,Math.min(.5,event.clientX/width-.5))*24;
     targetY=Math.max(-.5,Math.min(.5,event.clientY/height-.5))*20;schedule();
   },{passive:true});
   root.addEventListener('pointerleave',center);
-  addEventListener('resize',()=>{stop();width=Math.max(1,innerWidth);height=Math.max(1,innerHeight);x=y=targetX=targetY=0;paint();},{passive:true});
+  addEventListener('resize',()=>{stop();width=Math.max(1,innerWidth);height=Math.max(1,innerHeight);x=y=targetX=targetY=0;clearStarHover();paint();},{passive:true});
   document.addEventListener('visibilitychange',activity);addEventListener('raccoon:scrollstate',activity);
   addEventListener('blur',()=>{focused=false;activity();});addEventListener('focus',()=>{focused=true;activity();});
   addEventListener('pagehide',()=>{closed=true;activity();});addEventListener('pageshow',()=>{closed=false;activity();});
