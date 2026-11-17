@@ -1,0 +1,19 @@
+/* Spectral typography. Motion is finite; selection and the original layout stay native. */
+:root[data-site-world=studio]{--studio-violet:#c5a5ff;--studio-mint:#a4f2db;--studio-pink:#efa7df}
+:root[data-site-world=studio][data-theme=light]{--studio-violet:#7046aa;--studio-mint:#216b62;--studio-pink:#984377}
+[data-studio-text=hologram],[data-studio-text=signal]{position:relative}
+.studio-text-echo{position:absolute;inset:0;display:block;font:inherit;letter-spacing:inherit;line-height:inherit;word-spacing:inherit;text-align:inherit;white-space:inherit;pointer-events:none;user-select:none;-webkit-user-select:none;opacity:0;z-index:1;transition:opacity .22s ease-out;overflow:visible}
+.studio-text-echo .gradient-word{color:inherit!important;-webkit-text-fill-color:currentColor;background:none!important;animation:none!important;filter:none!important}
+.studio-text-spectrum{color:var(--studio-mint);transform:translate(var(--studio-dx,0px),var(--studio-dy,0px));mask-image:radial-gradient(ellipse var(--studio-radius,150px) calc(var(--studio-radius,150px)*.62) at var(--studio-x,50%) var(--studio-y,50%),#000 0%,#000b 33%,transparent 78%);text-shadow:0 0 16px color-mix(in srgb,var(--studio-mint) 40%,transparent)}
+.studio-text-ribbon{color:var(--studio-pink);transform:translate(calc(var(--studio-dx,0px)*-1),calc(var(--studio-dy,0px)*-1));mask-image:radial-gradient(ellipse var(--studio-radius,150px) var(--studio-radius,150px) at var(--studio-x,50%) var(--studio-y,50%),#000,transparent 85%)}
+[data-studio-active]>.studio-text-spectrum{opacity:.62}
+[data-studio-surge]>.studio-text-ribbon{animation:studio-spectral-ribbon 1.05s cubic-bezier(.2,.8,.2,1) both}
+[data-studio-text=hologram][data-studio-active]{text-shadow:0 0 25px color-mix(in srgb,var(--studio-violet) 20%,transparent)}
+[data-studio-text=hologram][data-studio-active] .gradient-word{filter:drop-shadow(0 0 13px color-mix(in srgb,var(--studio-violet) 26%,transparent))}
+[data-studio-text=ink][data-studio-active]{color:transparent!important;-webkit-text-fill-color:transparent;background-image:radial-gradient(ellipse var(--studio-radius,100px) calc(var(--studio-radius,100px)*.65) at var(--studio-x,50%) var(--studio-y,50%),var(--studio-mint),var(--studio-violet) 35%,var(--studio-base) 90%);background-clip:text;-webkit-background-clip:text;text-shadow:0 0 14px color-mix(in srgb,var(--studio-violet) 12%,transparent)}
+[data-studio-text=signal][data-studio-surge]::after{content:'';position:absolute;inset:auto 0 -5px;height:2px;pointer-events:none;transform-origin:0 50%;background:linear-gradient(90deg,transparent,var(--studio-violet),var(--studio-mint),transparent);box-shadow:0 0 12px color-mix(in srgb,var(--studio-violet) 38%,transparent);animation:studio-signal-sweep 1.05s cubic-bezier(.2,.8,.2,1) both}
+[data-studio-text]::selection,[data-studio-text] *::selection{color:HighlightText!important;-webkit-text-fill-color:HighlightText;background:Highlight;text-shadow:none}
+@keyframes studio-spectral-ribbon{0%{opacity:0;clip-path:inset(3% 0 91% 0)}15%{opacity:.65;clip-path:inset(12% 0 70% 0)}30%{opacity:.38;clip-path:inset(49% 0 39% 0)}44%{opacity:.55;clip-path:inset(34% 0 52% 0)}67%{opacity:.35;clip-path:inset(73% 0 15% 0)}100%{opacity:0;clip-path:inset(98% 0 0 0)}}
+@keyframes studio-signal-sweep{0%{opacity:0;clip-path:inset(0 100% 0 0)}24%{opacity:1}60%{opacity:.8;clip-path:inset(0 0 0 0)}100%{opacity:0;clip-path:inset(0 0 0 100%)}}
+@media(prefers-reduced-motion:reduce),(hover:none),(pointer:coarse){.studio-text-echo{display:none!important}[data-studio-text=signal]::after{animation:none!important}}
+:root[data-motion=reduced] .studio-text-echo{display:none!important}
