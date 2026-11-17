@@ -11,12 +11,13 @@
  const app=()=>['keys','bloom'].includes(root.dataset.app)?root.dataset.app:null;
  const language=()=>window.HanziLocale?.code || root.lang || 'en';
  const t=key=>(window.HanziCurrencyCopy?.[language()] || window.HanziCurrencyCopy?.en || {})[key] || key;
+ const international=()=>window.HanziInternationalRUBCopy?.[language()]||window.HanziInternationalRUBCopy?.en;
  const set=(node,value)=>{if(node && node.textContent!==value){node.dataset.noL10n='';node.textContent=value;}};
  let entrance;
  function url(value){const u=new URL(location.href);u.searchParams.set('region',value);u.searchParams.set('app',app()||'bloom');u.searchParams.set('lang',language());return u;}
  function checkout(plan){const u=new URL(region()==='ru'?'/apps/hanzi-bloom/plus/checkout/':'/en/apps/hanzi-bloom/plus/checkout/',location.href);u.searchParams.set('app',app()||'bloom');u.searchParams.set('lang',language());if(plan)u.searchParams.set('plan',plan);return u.href;}
  function render(){
-  const ru=region()==='ru',hanzi=!!app();root.dataset.accountRegion=ru?'ru':'global';root.dataset.currencyUi='ready';
+  const ru=region()==='ru',hanzi=!!app();root.dataset.accountRegion=hanzi?'ru':(ru?'ru':'global');root.dataset.currencyUi='ready';
   for(const node of document.querySelectorAll('#app-panel,#hanzi-content>.how-section,#hanzi-content>.faq-section'))node.hidden=false;
   pass.hidden=false;pass.id=hanzi?'plus':'hanzi-plus';panel.id='ru-pricing';panel.hidden=!ru || !hanzi;usd.hidden=ru || !hanzi;
   picker.setAttribute('aria-label',t('currency'));set(picker.querySelector(':scope>p'),t('currency'));set(picker.querySelector(':scope>p:last-child'),t('hint'));
@@ -27,11 +28,22 @@
   panel.querySelectorAll('.ru-price-card>.eyebrow').forEach(node=>set(node,'RUB · ₽'));
   const unavailable=usd.querySelector('[data-checkout]');unavailable.removeAttribute('href');unavailable.setAttribute('aria-disabled','true');unavailable.setAttribute('role','button');unavailable.tabIndex=0;unavailable.dataset.currencyUnavailable='';
   set(unavailable.querySelector('#pass-action'),t('soon'));set(usd.querySelector('.pass-availability'),t('usdNotice'));set(usd.querySelector(':scope>p'),t('onePayment'));set(usd.querySelector('.pass-term'),t('month'));
+
+  if(hanzi){
+   const copy=international(),choice=picker.querySelector('[data-international-catalog]');
+   set(choice.querySelector('strong'),copy.countries);set(choice.querySelector('small'),'RUB · Robokassa');set(choice.querySelector(':scope>span'),'₽');
+   if(!ru){
+    unavailable.href=checkout('rub_month');unavailable.removeAttribute('aria-disabled');unavailable.removeAttribute('role');delete unavailable.dataset.currencyUnavailable;
+    set(unavailable.querySelector('#pass-action'),copy.checkout);set(usd.querySelector('.pass-price'),'RUB');set(usd.querySelector('.pass-term'),copy.term);
+    set(usd.querySelector('.pass-availability'),copy.card+' '+copy.account);
+    set(document.querySelector('#mobile-buybar small'),'RUB · Robokassa');
+   }
+  }
   if(hanzi){document.querySelector('.skip-link').href='#app-panel';for(const link of document.querySelectorAll('.hero-actions [data-checkout],#mobile-buybar [data-checkout]'))link.href='#plus';document.querySelector('.account-link').href=checkout();}
   for(const link of panel.querySelectorAll('[data-ru-web-plan]'))link.href=checkout(link.dataset.ruWebPlan);
-  for(const link of footer){const u=new URL(originalFooter.get(link),location.href);if(hanzi&&ru)u.pathname='/apps/hanzi-bloom/plus/checkout/'+(u.pathname.includes('/offer/')?'offer/':'privacy/');u.searchParams.set('lang',language());link.href=u.href;}
+  for(const link of footer){const u=new URL(originalFooter.get(link),location.href);if(hanzi)u.pathname=(ru?'/apps/hanzi-bloom/plus/checkout/':'/en/apps/hanzi-bloom/plus/checkout/robokassa/')+(u.pathname.includes('/offer/')?'offer/':'privacy/');u.searchParams.set('lang',language());link.href=u.href;}
   for(const link of panel.querySelectorAll('[data-ru-document]')){const u=new URL(link.href);u.searchParams.set('lang',language());link.href=u.href;}
-  const how=document.querySelectorAll('.how-steps p');set(how[0],t('email'));set(how[1],t('pay'));set(how[2],t('access'));
+  const how=document.querySelectorAll('.how-steps p');set(how[0],t('email'));set(how[1],t('pay'));set(how[2],hanzi&&!ru?international().account:t('access'));
   const answers=document.querySelectorAll('.faq-answer p');set(answers[0],t('shared'));set(answers[1],t('onePayment'));
   const answer=answers[2];if(answer){answer.dataset.noL10n='';const help=answer.querySelector('a'),lead=document.createTreeWalker(answer,NodeFilter.SHOW_TEXT).nextNode();if(help && lead){const value=t('restore')+' ';if(lead.textContent!==value)lead.textContent=value;while(help.nextSibling)help.nextSibling.remove();}}
  }
