@@ -35,7 +35,7 @@
   }
   const normalize = value => value.replace(/\s+/gu,' ').trim();
   const valid = value => languages.some(([code]) => code === value);
-  const baseCode = value => String(value || '').toLowerCase().split(/[-_]/u)[0];
+  const baseCode = value => String(value || '').trim().toLowerCase().split(/[-_]/u)[0];
   const storageKey = 'hanzi-plus-language';
   const motion = matchMedia('(prefers-reduced-motion: reduce)');
   const reduced = () => motion.matches || document.documentElement.dataset.motion === 'reduced';
@@ -123,13 +123,21 @@
     while (walker.nextNode()) text(walker.currentNode);
     root.querySelectorAll('[aria-label],[aria-description],[placeholder],[title],[alt],meta[content],a[href]').forEach(attributes);
   }
+  const preference = window.HanziLanguagePreference;
+  function deviceLanguage() {
+    if (preference) return preference.device();
+    try { const device = baseCode(navigator.languages?.[0] || navigator.language); return valid(device) ? device : 'en'; }
+    catch { return 'en'; }
+  }
   function initialLanguage() {
+    const resolved = preference?.resolve();
+    if (valid(resolved)) return resolved;
     const query = baseCode(new URLSearchParams(location.search).get('lang'));
     if (valid(query)) return query;
-    try { const saved = localStorage.getItem(storageKey); if (valid(saved)) return saved; } catch {}
-    const legacy = window.HANZI_INITIAL_LOCALE?.legacy;
-    if (valid(legacy)) return legacy;
-    return (navigator.languages || [navigator.language]).map(baseCode).find(valid) || 'en';
+    try { const saved = baseCode(localStorage.getItem(storageKey)); if (valid(saved)) return saved; } catch {}
+    const initial = window.HANZI_INITIAL_LOCALE?.code || window.HANZI_INITIAL_LOCALE?.legacy;
+    if (valid(initial)) return initial;
+    return deviceLanguage();
   }
   const host = document.querySelector('header');
   if (!host) return;
@@ -212,8 +220,12 @@
       if (request !== languageRequest) return;
     } else launch.removeAttribute('aria-busy');
     code = next; document.documentElement.lang = code; document.documentElement.dir = code === 'ar' ? 'rtl' : 'ltr';
-    if (persist) {
+    if (preference) preference.remember(code);
+    else {
       try { localStorage.setItem(storageKey,code); } catch {}
+      try { localStorage.setItem('ral-language',code === 'ru' ? 'ru' : 'en'); } catch {}
+    }
+    if (persist) {
       const url = new URL(location.href); url.searchParams.set('lang',code);
       history.replaceState(history.state,'',url.pathname + url.search + url.hash);
     }
@@ -335,8 +347,7 @@
     if (next !== null) { event.preventDefault(); cards.forEach(card => card.tabIndex = -1); shown[next].tabIndex = 0; shown[next].focus(); }
   });
   device.addEventListener('click', () => {
-    try { localStorage.removeItem(storageKey); } catch {}
-    const next = (navigator.languages || [navigator.language]).map(baseCode).find(valid) || 'en';
+    const next = deviceLanguage();
     setLanguage(next,true); closeDropdown({focus:true});
   });
   const observer = new MutationObserver(records => {
