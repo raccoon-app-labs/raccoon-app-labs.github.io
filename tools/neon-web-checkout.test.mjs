@@ -5,7 +5,7 @@ import {randomUUID} from 'node:crypto';
 
 // Exercise the shipped module against a small DOM, without a browser or real API.
 const source=fs.readFileSync(new URL('../apps/neon-cyber-wall-kicker/shop/checkout.js',import.meta.url),'utf8');
-const {mountCheckout}=await import('data:text/javascript;base64,'+Buffer.from(source).toString('base64'));
+const {mountCheckout,paymentUrl}=await import('data:text/javascript;base64,'+Buffer.from(source).toString('base64'));
 class Element {
   constructor(tag,document){this.tagName=tag;this.ownerDocument=document;this.children=[];this.dataset={};this.attributes={};this.events={};this.hidden=false;this.disabled=false;this.checked=false;this.value='';this.open=false;this._text='';}
   setAttribute(name,value=''){this.attributes[name]=String(value);if(name==='class')this.className=value;if(name==='hidden')this.hidden=true;if(name==='disabled')this.disabled=true;if(name==='open')this.open=true;if(name.startsWith('data-'))this.dataset[name.slice(5).replace(/-([a-z])/g,(_,c)=>c.toUpperCase())]=String(value);}
@@ -150,4 +150,54 @@ test('local checkout language buttons also update the shared site language',asyn
   const f=await fixture({globalLanguage:true});f.el('[data-lang=ru]').click();await new Promise(setImmediate);
   assert.equal(f.root.ownerDocument.documentElement.lang,'ru');assert.equal(f.root.lang,'ru');assert.equal(f.buyButton.textContent,'Выбрать покупку');
   f.setLanguage('en');assert.equal(f.buyButton.textContent,'Choose purchase');
+});
+
+
+test('Russian catalogue cards and selected checkout show the exact RUB price without euro estimates',async()=>{
+  const f=await fixture({language:'ru'});f.choose();
+  const card=f.root.ownerDocument.querySelector('[data-neon-price]');
+  for(const target of [card,f.el('.neon-selected-price')]){
+    assert.match(target.querySelector('strong').textContent,/149,00.*₽/);
+    assert.equal(target.querySelector('small'),null,'RUB is a single primary price in Russian');
+    assert.doesNotMatch(target.textContent,/€|EUR|≈/);
+  }
+  assert.equal(f.el('.neon-rate').hidden,true);
+  assert.equal(f.controller.state.catalog.currency,'RUB');
+  assert.equal(f.controller.state.selected.price,14900);
+  assert.equal(f.controller.state.selected.euro.cents,164,'display choice does not modify the catalogue or charge');
+});
+
+test('RU to EN to RU updates every price without changing the selection, account, consent or charge amount',async()=>{
+  const f=await fixture({language:'ru',globalLanguage:true,signedIn:true});f.choose();
+  const selected=f.controller.state.selected,catalogue=structuredClone(f.controller.state.catalog),calls=f.calls.length;
+  const now=Date.now(),expiry=new Date(now+240000).toISOString();
+  const checkout=new URL('https://auth.robokassa.ru/Merchant/Index.aspx');checkout.searchParams.set('OutSum','149.00');checkout.searchParams.set('ExpirationDate',expiry);
+  const order={checkout_url:checkout.href,amount:selected.price,checkout_expires_at:expiry,offer_version:selected.offer_version,...catalogue.seller};
+  const email=f.el('input[name=email]');email.value='typing@example.invalid';email.emit('input');
+  const code=f.el('input[name=code]');code.value='123456';f.el('[data-consent]').checked=true;
+  f.setLanguage('en');
+  for(const target of [f.root.ownerDocument.querySelector('[data-neon-price]'),f.el('.neon-selected-price')]){
+    assert.match(target.querySelector('strong').textContent,/≈.*€/);
+    assert.match(target.querySelector('small').textContent,/149.*00/);
+  }
+  assert.equal(f.el('.neon-rate').hidden,false);
+  assert.equal(new URL(paymentUrl(order,selected,catalogue.seller,now)).searchParams.get('OutSum'),'149.00');
+  f.setLanguage('ru');
+  for(const target of [f.root.ownerDocument.querySelector('[data-neon-price]'),f.el('.neon-selected-price')]){
+    assert.match(target.querySelector('strong').textContent,/149,00.*₽/);
+    assert.equal(target.querySelector('small'),null);
+    assert.doesNotMatch(target.textContent,/€|EUR|≈/);
+  }
+  assert.equal(f.el('.neon-rate').hidden,true);
+  assert.equal(f.controller.state.selected,selected);assert.deepEqual(f.controller.state.catalog,catalogue);
+  assert.equal(new URL(paymentUrl(order,selected,catalogue.seller,now)).searchParams.get('OutSum'),'149.00');
+  assert.equal(email.value,'typing@example.invalid');assert.equal(code.value,'123456');
+  assert.equal(f.el('[data-consent]').checked,true);assert.equal(f.calls.length,calls,'language changes perform no payment requests');
+});
+
+test('other supported languages retain the euro estimate and the exact RUB secondary price',async()=>{
+  const f=await fixture({language:'es',globalLanguage:true});f.choose();
+  assert.match(f.el('.neon-selected-price strong').textContent,/≈.*€/);
+  assert.match(f.el('.neon-selected-price small').textContent,/149.*00/);
+  assert.equal(f.el('.neon-rate').hidden,false);
 });

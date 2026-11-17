@@ -118,9 +118,10 @@ export function mountCheckout(root, options = {}) {
   function price(product, target) {
     target.replaceChildren();
     const primary = document.createElement('strong');
-    primary.textContent = state.catalog?.display_currency === 'EUR' && product.euro?.cents > 0 ? '≈ ' + money(product.euro.cents, 'EUR') : money(product.price, 'RUB');
+    const showEuro = language !== 'ru' && state.catalog?.display_currency === 'EUR' && product.euro?.cents > 0;
+    primary.textContent = showEuro ? '≈ ' + money(product.euro.cents, 'EUR') : money(product.price, 'RUB');
     target.append(primary);
-    if (state.catalog?.display_currency === 'EUR') { const rub = document.createElement('small'); rub.textContent = money(product.price, 'RUB'); target.append(rub); }
+    if (showEuro) { const rub = document.createElement('small'); rub.textContent = money(product.price, 'RUB'); target.append(rub); }
   }
   function persist() {
     try { win.sessionStorage.setItem(KEY, JSON.stringify({ token: state.token, email: state.email, pending: state.pending, codeSent: state.codeSent })); durable = true; return true; }
@@ -156,7 +157,7 @@ export function mountCheckout(root, options = {}) {
     el('.neon-selected').hidden = !state.selected;
     el('.neon-payment').hidden = !state.selected || !state.token;
     el('.neon-choose').hidden = Boolean(state.selected);
-    el('.neon-rate').hidden = state.catalog?.display_currency !== 'EUR';
+    el('.neon-rate').hidden = language === 'ru' || state.catalog?.display_currency !== 'EUR';
     el('[data-retry-service]')?.toggleAttribute('hidden', state.ready);
     if (state.selected) {
       el('.neon-edit').href = state.selected.kind === 'bundle' ? '#bundles' : '#coins';
