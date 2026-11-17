@@ -1,0 +1,14 @@
+# BEGIN raccoon versioned static cache
+# Place inside the public site's static handle, after the private-path guard.
+# HTML, JSON, unversioned files and all service/API routes retain their policy.
+@versioned_static {
+    method GET HEAD
+    path /assets/* /plus/* /apps/* /en/apps/*
+    path_regexp versioned_static_extension \.(css|js|mjs|webp|png|jpg|jpeg|svg|ico|woff|woff2)$
+    query v=*
+}
+header @versioned_static {
+    Cache-Control "public, max-age=31536000, immutable"
+    match status 200 304
+}
+# END raccoon versioned static cache

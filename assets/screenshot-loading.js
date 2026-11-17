@@ -32,6 +32,10 @@
   },{rootMargin:'600px 200px'}):null;
   for(const image of document.querySelectorAll('img[data-store-screen]')){
     const figure=image.closest('figure');
+    // Keep the exact inline preview visible while src is replaced and decoded.
+    // Its bytes only need to appear once in HTML; without JS the img shows it.
+    const placeholder=image.getAttribute('src') || '';
+    if(figure && /^data:image\/webp;base64,/i.test(placeholder))figure.style.setProperty('--store-placeholder',`url("${placeholder}")`);
     const source=image.dataset.screenSrc || image.getAttribute('src');
     let retry,done,decoding=false,attempt=0;
     function release(){const finish=done;done=null;finish?.();}

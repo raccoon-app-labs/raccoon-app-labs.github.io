@@ -71,7 +71,9 @@ def main() -> None:
             screen=shots[number-1]
             chunk=re.sub(r'\sdata-store-screen="[^"]*"','',chunk,count=1)
             chunk=re.sub(r'\sstyle="[^"]*"','',chunk,count=1)
-            chunk=chunk.replace('<figure',f'<figure data-store-screen="{number}" style="--store-placeholder:url({screen["placeholder"]})"',1)
+            # The inline img remains the no-JS preview. The loader copies its
+            # existing bytes into the figure background before hiding it.
+            chunk=chunk.replace('<figure',f'<figure data-store-screen="{number}"',1)
             image=render_image(img.group(),screen,catalog=catalog,hero=False)
             image=f'<a class="screenshot-original" href="{screen["original"]}" target="_blank" rel="noopener">{image}</a>'
             chunk=IMAGE_RE.sub(lambda _:image,chunk,count=1)

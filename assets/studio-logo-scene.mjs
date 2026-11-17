@@ -120,7 +120,7 @@ async function boot(){
     let width=1,height=1,density=1,sceneTop=0,sceneLeft=0,sceneWidth=1,sceneHeight=1,canvasHeight=1,viewportHeight=1,last=0,time=0,orbitTime=0,lastPaint=-1000,pulse=0,ready=false,hovered=-1,focused=-1,lastPointer=null;
     const pointer=createPointerMotion(),target={x:0,y:0,strength:0};
     const matrix=new Float32Array(9),poses=miniatures.map(()=>({})),screen={x:0,y:0},transforms=miniatures.map(()=>null);
-    let lastCell=NaN,lastSize=NaN,lastGlow=NaN,lastAlive=null;
+    let lastCell=NaN,lastSize=NaN,lastGlow=NaN,lastAlive=null,lastScale=NaN,lastDensity=NaN;
     // All voxel prisms are closed, opaque and counter-clockwise outside.
     // Their back-facing triangles never contribute to the visible image.
     gl.enable(gl.CULL_FACE);gl.enable(gl.DEPTH_TEST);gl.clearColor(0,0,0,0);
@@ -157,7 +157,10 @@ async function boot(){
       if(!reduced.matches&&hovered<0&&focused<0)orbitTime+=dt;
       const yaw=logoScrollAngle(scrollY,sceneTop,sceneHeight,viewportHeight,reduced.matches)+pointer.x*.23;
       gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);gl.disable(gl.BLEND);
-      gl.useProgram(mesh);gl.uniform2f(m.scale,.66*height/width,.66);gl.uniform1f(m.sceneTime,time);
+      // Program uniforms retain their values between draws. Projection and pixel
+      // density only need uploading after a measured viewport change.
+      const scale=.66*height/width;
+      gl.useProgram(mesh);if(scale!==lastScale)gl.uniform2f(m.scale,scale,.66);gl.uniform1f(m.sceneTime,time);
       drawModel(head,pointer.x*.025,pointer.y*.018,0,1,yaw,-.1-pointer.y*.17+(reduced.matches?0:Math.sin(time*.3)*.025),-pointer.x*.045,reduced.matches?0:Math.sin(time*.7)*.024,true,pulse+pointer.strength*.6);
       for(let index=0;index<miniatures.length;index++){
         const shape=miniatures[index],pose=satellitePose(index,orbitTime,7,poses[index]),over=!reduced.matches&&(index===hovered||index===focused),bob=reduced.matches?0:Math.sin(time*.9+index)*.018;
@@ -168,7 +171,10 @@ async function boot(){
         if(transform!==transforms[index]){satellites[index].style.setProperty('transform',transform);transforms[index]=transform;}
       }
       gl.enable(gl.BLEND);gl.blendFunc(gl.SRC_ALPHA,gl.ONE);gl.depthMask(false);
-      gl.useProgram(flies);gl.bindVertexArray(fireflyArray);gl.uniform1f(f.time,time);gl.uniform2f(f.scale,.66*height/width,.66);gl.uniform1f(f.density,density);gl.uniform1f(f.pulse,pulse);
+      gl.useProgram(flies);gl.bindVertexArray(fireflyArray);gl.uniform1f(f.time,time);
+      if(scale!==lastScale){gl.uniform2f(f.scale,scale,.66);lastScale=scale;}
+      if(density!==lastDensity){gl.uniform1f(f.density,density);lastDensity=density;}
+      gl.uniform1f(f.pulse,pulse);
       gl.uniform4f(f.attractor,pointer.x*1.15,pointer.y*1.15,1.1,pointer.strength);
       gl.drawArrays(gl.POINTS,0,reduced.matches?20:42);gl.depthMask(true);
       if(!ready){if(gl.getError()!==gl.NO_ERROR)throw new Error('Logo frame unavailable');ready=true;visual.dataset.logoScene='ready';if(miniatures.length)visual.dataset.satelliteScene='ready';}

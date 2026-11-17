@@ -58,3 +58,42 @@ test('a language transfer failure keeps the current language usable and can be r
  const {load,scripts}=loader();const first=load.load('fr');scripts[0].onerror();await assert.rejects(first);
  assert.equal(load.ready('ru'),true);const retry=load.load('fr');assert.equal(scripts.length,2);scripts[1].onload();await retry;
 });
+
+test('the home page renders its source language before deferred dictionaries and loads the chosen extra language',async()=>{
+ const html=read('index.html');
+ const scripts=[...html.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script>/g)].map(match=>({tag:match[1],body:match[2],index:match.index,src:match[1].match(/\bsrc="([^"]+)"/)?.[1]}));
+ const bootstrap=scripts.find(script=>script.src?.startsWith('/assets/locales/bootstrap.js'));
+ const base=scripts.find(script=>script.src?.includes('/assets/locales/optimized/')&&script.src.includes('.base.js'));
+ const load=scripts.find(script=>script.src?.startsWith('/assets/locales/load.js'));
+ const locale=scripts.find(script=>script.src?.startsWith('/plus/locale.js'));
+ assert.doesNotMatch(bootstrap.tag,/\b(?:defer|async)\b/,'device preference precedes the source-language script');
+ assert.ok(bootstrap.index<base.index&&base.index<load.index&&load.index<locale.index,'deferred consumers run after their dictionaries');
+ for(const script of [base,load,locale]){assert.match(script.tag,/\bdefer\b/);assert.doesNotMatch(script.tag,/\basync\b/);}
+ const inline=scripts.find(script=>!script.src&&script.body.includes('const translations='));
+ const source=inline.body.slice(0,inline.body.indexOf('    let raf='));
+ assert.ok(source.includes('applyLanguage(activeLanguage,false)'));
+ for(const [device,expected]of [['ru-RU','ru'],['en-US','en'],['fr-CA','en'],['it-IT','en']]){
+  const values=new Map(),requests=[],heading={dataset:{i18nHtml:'heroTitle'}},copyNode={dataset:{i18n:'heroCopy'}},description={};
+  const buttons=['ru','en'].map(lang=>({dataset:{lang},setAttribute(){}}));
+  const switcher={style:{setProperty(){}},querySelectorAll:()=>buttons,addEventListener(){}};
+  const document={documentElement:{},head:{append:script=>requests.push(script)},createElement:()=>({remove(){}}),
+   querySelector:selector=>selector==='.language-switch'?switcher:selector==='meta[name=description]'?description:null,
+   querySelectorAll:selector=>selector==='[data-i18n]'?[copyNode]:selector==='[data-i18n-html]'?[heading]:[]};
+  const window={},context={window,document,localStorage:{getItem:key=>values.get(key)||null,setItem:(key,value)=>values.set(key,value)},navigator:{languages:[device]},location:new URL('https://site.test/'),URLSearchParams};
+  vm.runInNewContext(read(new URL(bootstrap.src,'https://site.test/').pathname),context);
+  vm.runInNewContext(source,context);
+  assert.equal(window.HANZI_SITE_MESSAGES,undefined,'first source text does not need the deferred dictionary');
+  assert.equal(document.documentElement.lang,expected,device+' source language');
+  assert.match(heading.innerHTML,expected==='ru'?/Мобильные приложения/:/Mobile apps/);
+  assert.ok(copyNode.textContent&&description.content,'source text and metadata are ready without a dictionary');
+  vm.runInNewContext(read(new URL(base.src,'https://site.test/').pathname),context);
+  vm.runInNewContext(read(new URL(load.src,'https://site.test/').pathname),context);
+  const code=window.HANZI_INITIAL_LOCALE.code,pending=window.HanziLanguageLoader.load(code);
+  if(code==='fr'){
+   assert.equal(requests.length,1,'only the selected extra language is fetched');
+   vm.runInNewContext(read(requests[0].src),context);requests[0].onload();
+   assert.ok(Object.keys(window.HANZI_SITE_MESSAGES.fr).length>0);
+  }else assert.equal(requests.length,0,'RU/EN and unsupported-device fallback need no extra transfer');
+  await pending;assert.equal(window.HanziLanguageLoader.ready(code),true);
+ }
+});

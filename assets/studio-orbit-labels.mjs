@@ -25,7 +25,7 @@ export function createOrbitCaptions(visual){
   caption.append(signal,number,title,arrow);
   const tether=document.createElement('i');tether.className='studio-caption-tether';tether.setAttribute('aria-hidden','true');
   visual.append(tether,caption);visual.dataset.orbitCaptions='ready';
-  let active=2,hovered=-1,focused=-1,timer=0,visible=false,closed=false,width=1,height=1,labelWidth=1,labelHeight=1,documentTop=0;
+  let active=2,hovered=-1,focused=-1,timer=0,visible=false,closed=false,width=1,height=1,labelWidth=1,labelHeight=1,documentTop=0,shownName=null,previousLanguage=null,previousMotion=null;
   caption.style.visibility='hidden';
   const styles=new Map();
   function style(node,key,value){const cacheKey=(node===caption?'caption:':'tether:')+key;if(styles.get(cacheKey)!==value){node.style[key]=value;styles.set(cacheKey,value);}}
@@ -59,7 +59,7 @@ export function createOrbitCaptions(visual){
   }
   function show(index){
     active=index;carriers.forEach((el,i)=>el.toggleAttribute('data-caption-active',i===active));
-    const name=translated(active);words(name);number.textContent=String(active+1).padStart(2,'0')+' / 07';
+    const name=translated(active);if(name!==shownName){words(name);shownName=name;}number.textContent=String(active+1).padStart(2,'0')+' / 07';
     caption.dataset.effect=effects[active];caption.style.setProperty('--signal-color',colors[active]);tether.style.setProperty('--signal-color',colors[active]);
     caption.classList.remove('is-revealing');measure();
     // One layout at selection time restarts a finite reveal, never in the frame loop.
@@ -76,8 +76,15 @@ export function createOrbitCaptions(visual){
   visual.addEventListener('focusin',event=>{focused=indexOf(event.target);if(focused>=0)show(focused);schedule();});
   visual.addEventListener('focusout',event=>{focused=indexOf(event.relatedTarget);if(focused>=0)show(focused);else if(hovered>=0)show(hovered);schedule();});
   visual.addEventListener('click',event=>{if(event.target.closest('.studio-orbit')){show((active+1)%carriers.length);schedule();}});
-  function language(){links.forEach((link,i)=>link.setAttribute('aria-label',translated(i)));show(active);}
-  window.addEventListener('hanzi:languagechange',language);
+  function language(reveal=false){
+    const language=root.lang,motion=quiet();let changed=language!==previousLanguage||motion!==previousMotion;
+    links.forEach((link,i)=>{const name=translated(i);if(link.getAttribute('aria-label')!==name){link.setAttribute('aria-label',name);changed=true;}});
+    // A language event follows the DOM translation. Its queued root observer
+    // sees the same names, so it needs neither a second rebuild nor measurement.
+    if(reveal||changed)show(active);
+    previousLanguage=language;previousMotion=motion;
+  }
+  window.addEventListener('hanzi:languagechange',()=>language(true));
   const settings=new MutationObserver(()=>{language();schedule();});settings.observe(root,{attributes:true,attributeFilter:['lang','data-motion']});
   const observer=new IntersectionObserver(entries=>{visible=entries[0].isIntersecting;caption.style.visibility=visible?'':'hidden';place();schedule();},{threshold:0});observer.observe(visual);
   const resize=new ResizeObserver(measure);resize.observe(visual);

@@ -16,13 +16,14 @@ function element(className=''){
   const attrs=new Map(),classes=new Set();
   const node={...target(),className,dataset:{},children:[],parent:null,style:{setProperty(key,value){this[key]=value;}},
     classList:{add:name=>classes.add(name),remove:name=>classes.delete(name),contains:name=>classes.has(name)},
-    setAttribute:(key,value)=>attrs.set(key,String(value)),getAttribute:key=>attrs.get(key),
+    metrics:{attributeWrites:0,titleRebuilds:0,geometryReads:0},
+    setAttribute(key,value){this.metrics.attributeWrites++;attrs.set(key,String(value));},getAttribute:key=>attrs.get(key),
     toggleAttribute(key,on){if(on)attrs.set(key,'');else attrs.delete(key);},hasAttribute:key=>attrs.has(key),
     append(...children){for(const child of children){child.parent=this;this.children.push(child);}},
-    replaceChildren(...children){this.children=[];this._text='';this.append(...children);},
+    replaceChildren(...children){this.metrics.titleRebuilds++;this.children=[];this._text='';this.append(...children);},
     querySelector(selector){return this.children.find(child=>selector==='a'?child.tagName==='A':child.className===selector.slice(1))||null;},
     closest(selector){return this.className===selector.slice(1)?this:this.parent?.closest(selector)||null;},
-    getBoundingClientRect:()=>({width:280,height:280,top:180,left:20}),offsetWidth:190,offsetHeight:68};
+    getBoundingClientRect(){this.metrics.geometryReads++;return {width:280,height:280,top:180,left:20};},get offsetWidth(){this.metrics.geometryReads++;return 190;},get offsetHeight(){this.metrics.geometryReads++;return 68;}};
   Object.defineProperty(node,'textContent',{get(){return (this._text||'')+this.children.map(child=>child.textContent).join('');},set(value){this._text=String(value);this.children=[];}});
   return node;
 }
@@ -33,8 +34,9 @@ function fixture({reduced=false}={}){
   root.dataset.siteWorld='test';
   const carriers=Array.from({length:7},()=>{const carrier=element('studio-satellite'),link=element();link.tagName='A';carrier.append(link);visual.append(carrier);return carrier;});
   visual.querySelectorAll=()=>carriers;
+  let elementCreates=0;
   const document={...target(),documentElement:root,hidden:false,querySelector:()=>null,
-    createElement:()=>element(),createTextNode:value=>({textContent:value})};
+    createElement:()=>{elementCreates++;return element();},createTextNode:value=>({textContent:value})};
   let language='en';
   const window={...target(),HanziLocale:{t:name=>language==='ar'?'قصص سحرية':name}};
   const media={...target(),matches:reduced};
@@ -45,6 +47,7 @@ function fixture({reduced=false}={}){
   vm.runInNewContext(source,context);
   const controller=context.createOrbitCaptions(visual),caption=visual.children.find(node=>node.className==='studio-caption');
   return {root,visual,carriers,document,window,media,timers,controller,caption,
+    elementCreates:()=>elementCreates,
     active:()=>carriers.findIndex(node=>node.hasAttribute('data-caption-active')),
     visible(value){observers.visible([{isIntersecting:value}]);},
     settings(){observers.settings();},
@@ -101,4 +104,38 @@ test('caption remains within a 320px viewport through a complete orbit and flips
   assert.equal(topClipped.top,width+16,'use bottom rail when top caption would leave the viewport');
   const bottomClipped=captionLayout(0,110,width,width,labelWidth,76,-200,320);
   assert.equal(bottomClipped.top,-92,'use top rail when bottom caption would leave the viewport');
+});
+
+
+test('one language event and its root observer update labels and caption only once',()=>{
+  const f=fixture();f.visible(true);
+  const title=f.caption.children.find(node=>node.className==='studio-caption-title');
+  const links=f.carriers.map(node=>node.children[0]);
+  const writes=links.reduce((sum,node)=>sum+node.metrics.attributeWrites,0),rebuilds=title.metrics.titleRebuilds;
+  const geometry=f.visual.metrics.geometryReads+f.caption.metrics.geometryReads;
+  f.language('ar');f.settings();
+  assert.equal(links.reduce((sum,node)=>sum+node.metrics.attributeWrites,0)-writes,7,'each accessible label changes exactly once');
+  assert.equal(title.metrics.titleRebuilds-rebuilds,1,'the observer does not rebuild the translated text a second time');
+  assert.equal(f.visual.metrics.geometryReads+f.caption.metrics.geometryReads-geometry,4,'one selection measures geometry and restarts its finite reveal');
+  assert.equal(title.textContent,'قصص سحرية');assert.equal(title.children.length,0);assert.equal(f.active(),2);assert.equal(f.timers.size,1);
+});
+
+test('unchanged settings and motion changes retain glyphs while preserving reveal and timers',()=>{
+  const f=fixture();f.visible(true);const title=f.caption.children.find(node=>node.className==='studio-caption-title');
+  const original=[...title.children],created=f.elementCreates(),rebuilds=title.metrics.titleRebuilds;
+  const geometry=f.visual.metrics.geometryReads+f.caption.metrics.geometryReads;
+  f.settings();assert.equal(f.visual.metrics.geometryReads+f.caption.metrics.geometryReads,geometry,'unchanged settings do no layout work');
+  f.root.dataset.motion='reduced';f.settings();assert.equal(f.timers.size,0);assert.equal(f.caption.classList.contains('is-revealing'),false);
+  delete f.root.dataset.motion;f.settings();assert.equal(f.timers.size,1);assert.equal(f.caption.classList.contains('is-revealing'),true);
+  assert.equal(title.metrics.titleRebuilds,rebuilds);assert.equal(f.elementCreates(),created);assert.deepEqual(title.children,original);
+});
+
+test('confirming the same language or selecting the same caption replays the reveal without replacing glyphs',()=>{
+  const f=fixture();f.visible(true);const title=f.caption.children.find(node=>node.className==='studio-caption-title');
+  const original=[...title.children],created=f.elementCreates(),rebuilds=title.metrics.titleRebuilds;
+  const geometry=f.visual.metrics.geometryReads+f.caption.metrics.geometryReads;
+  f.language('en');f.visual.emit('pointerover',{target:f.carriers[2].children[0],pointerType:'mouse'});f.visual.emit('focusin',{target:f.carriers[2].children[0]});
+  assert.equal(f.visual.metrics.geometryReads+f.caption.metrics.geometryReads-geometry,12,'all three intentional reveals retain their measurement/restart');
+  assert.equal(title.metrics.titleRebuilds,rebuilds);assert.equal(f.elementCreates(),created);assert.deepEqual(title.children,original);
+  assert.equal(f.caption.classList.contains('is-revealing'),true);assert.equal(f.active(),2);assert.equal(f.timers.size,0,'keyboard focus still pauses cycling');
 });

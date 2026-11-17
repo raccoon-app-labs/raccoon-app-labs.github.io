@@ -140,8 +140,18 @@ function eventTarget(){
   };
 }
 
-async function rendererFixture({missingObserver,failShader=0,failLink=0,noWebGL=false,reducedMotion=false,withSatellites=false}={}){
-  const pending=new Map(),canvases=[],observers=[],meshFrames=[],uniforms=new Map(),styleWrites=[];
+export async function rendererFixture({missingObserver,failShader=0,failLink=0,noWebGL=false,reducedMotion=false,withSatellites=false,sourceText=rendererSource}={}){
+  const pending=new Map(),canvases=[],observers=[],meshFrames=[],uniforms=new Map(),styleWrites=[],uniformCalls=[],drawFrames=[];
+  const programUniforms=new Map(),canvasBounds={left:68,top:128,width:464,height:464};let activeProgram=null;
+  function recordUniform(location,value){
+    uniforms.set(location.name,value);uniformCalls.push({program:location.program.order,name:location.name,value});
+    if(!programUniforms.has(location.program))programUniforms.set(location.program,new Map());
+    programUniforms.get(location.program).set(location.name,value);
+  }
+  function recordDraw(mode,count,instances){
+    const state=programUniforms.get(activeProgram)||new Map();
+    drawFrames.push({program:activeProgram.order,mode,count,instances,uniforms:Object.fromEntries([...state].sort(([a],[b])=>a<b?-1:a>b?1:0))});
+  }
   const live={shaders:new Set(),programs:new Set(),buffers:new Set(),arrays:new Set()};
   let serial=0,shaderCount=0,programCount=0,draws=0;
   const allocate=(kind,extra={})=>{const resource={id:++serial,...extra};live[kind].add(resource);return resource;};
@@ -155,15 +165,17 @@ async function rendererFixture({missingObserver,failShader=0,failLink=0,noWebGL=
     createBuffer:()=>allocate('buffers'),deleteBuffer:b=>live.buffers.delete(b),
     createVertexArray:()=>allocate('arrays'),deleteVertexArray:a=>live.arrays.delete(a),
     getUniformLocation:(program,name)=>({program,name}),getError:()=>0,
-    drawElementsInstanced(mode,count,type,offset,instances){assert.equal(mode,gl.TRIANGLES);assert.equal(count,36);assert.equal(type,gl.UNSIGNED_SHORT);assert.equal(offset,0);assert.ok(instances>0);draws++;meshFrames.push(new Map(uniforms));},drawArrays(){draws++;}
+    drawElementsInstanced(mode,count,type,offset,instances){assert.equal(mode,gl.TRIANGLES);assert.equal(count,36);assert.equal(type,gl.UNSIGNED_SHORT);assert.equal(offset,0);assert.ok(instances>0);draws++;meshFrames.push(new Map(uniforms));recordDraw(mode,count,instances);},drawArrays(mode,start,count){draws++;recordDraw(mode,count,1);}
   };
   for(const name of ['shaderSource','compileShader','attachShader','linkProgram','bindBuffer','bufferData','bindVertexArray',
     'enableVertexAttribArray','vertexAttribPointer','vertexAttribDivisor','viewport','clearColor','clear','enable','depthMask',
     'disable','useProgram','uniform2f','uniform1f','uniform3f','uniform4f','blendFunc'])gl[name]=()=>{};
-  gl.uniformMatrix3fv=(location,transpose,value)=>uniforms.set(location.name,Array.from(value));
-  gl.uniform4f=(location,...values)=>uniforms.set(location.name,values);
-  gl.uniform3f=(location,...values)=>uniforms.set(location.name,values);
-  gl.uniform1f=(location,value)=>uniforms.set(location.name,value);
+  gl.useProgram=program=>{activeProgram=program;};
+  gl.uniformMatrix3fv=(location,transpose,value)=>recordUniform(location,Array.from(value));
+  gl.uniform4f=(location,...values)=>recordUniform(location,values);
+  gl.uniform3f=(location,...values)=>recordUniform(location,values);
+  gl.uniform2f=(location,...values)=>recordUniform(location,values);
+  gl.uniform1f=(location,value)=>recordUniform(location,value);
   const rgba=new Uint8ClampedArray(80*80*4);rgba.set([245,235,255,255],(10*80+10)*4);
   const image={complete:true,naturalWidth:80};
   const root={...eventTarget(),dataset:{siteWorld:'studio'}};
@@ -177,7 +189,7 @@ async function rendererFixture({missingObserver,failShader=0,failLink=0,noWebGL=
     querySelector:selector=>selector==='.visual'?visual:null,
     createElement(tag){
       assert.equal(tag,'canvas');
-      const canvas={...eventTarget(),className:'',parent:null,setAttribute(){},getBoundingClientRect:()=>({left:68,top:128,width:464,height:464}),
+      const canvas={...eventTarget(),className:'',parent:null,setAttribute(){},getBoundingClientRect:()=>({...canvasBounds}),
         getContext(type){return type==='2d'?{drawImage(){},getImageData:()=>({data:rgba})}:noWebGL?null:gl;},
         remove(){if(this.parent){this.parent.children=this.parent.children.filter(node=>node!==this);this.parent=null;}}};
       canvases.push(canvas);return canvas;
@@ -193,10 +205,11 @@ async function rendererFixture({missingObserver,failShader=0,failLink=0,noWebGL=
     requestAnimationFrame:fn=>{pending.set(++serial,fn);return serial;},cancelAnimationFrame:id=>pending.delete(id),
     buildLogoVoxels,logoScrollAngle,rotationMatrix,createSceneLoop,createPointerMotion,advancePointer,satellitePose,projectScenePoint,SATELLITE_ORDER,buildSatelliteModel};
   if(missingObserver)context[missingObserver]=undefined;
-  vm.runInNewContext(rendererSource,context);
+  vm.runInNewContext(sourceText.replace(/^import[^;\n]*;\r?\n/gm,''),context);
   // Let boot's rejection handler and the real fonts.ready continuation settle.
   await new Promise(resolve=>setImmediate(resolve));
-  return {root,visual,image,window,document,media,canvases,observers,live,pending,meshFrames,uniforms,satellites,styleWrites,draws:()=>draws,
+  return {root,visual,image,window,document,media,canvases,observers,live,pending,meshFrames,uniforms,satellites,styleWrites,uniformCalls,drawFrames,context,draws:()=>draws,
+    resizeCanvas(width,height,dpr=context.devicePixelRatio){canvasBounds.width=width;canvasBounds.height=height;context.devicePixelRatio=dpr;window.emit('resize');},
     step(time=100){const jobs=[...pending.values()];pending.clear();for(const fn of jobs)fn(time);}};
 }
 
@@ -338,4 +351,31 @@ test('hover and keyboard focus pause orbital travel so miniature links remain st
   assert.deepEqual(latestPose(1),focusedPose);
   f.visual.emit('focusout',{relatedTarget:null});f.step(380);
   assert.notDeepEqual(latestPose(1),focusedPose,'orbits resume after the target is released');
+});
+
+
+test('projection and density uploads are reused until a measured viewport change',async()=>{
+  const f=await rendererFixture({withSatellites:true});f.step(100);
+  const constants=()=>f.uniformCalls.filter(call=>call.name==='scale'||call.name==='density');
+  assert.equal(constants().length,3,'initial projection is sent once to each program, plus point density');
+  const originalResources=Object.fromEntries(Object.entries(f.live).map(([kind,items])=>[kind,items.size]));
+  for(let time=140;time<=540;time+=40)f.step(time);
+  assert.equal(constants().length,3,'steady frames must not resend unchanged projection or density');
+  assert.equal(f.draws(),12*9,'all head, seven miniature and firefly draws remain present');
+  for(const frame of f.drawFrames){
+    assert.deepEqual(frame.uniforms.scale,[.66,.66]);
+    if(frame.program===2)assert.equal(frame.uniforms.density,1);
+  }
+  f.resizeCanvas(620,464);f.step(580);
+  assert.equal(constants().length,5,'changing the aspect ratio refreshes both program projections');
+  for(const frame of f.drawFrames.slice(-9))assert.deepEqual(frame.uniforms.scale,[.66*464/620,.66]);
+  const count=constants().length;f.window.emit('resize');f.step(620);assert.equal(constants().length,count,'an unchanged resize must not upload constants');
+  f.resizeCanvas(620,464,2);f.step(660);
+  const expectedDensity=1.5*(720/930);
+  assert.equal(constants().length,count+3,'a high-DPI resize refreshes projection and density after backing-store rounding');
+  for(const frame of f.drawFrames.slice(-9)){
+    assert.deepEqual(frame.uniforms.scale,[.66*539/720,.66]);
+    if(frame.program===2)near(frame.uniforms.density,expectedDensity,1e-12);
+  }
+  assert.deepEqual(Object.fromEntries(Object.entries(f.live).map(([kind,items])=>[kind,items.size])),originalResources,'resizing adds no GPU resources');
 });

@@ -44,6 +44,23 @@ test('both language versions include every current store screenshot',()=>{
   }
 });
 
+test('screenshots keep complete no-JS previews without duplicate inline backgrounds',()=>{
+  const files=['index.html',...Object.keys(manifest.apps).flatMap(slug=>[`apps/${slug}/index.html`,`en/apps/${slug}/index.html`])];
+  let figures=0;
+  for(const file of files){
+    const source=read(file);
+    for(const [figure]of source.matchAll(/<figure\b[^>]*data-store-screen=[^>]*>.*?<\/figure>/gs)){
+      const opening=figure.slice(0,figure.indexOf('>')+1),image=figure.match(/<img\b[^>]*>/)?.[0];
+      assert.ok(image,file+' keeps an actual image before JavaScript');
+      const details=attrs(image);assert.match(details.src,/^data:image\/webp;base64,/);
+      assert.equal(details['data-image-state'],undefined,'the inline image stays visible before the loader runs');
+      assert.doesNotMatch(opening,/--store-placeholder|data:image/,'one inline bitmap per figure');
+      assert.equal(figure.split(details.src).length-1,1,file+' does not repeat the preview');figures++;
+    }
+  }
+  assert.ok(figures>70,'the check reaches the portfolio and both product locales');
+});
+
 test('switching page language preserves screenshot URLs and responsive candidates',()=>{
   const source=read('index.html'),start=source.indexOf('function applyLanguage('),end=source.indexOf('\n    switcher.addEventListener',start);
   assert.ok(start>0&&end>start);
@@ -56,12 +73,17 @@ test('switching page language preserves screenshot URLs and responsive candidate
 
 
 function loader(count=5){
-  const buttons=[],images=[],observations=[];
+  const buttons=[],images=[],observations=[],backgrounds=[];
+  const placeholder=Object.values(manifest.apps)[0].screens[0].placeholder;
   for(let i=0;i<count;i++){
     const listeners={};let resolveDecode;
-    const figure={append:button=>buttons.push(button)};
-    images.push({dataset:{screenSrc:`small-${i}.webp`},naturalWidth:0,complete:false,
-      closest:()=>figure,getAttribute:()=>'',getBoundingClientRect:()=>({top:100+i*20,height:100,left:0,right:100}),
+    const figure={style:{setProperty(name,value){backgrounds[i]={name,value};}},append:button=>buttons.push(button)};
+    const dataset=new Proxy({screenSrc:`small-${i}.webp`},{set(target,key,value){
+      if(key==='imageState')assert.equal(backgrounds[i]?.value,`url("${placeholder}")`,'the existing preview must be copied before any state can hide it');
+      target[key]=value;return true;
+    }});
+    images.push({dataset,src:placeholder,naturalWidth:0,complete:false,
+      closest:()=>figure,getAttribute:name=>name==='src'?placeholder:'',getBoundingClientRect:()=>({top:100+i*20,height:100,left:0,right:100}),
       addEventListener:(event,fn)=>listeners[event]=fn,
       decode:()=>new Promise(resolve=>{resolveDecode=resolve;}),
       receive(){this.naturalWidth=320;listeners.load();},decodeDone(){resolveDecode();},fail(){listeners.error();}});
@@ -70,8 +92,18 @@ function loader(count=5){
     IntersectionObserver:class{constructor(callback){observations.push(callback);}observe(){}unobserve(){}},
     document:{documentElement:{lang:'ru'},querySelectorAll:selector=>selector==='img[data-store-screen]'?images:[],createElement:()=>({dataset:{},addEventListener(event,fn){this[event]=fn;},remove(){}})}};
   vm.runInNewContext(read('assets/screenshot-loading.js'),sandbox);
-  return {images,buttons,nearby:()=>observations[0](images.map(target=>({target,isIntersecting:true})))};
+  return {images,buttons,backgrounds,placeholder,nearby:()=>observations[0](images.map(target=>({target,isIntersecting:true})))};
 }
+
+test('the exact preview survives waiting, loading, image failure and decoded completion',async()=>{
+  const {images,backgrounds,placeholder,nearby}=loader(3);
+  assert.ok(images.every(image=>image.src===placeholder),'no URL is assigned before intersection');
+  assert.ok(backgrounds.every(row=>row.name==='--store-placeholder'&&row.value===`url("${placeholder}")`));
+  nearby();assert.equal(images[0].src,'small-0.webp');assert.equal(backgrounds[0].value,`url("${placeholder}")`);
+  images[0].fail();assert.equal(images[0].dataset.imageState,'error');assert.equal(backgrounds[0].value,`url("${placeholder}")`);
+  images[1].receive();images[1].decodeDone();await new Promise(setImmediate);
+  assert.equal(backgrounds[1].value,`url("${placeholder}")`);
+});
 
 test('only two nearby screenshot requests run together and incomplete decodes stay hidden',async()=>{
   const {images,nearby}=loader();assert.ok(images.every(i=>i.dataset.imageState==='waiting'));
