@@ -21,7 +21,7 @@ async function boot(){
   const dispose=()=>{
     if(disposed)return;disposed=true;
     resources.reverse().forEach(release=>{try{release();}catch{/* Context may already be lost. */}});
-    delete visual.dataset.logoScene;delete visual.dataset.satelliteScene;canvas.remove();
+    delete visual.dataset.logoScene;delete visual.dataset.satelliteScene;canvas.remove();visual.orbitCaption?.fallback();
   };
   const listen=(target,type,handler,options)=>{target.addEventListener(type,handler,options);resources.push(()=>target.removeEventListener(type,handler,options));};
   try{
@@ -136,7 +136,7 @@ async function boot(){
       const cap=Math.min(1,720/Math.max(width,height));width=Math.round(width*cap);height=Math.round(height*cap);density*=cap;
       if(canvas.width!==width||canvas.height!==height){canvas.width=width;canvas.height=height;}
       gl.viewport(0,0,width,height);
-      updatePointer();loop.invalidate();
+      updatePointer();visual.orbitCaption?.resize();loop.invalidate();
     }
     function drawModel(shape,x,y,z,size,yaw,pitch,roll,bob,alive,glow){
       gl.bindVertexArray(shape.array);gl.uniformMatrix3fv(m.rotation,false,rotationMatrix(yaw,pitch,roll,matrix));
@@ -163,6 +163,7 @@ async function boot(){
         const shape=miniatures[index],pose=satellitePose(index,orbitTime,7,poses[index]),over=!reduced.matches&&(index===hovered||index===focused),bob=reduced.matches?0:Math.sin(time*.9+index)*.018;
         drawModel(shape,pose.x,pose.y,pose.z,pose.scale*(over?1.16:1),pose.yaw+(over?.9:0),pose.pitch,0,bob,false,over?.35:0);
         pose.y+=bob;projectScenePoint(pose,canvasHeight,screen);
+        visual.orbitCaption?.project(index,screen.x,screen.y);
         const transform='translate3d('+screen.x.toFixed(2)+'px,'+screen.y.toFixed(2)+'px,0)';
         if(transform!==transforms[index]){satellites[index].style.setProperty('transform',transform);transforms[index]=transform;}
       }

@@ -1,0 +1,39 @@
+/* App names travel on a quiet outer rail, leaving the raccoon's face clear. */
+.visual[data-orbit-captions]{margin-block:76px 92px}
+.studio-caption{position:absolute;z-index:5;display:grid;grid-template-columns:1fr auto;gap:5px 14px;min-width:148px;padding:12px 16px 13px;border:1px solid color-mix(in srgb,var(--signal-color) 42%,transparent);border-radius:3px 14px 3px 14px;background:#1b172af5;color:#fbf7ff;box-shadow:0 8px 26px #09061735;pointer-events:none;text-align:start;isolation:isolate;transform-origin:50% 50%}
+.studio-caption::before,.studio-caption::after{content:'';position:absolute;width:8px;height:8px;border-color:var(--signal-color);border-style:solid;pointer-events:none}
+.studio-caption::before{inset:-3px auto auto -3px;border-width:2px 0 0 2px}.studio-caption::after{inset:auto -3px -3px auto;border-width:0 2px 2px 0}
+.studio-caption-title{grid-column:1/-1;font-size:15px;line-height:1.3;font-weight:800;letter-spacing:.01em;overflow-wrap:anywhere}
+.studio-caption-word{display:inline-block;white-space:nowrap}.studio-caption-letter{display:inline-block}
+.studio-caption-number{font-size:10px;line-height:12px;font-weight:700;letter-spacing:.15em;color:var(--signal-color);font-variant-numeric:tabular-nums}
+.studio-caption-signal{position:absolute;top:12px;left:16px;display:flex;align-items:end;gap:2px;height:10px}
+.studio-caption-signal i{width:2px;height:4px;background:var(--signal-color)}.studio-caption-signal i:nth-child(2){height:9px}.studio-caption-signal i:nth-child(3){height:6px}
+.studio-caption-number{padding-inline-start:16px}
+.studio-caption-arrow{grid-column:2;grid-row:1;font-size:16px;line-height:12px;color:var(--signal-color)}
+.studio-caption-tether{position:absolute;z-index:4;height:1px;transform-origin:0 50%;pointer-events:none;background:repeating-linear-gradient(90deg,var(--signal-color) 0 3px,transparent 3px 7px);opacity:.55}
+.studio-caption-tether::before{content:'';position:absolute;left:-3px;top:-3px;width:7px;height:7px;border:1px solid var(--signal-color);border-radius:50%;background:var(--theme-bg,#171324)}
+.studio-caption-tether[hidden]{display:none}
+.studio-satellite[data-caption-active]{z-index:2}
+.visual:has(.studio-satellite a:focus-visible) .studio-satellites,.visual:has(.studio-satellite a:focus-visible) .studio-satellite{animation-play-state:paused}
+.studio-caption.is-revealing{animation:caption-arrive .65s cubic-bezier(.16,1,.3,1) both}
+.is-revealing .studio-caption-letter{animation:caption-letter .65s cubic-bezier(.2,.9,.2,1.2) both;animation-delay:calc(var(--glyph)*24ms)}
+.is-revealing .studio-caption-signal i{animation:caption-signal .45s ease-in-out 3 alternate}.is-revealing .studio-caption-signal i:nth-child(2){animation-delay:.1s}.is-revealing .studio-caption-signal i:nth-child(3){animation-delay:.2s}
+.studio-caption[data-effect=keys] .studio-caption-letter{--letter-turn:75deg;--letter-y:0px}
+.studio-caption[data-effect=bloom] .studio-caption-letter{--letter-turn:-22deg;--letter-y:12px;--letter-scale:.25}
+.studio-caption[data-effect=city]{transform-origin:12% 100%}.studio-caption[data-effect=city].is-revealing{animation-name:caption-swing}
+.studio-caption[data-effect=neon].is-revealing .studio-caption-title{animation:caption-glitch .75s steps(1) both}
+.studio-caption[data-effect=story].is-revealing::after{animation:caption-star 1.4s ease-out both}
+.studio-caption[data-effect=food] .studio-caption-letter{--letter-y:8px;--letter-turn:8deg}
+.studio-caption[data-effect=list] .studio-caption-letter{--letter-y:0px;--letter-x:-8px}
+:root[data-theme=light] .studio-caption{background:#fffaf5f7;color:#292337;border-color:#8a739b;box-shadow:0 8px 26px #39234b13}
+:root[data-theme=light] .studio-caption-number,:root[data-theme=light] .studio-caption-arrow{color:#655079}
+:root[data-theme=light] .studio-caption-signal i{background:#655079}
+@keyframes caption-arrive{from{opacity:0;transform:translateY(7px) scale(.94)}to{opacity:1;transform:none}}
+@keyframes caption-letter{from{opacity:0;transform:translate(var(--letter-x,0px),var(--letter-y,-9px)) rotateX(var(--letter-turn,0deg)) scale(var(--letter-scale,.8))}to{opacity:1;transform:none}}
+@keyframes caption-signal{to{transform:scaleY(.4)}}
+@keyframes caption-swing{0%{opacity:0;transform:rotate(-9deg) translateY(8px)}55%{opacity:1;transform:rotate(3deg)}100%{opacity:1;transform:none}}
+@keyframes caption-glitch{0%,32%{text-shadow:2px 0 #8ef3d0,-2px 0 #d8a1ff;transform:translateX(-1px)}16%,48%{text-shadow:-2px 0 #8ef3d0,2px 0 #d8a1ff;transform:translateX(1px)}64%,100%{text-shadow:none;transform:none}}
+@keyframes caption-star{0%{box-shadow:0 0 0 0 #f4d28c99}100%{box-shadow:0 0 0 14px #f4d28c00}}
+@media(max-width:600px){.visual[data-orbit-captions]{margin-block:70px 84px}.studio-caption{min-width:134px;padding:10px 13px 11px}.studio-caption-title{font-size:14px}.studio-caption-signal{top:10px;left:13px}}
+@media(prefers-reduced-motion:reduce){.studio-caption,.studio-caption *,.studio-caption::after{animation:none!important;transition:none!important}}
+:root[data-motion=reduced] .studio-caption,:root[data-motion=reduced] .studio-caption *,:root[data-motion=reduced] .studio-caption::after{animation:none!important;transition:none!important}
