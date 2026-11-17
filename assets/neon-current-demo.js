@@ -4,8 +4,8 @@
 (() => {
   'use strict';
   const root=document.querySelector('.neon-lab');if(!root)return;
-  const en=document.documentElement.lang==='en',t=(ru,enText)=>en?enText:ru;
-  const canvasText=(ru,english)=>document.documentElement.lang==='ru'?ru:(window.HanziLocale?.t(english) ?? english);
+  const t=(ru,english)=>{const source=document.documentElement.lang==='ru'?ru:english;return window.HanziLocale?.translate?.(source) ?? window.HanziLocale?.t?.(english) ?? source;};
+  const canvasText=t;
   const canvas=root.querySelector('canvas'),ctx=canvas.getContext('2d');
   const status=root.querySelector('[data-neon-status]'),score=root.querySelector('[data-neon-score]');
   const coinLabel=root.querySelector('[data-neon-coins]'),pauseButton=root.querySelector('[data-neon-pause]'),jumpButton=root.querySelector('[data-neon-jump]');
@@ -76,7 +76,7 @@
   function launch(){
     if(attached){const perfect=contactTime<=.145,charged=contactWall?.kind==='charged';launchSide=side;
       vx=-side*900*(charged?1.36:1);vy=-930*(charged?1.28:1);
-      if(perfect){vx*=1.06;vy*=1.035;status.textContent='PERFECT KICK';}else status.textContent=t('Удерживайте для ускорения','Hold to boost');
+      if(perfect){vx*=1.06;vy*=1.035;status.textContent=t('ТОЧНОЕ ОТТАЛКИВАНИЕ','PERFECT KICK');}else status.textContent=t('Удерживайте для ускорения','Hold to boost');
       launchAge=0;landingAge=100;puppetFlight=partsReady()&&!reduced.matches;burst('kick',x+side*R,y,side);
       ignoreWall=contactWall;ignoreTime=.14;x+=Math.sign(vx)*16;if(attached==='platform')y-=6;
       attached=null;contactWall=null;redirects=1;thrust=0;boost=.30;boostUsed=0;contactTime=0;coyote=0;charge=charged?.42:0;impact=6.5;
@@ -266,7 +266,7 @@
   pauseButton?.addEventListener('click',togglePause);
   root.querySelector('[data-neon-reset]').addEventListener('click',reset);
   new IntersectionObserver(entries=>{visible=entries[0].isIntersecting;if(visible)sharpenArt();resume();}).observe(canvas);
-  window.addEventListener('hanzi:languagechange',()=>draw());
+  window.addEventListener('hanzi:languagechange',()=>{updateState();draw();});
   window.addEventListener('raccoon:scrollstate',()=>resume());
   document.addEventListener('visibilitychange',()=>resume());window.addEventListener('pageshow',()=>resume());window.addEventListener('pagehide',()=>{cancelAnimationFrame(frame);release();});reset();loadPreviews();
 })();

@@ -13,11 +13,12 @@
   if(header)new ResizeObserver(headerSize).observe(header);
   function language(){
     const ru=root.lang==='ru';
-    const copy={'.book-hint-motion':ru?'Вниз — раскрыть · вверх — закрыть':'Scroll down to open · up to close','.book-hint-still':ru?'Загляни внутрь истории':'A little peek inside the story','.story-scroll-stage .scene-tag':ru?'У каждой сказки есть свой свет':'Every story has its own light'};
+    const t=(r,e)=>window.HanziLocale?.translate?.(ru?r:e) ?? window.HanziLocale?.t?.(e) ?? (ru?r:e);
+    const copy={'.book-hint-motion':t('Вниз — раскрыть · вверх — закрыть','Scroll down to open · up to close'),'.book-hint-still':t('Загляни внутрь истории','A little peek inside the story'),'.story-scroll-stage .scene-tag':t('У каждой сказки есть свой свет','Every story has its own light')};
     for(const [selector,value] of Object.entries(copy)){const n=document.querySelector(selector);if(n){n.dataset.noL10n='';n.textContent=value;}}
     schedule();
   }
-  new MutationObserver(language).observe(root,{attributes:true,attributeFilter:['lang']});language();headerSize();
+  new MutationObserver(language).observe(root,{attributes:true,attributeFilter:['lang']});addEventListener('hanzi:languagechange',language);language();headerSize();
   addEventListener('scroll',schedule,{passive:true});addEventListener('resize',headerSize,{passive:true});reduced.addEventListener('change',schedule);
   addEventListener('pagehide',()=>{closed=true;cancelAnimationFrame(frame);frame=0;});addEventListener('pageshow',()=>{closed=false;schedule();});
 })();

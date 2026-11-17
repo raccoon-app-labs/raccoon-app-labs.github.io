@@ -30,11 +30,11 @@ class Element {
 const product=()=>({id:'coins_2000',kind:'coins',ru:'Горсть монет',en:'Pocket change',coins:3000,price:14900,euro:{cents:164},offer_version:'a'.repeat(64)});
 const catalog=()=>({enabled:true,website_checkout_available:true,pricing_available:true,currency:'RUB',display_currency:'EUR',products:[product()],seller:{terms_version:'v1',terms_url:'https://neonwallkicker.ru/apps/neon-cyber-wall-kicker/shop/offer/'}});
 async function settled(controller){for(let count=0;controller.state.busy&&count<30;count++)await new Promise(resolve=>setImmediate(resolve));assert.equal(controller.state.busy,false,'checkout action settled');}
-async function fixture({signedIn=false,offline=false,paused=false,origin='https://neonwallkicker.ru',apiOrigin,authRequestFails=false}={}){
+async function fixture({signedIn=false,offline=false,paused=false,origin='https://neonwallkicker.ru',apiOrigin,authRequestFails=false,language='en',globalLanguage=false}={}){
   const calls=[],navigation=[],storage=new Map();let available=!offline,offerChanged=false,badCode=false,currentCatalog=catalog();
   if(paused)currentCatalog.website_checkout_available=false;
   if(signedIn)storage.set('neon-website-purchases-v1',JSON.stringify({token:'session',email:'player@example.invalid'}));
-  const document={documentElement:{lang:'en'},createElement:tag=>new Element(tag,document)};
+  const document={documentElement:{lang:language},createElement:tag=>new Element(tag,document)};
   const page=new Element('main',document);page.innerHTML='<article data-neon-product="coins_2000"><span data-neon-price></span><span data-neon-coins></span><button data-neon-buy="coins_2000"></button></article><section data-neon-web-checkout></section>';
   document.querySelector=selector=>page.querySelector(selector);document.querySelectorAll=selector=>page.querySelectorAll(selector);
   const location=new URL(origin+'/apps/neon-cyber-wall-kicker/shop/');
@@ -49,9 +49,14 @@ async function fixture({signedIn=false,offline=false,paused=false,origin='https:
     else throw Error('Unexpected test API call: '+path);
     return {ok:status===200,status,json:async()=>data};
   }};
+  if(globalLanguage){
+    const listeners=[],messages={es:{'Choose purchase':'Elegir compra','Checkout':'Comprar','In-game email':'Correo del juego','Pocket change':'Monedas sueltas'}};
+    document.defaultView.addEventListener=(name,fn)=>{if(name==='hanzi:languagechange')listeners.push(fn);};
+    document.defaultView.HanziLocale={code:language,translate(value){return messages[this.code]?.[value]??value;},set(next){this.code=next;document.documentElement.lang=next;for(const fn of listeners)fn({detail:{code:next}});}};
+  }
   const root=document.querySelector('[data-neon-web-checkout]'),controller=mountCheckout(root,{apiOrigin,navigate:url=>navigation.push(url)});await settled(controller);
   const el=selector=>{const node=root.querySelector(selector);assert.ok(node,selector);return node;};
-  return {root,controller,el,calls,navigation,choose:()=>document.querySelector('[data-neon-buy]').click(),buyButton:document.querySelector('[data-neon-buy]'),setOffline:()=>{available=false;},setBadCode:value=>{badCode=value;},changeOffer:()=>{offerChanged=true;currentCatalog.products[0].price=15900;currentCatalog.products[0].offer_version='b'.repeat(64);}};
+  return {root,controller,el,calls,navigation,choose:()=>document.querySelector('[data-neon-buy]').click(),buyButton:document.querySelector('[data-neon-buy]'),setLanguage:next=>document.defaultView.HanziLocale.set(next),setOffline:()=>{available=false;},setBadCode:value=>{badCode=value;},changeOffer:()=>{offerChanged=true;currentCatalog.products[0].price=15900;currentCatalog.products[0].offer_version='b'.repeat(64);}};
 }
 
 test('guest selection prioritizes product and both currencies, with payment hidden until sign-in',async()=>{
@@ -125,4 +130,24 @@ test('same-origin writes retain JSON bodies and a failed auth POST is sent only 
   assert.equal(writes[0].headers['Content-Type'],'application/json');
   assert.deepEqual(writes[0].body,{email:'player@example.invalid'});
   assert.equal(f.controller.state.ready,false);assert.equal(f.el('[data-pay]').disabled,true);assert.equal(f.navigation.length,0);
+});
+
+test('global language changes update late catalogue controls and preserve email, code and consent',async()=>{
+  const f=await fixture({language:'ru',globalLanguage:true,signedIn:true});f.choose();
+  const email=f.el('input[name=email]'),code=f.el('input[name=code]');email.value='typing@example.invalid';email.emit('input');code.value='123456';f.el('[data-consent]').checked=true;
+  assert.equal(f.buyButton.textContent,'Выбрать покупку');f.setLanguage('en');
+  assert.equal(f.buyButton.textContent,'Choose purchase');assert.equal(f.root.lang,'en');assert.equal(email.value,'typing@example.invalid');assert.equal(code.value,'123456');assert.equal(f.el('[data-consent]').checked,true);
+  await f.controller.refresh();await settled(f.controller);assert.equal(f.buyButton.textContent,'Choose purchase');
+});
+
+test('a third site language reaches isolated checkout copy and product names',async()=>{
+  const f=await fixture({language:'es',globalLanguage:true});f.choose();
+  assert.equal(f.root.lang,'es');assert.equal(f.buyButton.textContent,'Elegir compra');assert.equal(f.el('.neon-selected h3').textContent,'Monedas sueltas');
+  assert.equal(f.el('[data-copy=email]').textContent,'Correo del juego');assert.equal(f.root.getAttribute('aria-label'),'Comprar');
+});
+
+test('local checkout language buttons also update the shared site language',async()=>{
+  const f=await fixture({globalLanguage:true});f.el('[data-lang=ru]').click();await new Promise(setImmediate);
+  assert.equal(f.root.ownerDocument.documentElement.lang,'ru');assert.equal(f.root.lang,'ru');assert.equal(f.buyButton.textContent,'Выбрать покупку');
+  f.setLanguage('en');assert.equal(f.buyButton.textContent,'Choose purchase');
 });

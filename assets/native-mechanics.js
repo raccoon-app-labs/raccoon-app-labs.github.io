@@ -4,7 +4,7 @@
   const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
   const display={"town-hall.webp":"/assets/display/demo/town-hall.webp?v=d168044e2df7","house.webp":"/assets/display/demo/house.webp?v=08bc93c97782","tree.webp":"/assets/display/demo/tree.webp?v=10dd46947c03","cat.webp":"/assets/display/demo/cat.webp?v=30a846ffce4b","inventory.webp":"/assets/display/demo/inventory.webp?v=00da303148e7","basket.webp":"/assets/display/demo/basket.webp?v=ec2428f93c6e","omelet.webp":"/assets/display/demo/omelet.webp?v=1408437f86fa","soup.webp":"/assets/display/demo/soup.webp?v=bf8cbeeed60a","pasta.webp":"/assets/display/demo/pasta.webp?v=89e8de02698b"};
   const demoAsset=name=>display[name] || '/assets/demo/'+name;
-  const en = document.documentElement.lang === 'en', t = (ru, english) => en ? english : ru;
+  const t = (ru, english, params = {}) => { const source=document.documentElement.lang==='ru'?ru:english; const translated=window.HanziLocale?.translate?.(source) ?? window.HanziLocale?.t?.(english) ?? source; return translated.replace(/\{(\w+)\}/gu,(all,key)=>params[key] ?? all); };
   const reduced = matchMedia('(prefers-reduced-motion: reduce)');
   const motion = (el, frames, duration, options = {}) => reduced.matches ? null : el.animate(frames, {duration, easing:'cubic-bezier(.2,0,0,1)', ...options});
   // Compose spring, unit mass: dampingRatio and stiffness from the native screen.
@@ -64,17 +64,13 @@
   }
   if ($('.story-book')) {
     // StoriesRu / StoriesEn story 1, pages 1–3. SlideMediaConfig maps page N to slide_s1_pN.
-    const pages=en?[
-      'In a faraway forest lived a small white bunny named Tim. Every evening he ran to the meadow and gazed at the stars for hours.',
-      'One night a little star trembled and slowly drifted down to earth, leaving a golden trail behind it.',
-      'The star lay in the tall grass. It was tiny and barely glowing. “I don’t know how to get back home...”'
-    ]:[
-      'В далёком лесу жил маленький зайчик по имени Тим. Каждый вечер он выбегал на полянку и часами смотрел на звёзды.',
-      'Однажды ночью одна звёздочка задрожала и медленно поплыла вниз к земле, оставляя за собой золотой след.',
-      'Звёздочка лежала в высокой траве. Она была совсем маленькой и едва светилась. «Я не знаю, как вернуться домой...»'
+    const pages=[
+      ['В далёком лесу жил маленький зайчик по имени Тим. Каждый вечер он выбегал на полянку и часами смотрел на звёзды.','In a faraway forest lived a small white bunny named Tim. Every evening he ran to the meadow and gazed at the stars for hours.'],
+      ['Однажды ночью одна звёздочка задрожала и медленно поплыла вниз к земле, оставляя за собой золотой след.','One night a little star trembled and slowly drifted down to earth, leaving a golden trail behind it.'],
+      ['Звёздочка лежала в высокой траве. Она была совсем маленькой и едва светилась. «Я не знаю, как вернуться домой...»','The star lay in the tall grass. It was tiny and barely glowing. “I don’t know how to get back home...”']
     ];
     const frames=pages.map((_,i)=>demoAsset('bunny-page-'+(i+1)+'.webp'));
-    const captions=en?['The bunny gazes at the moon','A star falls with a golden trail','The bunny finds the star in the grass']:['Зайчик смотрит на луну','Звёздочка падает с золотым следом','Зайчик находит звёздочку в траве'];
+    const captions=[['Зайчик смотрит на луну','The bunny gazes at the moon'],['Звёздочка падает с золотым следом','A star falls with a golden trail'],['Зайчик находит звёздочку в траве','The bunny finds the star in the grass']];
     let index=0,speaking=false,generation=0,active=0,transitions=[];
     const prev=$('[data-story-prev]'),next=$('[data-story-next]'),listen=$('[data-story-listen]'),text=$('[data-story-text]'),art=$('.reader-art'),reader=$('.story-book');
     const incoming=art.cloneNode();incoming.removeAttribute('id');incoming.style.opacity='0';incoming.setAttribute('aria-hidden','true');art.after(incoming);
@@ -90,7 +86,7 @@
       prev.disabled=index===0;next.disabled=index===pages.length-1;
       const oldImage=images[active],newImage=images[1-active];
       await prepare(target);if(revision!==generation)return;
-      newImage.src=frames[target];newImage.alt=captions[target];
+      newImage.src=frames[target];newImage.alt=t(...captions[target]);
       try{await newImage.decode();}catch{if(revision===generation)$('[data-story-status]').textContent=t('Не удалось загрузить иллюстрацию. Попробуйте ещё раз.','The illustration could not load. Please try again.');return;}
       if(revision!==generation)return;
       transitions.forEach(a=>a?.cancel());transitions=[];
@@ -98,7 +94,7 @@
       const sameFrame=oldImage.getAttribute('src')===frames[target];
       oldImage.style.opacity='1';oldImage.setAttribute('aria-hidden','true');
       oldImage.style.zIndex='0';newImage.style.zIndex='1';newImage.style.opacity='1';newImage.removeAttribute('aria-hidden');active=1-active;
-      text.textContent=pages[target];$('[data-story-count]').textContent=(target+1)+' / 3';
+      text.textContent=t(...pages[target]);$('[data-story-count]').textContent=(target+1)+' / 3';
       $$('.reader-dots i').forEach((d,i)=>d.classList.toggle('active',i===target));
       if(!sameFrame&&!reduced.matches){
         // RemoteImageLoader.crossfadeTo(): linear 240ms, no moving/scaling of full-bleed media.
@@ -113,12 +109,12 @@
     prev.addEventListener('click',()=>turn(-1));next.addEventListener('click',()=>turn(1));turn(0);
     $('[data-story-status]').textContent=t('Первые 3 страницы «Лунного зайчика» · голос браузера','First 3 pages of The Moon Bunny · browser voice');
     $('[data-story-favorite]').addEventListener('click',e=>{const b=e.currentTarget,selected=b.getAttribute('aria-pressed')!=='true';b.setAttribute('aria-pressed',String(selected));b.textContent=selected?'★':'☆';motion(b,[{transform:'scale(1)'},{transform:'scale(1.08)'},{transform:'scale(1)'}],250);});
-    listen.addEventListener('click',()=>{if(!('speechSynthesis'in window)){$('[data-story-status]').textContent=t('Озвучка недоступна в этом браузере','Speech is unavailable in this browser');return;}if(speaking){stop();return;}const voice=new SpeechSynthesisUtterance(text.textContent);voice.lang=document.documentElement.lang || (en?'en-US':'ru-RU');voice.rate=.9;voice.onend=voice.onerror=stop;speaking=true;listen.textContent=t('■ Остановить','■ Stop');speechSynthesis.speak(voice);});
+    listen.addEventListener('click',()=>{if(!('speechSynthesis'in window)){$('[data-story-status]').textContent=t('Озвучка недоступна в этом браузере','Speech is unavailable in this browser');return;}if(speaking){stop();return;}const voice=new SpeechSynthesisUtterance(text.textContent);voice.lang=document.documentElement.lang || 'en';voice.rate=.9;voice.onend=voice.onerror=stop;speaking=true;listen.textContent=t('■ Остановить','■ Stop');speechSynthesis.speak(voice);});
     let start;
     reader.addEventListener('pointerdown',e=>{if(e.target.closest('button,.reader-overlay,.reader-top'))return;start=e.clientX;});
     reader.addEventListener('pointerup',e=>{if(start!==undefined&&Math.abs(e.clientX-start)>40)turn(e.clientX<start?1:-1);start=undefined;});
     reader.addEventListener('pointercancel',()=>start=undefined);
-    window.addEventListener('hanzi:languagechange',stop);
+    window.addEventListener('hanzi:languagechange',()=>{stop();text.textContent=t(...pages[index]);images[active].alt=t(...captions[index]);});
     window.addEventListener('pagehide',()=>{++generation;stop();transitions.forEach(a=>a?.cancel());});
     document.addEventListener('visibilitychange',()=>{if(document.hidden)stop();});
   }
@@ -147,7 +143,7 @@
       $$('[data-supply-action]').forEach((b,i)=>{const needs=needed.has(i);b.disabled=needs;b.textContent=needs?'✓':'♧';b.dataset.stage=needs?'2':'0';$(`[data-supply-state="${i}"]`).textContent=needs?t('в покупках','on the list'):t('есть дома','at home');});
       $('[data-inventory-screen]').hidden=shopping;$('[data-shopping-screen]').hidden=!shopping;$$('[data-supply-tab]').forEach(b=>b.setAttribute('aria-pressed',String((b.dataset.supplyTab==='shopping')===shopping)));
       const rows=$('[data-shopping-rows]');rows.replaceChildren();needed.forEach(i=>{const row=document.createElement('label');row.className='native-shopping-row';const check=document.createElement('input');check.type='checkbox';check.checked=checked.has(i);const icon=document.createElement('span');icon.textContent=items[i].emoji;const title=document.createElement('strong');title.textContent=items[i].name;row.classList.toggle('checked',check.checked);check.addEventListener('change',()=>{check.checked?checked.add(i):checked.delete(i);render();$(`[data-shopping-item="${i}"]`)?.focus();});check.dataset.shoppingItem=i;row.append(check,icon,title);rows.append(row);});
-      const progress=needed.size?checked.size/needed.size:0;$('[data-shopping-progress]').textContent=`${Math.round(progress*100)}%`;$('[data-shopping-left]').textContent=t(`${needed.size-checked.size} осталось · ${checked.size} готово`,`${needed.size-checked.size} left · ${checked.size} done`);$('progress').value=progress;$('[data-shopping-empty]').hidden=needed.size!==0;$('[data-finish-shopping]').hidden=checked.size===0;$('[data-finish-shopping]').textContent=t(`Куплено: ${checked.size} · завершить`,`Finish · ${checked.size} bought`);
+      const progress=needed.size?checked.size/needed.size:0;$('[data-shopping-progress]').textContent=`${Math.round(progress*100)}%`;$('[data-shopping-left]').textContent=t('{left} осталось · {done} готово','{left} left · {done} done',{left:needed.size-checked.size,done:checked.size});$('progress').value=progress;$('[data-shopping-empty]').hidden=needed.size!==0;$('[data-finish-shopping]').hidden=checked.size===0;$('[data-finish-shopping]').textContent=t('Куплено: {count} · завершить','Finish · {count} bought',{count:checked.size});
     }
     $$('[data-supply-action]').forEach((b,i)=>b.addEventListener('click',()=>{needed.add(i);render();$('[data-supply-feedback]').textContent=t('Товар уже в покупках. Откройте «Купить».','Already on your list. Open Shopping.');}));
     $$('[data-supply-tab]').forEach(b=>b.addEventListener('click',()=>{shopping=b.dataset.supplyTab==='shopping';render();motion(shopping?$('[data-shopping-screen]'):$('[data-inventory-screen]'),[{opacity:0},{opacity:1}],180);}));

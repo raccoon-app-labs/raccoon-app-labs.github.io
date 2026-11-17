@@ -1,3 +1,4 @@
+import {mergeRuntimeMessages} from './runtime-locales.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -19,6 +20,8 @@ test('all 25 dictionaries retain every translation and source alias when split',
   const old={window:{}},current={window:{}};vm.runInNewContext(read(source),old);vm.runInNewContext(read(base),current);
   const key=old.window.HANZI_SITE_MESSAGES?'HANZI_SITE_MESSAGES':'HANZI_PLUS_MESSAGES';
   const original=old.window[key],data=current.window[key];
+  const extraAliases=old.window.HANZI_SOURCE_ALIASES||{};mergeRuntimeMessages(original,extraAliases,current.window.HANZI_LOCALE_PACKS.runtimeKeys||[]);
+  old.window.HANZI_SOURCE_ALIASES=extraAliases;
   assert.deepEqual(copy(data.en),copy(original.en));assert.deepEqual(copy(data.ru),copy(original.ru));
   for(const value of [...Object.values(original.en),...Object.values(original.ru)]){
    const alias=normalize(value);if(old.window.HANZI_SOURCE_ALIASES?.[alias])assert.equal(current.window.HANZI_SOURCE_ALIASES[alias],old.window.HANZI_SOURCE_ALIASES[alias]);

@@ -207,7 +207,7 @@
     if (loader && !loader.ready(next)) {
       launch.setAttribute('aria-busy','true');
       try { await loader.load(next); }
-      catch { if (request === languageRequest) announce.textContent = code === 'ru' ? 'Не удалось загрузить язык. Попробуйте ещё раз.' : 'Could not load this language. Please try again.'; return; }
+      catch { if (request === languageRequest) announce.textContent = t('Could not load this language. Please try again.'); return; }
       finally { if (request === languageRequest) launch.removeAttribute('aria-busy'); }
       if (request !== languageRequest) return;
     } else launch.removeAttribute('aria-busy');
@@ -348,7 +348,7 @@
       else record.addedNodes.forEach(scan);
     } } finally { observe(); }
   });
-  window.HanziLocale = Object.freeze({get code() {return code;},t,set:next => setLanguage(next,true),languages:languages.map(([id,name])=>({code:id,name}))});
+  window.HanziLocale = Object.freeze({get code() {return code;},t,translate,set:next => setLanguage(next,true),languages:languages.map(([id,name])=>({code:id,name}))});
   const otp = document.getElementById('code');
   if (otp) otp.addEventListener('input', () => {
     otp.value = otp.value.replace(/[\u0660-\u0669\u06f0-\u06f9\u0966-\u096f]/gu, digit => {

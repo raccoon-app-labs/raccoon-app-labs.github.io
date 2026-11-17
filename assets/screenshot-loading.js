@@ -10,7 +10,9 @@
       const job=queue.shift();active++;job.start(()=>{active--;drain();});
     }
   }
-  const retryWords={ru:'Не загрузилось · Повторить',en:'Retry image'};
+  const retries=new Set();
+  const retryCopy=()=>{const source=document.documentElement.lang==='ru'?'Не загрузилось · Повторить':'Retry image';return globalThis.HanziLocale?.translate?.(source) ?? globalThis.HanziLocale?.t?.('Retry image') ?? source;};
+  globalThis.addEventListener?.('hanzi:languagechange',()=>{for(const retry of retries)retry.textContent=retryCopy();});
   // Keep complete inline art until its own visible section needs a sharper bitmap.
   const displayImages=[...document.querySelectorAll('img[data-display-src]')];
   const artObserver=displayImages.length && 'IntersectionObserver' in window?new IntersectionObserver(entries=>{
@@ -37,15 +39,15 @@
       if(image.dataset.imageState!=='loading' || !image.naturalWidth || decoding)return;
       decoding=true;
       try{await image.decode();}catch{decoding=false;failed();return;}
-      decoding=false;image.dataset.imageState='ready';retry?.remove();retry=undefined;release();
+      decoding=false;image.dataset.imageState='ready';if(retry){retries.delete(retry);retry.remove();}retry=undefined;release();
     }
     function failed(){
       if(image.dataset.imageState!=='loading')return;
       image.dataset.imageState='error';release();
       if(!figure || retry)return;
       retry=document.createElement('button');retry.type='button';retry.className='screenshot-retry';
-      retry.dataset.noL10n='';retry.textContent=retryWords[document.documentElement.lang] || retryWords.en;
-      retry.addEventListener('click',()=>{retry.remove();retry=undefined;enqueue(true);});figure.append(retry);
+      retry.dataset.noL10n='';retry.textContent=retryCopy();retries.add(retry);
+      retry.addEventListener('click',()=>{retries.delete(retry);retry.remove();retry=undefined;enqueue(true);});figure.append(retry);
     }
     function enqueue(again=false){
       if(!again && image.dataset.imageState!=='waiting')return;

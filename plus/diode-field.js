@@ -24,7 +24,7 @@
   let frame = 0, lastPaint = 0, clock = 0, nextRunner = 0, nextCapacitor = 4.2, entries = 0;
   let surge, nextSurge = 4, surgeIndex = 0, branches = 0;
   let visible = false, closed = false, dirty = true, initialized = false, boundsDirty = true;
-  let theme, palette = [], sprites = [], pointer, lastInduction = -10, lastClick = -10;
+  let theme, palette = [], sprites = [], radialDistances, pointer, lastInduction = -10, lastClick = -10;
   const random = (min, max) => min + Math.random() * (max - min);
   const integer = (min, max) => Math.floor(random(min, max + 1));
   const clamp = (n, min, max) => Math.max(min, Math.min(max, n));
@@ -72,7 +72,7 @@
     });
     updateBounds(); dirty = false;
     lamps.clear(); runners.length = waves.length = capacitors.length = 0;
-    initialized = false; pointer = surge = undefined; branches = 0;
+    initialized = false; pointer = surge = radialDistances = undefined; branches = 0;
     panel.dataset.diodeReady = '';
     paintBase(); return true;
   }
@@ -173,6 +173,13 @@
 
   function startSurge() {
     const kind = surgeIndex++ % 2 ? 'radial' : 'diagonal';
+    // The radial origin changes only with the grid. Reuse its exact distances
+    // instead of taking thousands of square roots on every animation frame.
+    if (kind === 'radial' && !radialDistances) {
+      radialDistances = new Float64Array(cols * rows);
+      for (let row = 0; row < rows; row++) for (let col = 0; col < cols; col++)
+        radialDistances[row * cols + col] = Math.hypot(col - cols * .52,row - rows * .4);
+    }
     surge = {kind,age:0,duration:kind === 'radial' ? 4.3 : 3.8,color:surgeIndex % 2 ? 0 : 1,
       col:cols * .52,row:rows * .4,reverse:surgeIndex % 4 > 1};
   }
@@ -199,16 +206,42 @@
     const reach = surge.kind === 'diagonal' ? cols - 1 + (rows - 1) * .7
       : Math.hypot(Math.max(surge.col,cols - surge.col),Math.max(surge.row,rows - surge.row));
     const front = -2 + (reach + 14) * t;
-    // A narrow luminous front crosses every diode; a golden echo follows it.
-    // Compute the moving band directly so a full-grid wave never fills the particle pool.
-    for (let row = 0; row < rows; row++) for (let col = 0; col < cols; col++) {
-      const position = surge.kind === 'diagonal' ? (surge.reverse ? cols - 1 - col : col) + row * .7
-        : Math.hypot(col - surge.col,row - surge.row);
-      const behind = front - position;
-      if (behind < 0 || behind > 11) continue;
-      const echo = behind > 5;
-      const power = envelope * (echo ? .65 * Math.exp(-(behind - 5) * .36) : 1.15 * Math.exp(-behind * .27));
-      paintLamp(col,row,power,echo ? (surge.color + 1) % 3 : surge.color);
+    // Visit just the moving band, in the same row/column order as the full
+    // matrix. Glow overlap, colours, timing and backing-store quality stay exact.
+    const radial = surge.kind === 'radial';
+    const inner = Math.max(0,front - 11);
+    function band(row,first,last,after = -1) {
+      const from = Math.max(0,first,after + 1),to = Math.min(cols - 1,last);
+      for (let col = from; col <= to; col++) {
+        const position = radial ? radialDistances[row * cols + col]
+          : (surge.reverse ? cols - 1 - col : col) + row * .7;
+        const behind = front - position;
+        if (behind < 0 || behind > 11) continue;
+        const echo = behind > 5;
+        const power = envelope * (echo ? .65 * Math.exp(-(behind - 5) * .36) : 1.15 * Math.exp(-behind * .27));
+        paintLamp(col,row,power,echo ? (surge.color + 1) % 3 : surge.color);
+      }
+      return to;
+    }
+    for (let row = 0; row < rows; row++) {
+      if (!radial) {
+        const low = front - 11 - row * .7,high = front - row * .7;
+        // A one-cell guard keeps boundary rounding identical to the exact test.
+        const first = Math.ceil(surge.reverse ? cols - 1 - high : low) - 1;
+        const last = Math.floor(surge.reverse ? cols - 1 - low : high) + 1;
+        band(row,first,last);
+      } else {
+        const dy = Math.abs(row - surge.row);
+        if (front < 0 || dy > front) continue;
+        const outerX = Math.sqrt(Math.max(0,front * front - dy * dy));
+        const innerX = dy < inner ? Math.sqrt(Math.max(0,inner * inner - dy * dy)) : 0;
+        const first = Math.ceil(surge.col - outerX) - 1,last = Math.floor(surge.col + outerX) + 1;
+        if (!innerX) band(row,first,last);
+        else {
+          const left = band(row,first,Math.floor(surge.col - innerX) + 1);
+          band(row,Math.ceil(surge.col + innerX) - 1,last,left);
+        }
+      }
     }
   }
 

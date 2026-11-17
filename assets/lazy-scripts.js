@@ -2,6 +2,8 @@
 (() => {
   'use strict';
   const groups=new Map();
+  const retryCopy=()=>{const source=document.documentElement.lang==='ru'?'Загрузить демо ещё раз':'Retry demo';return globalThis.HanziLocale?.translate?.(source) ?? globalThis.HanziLocale?.t?.('Retry demo') ?? source;};
+  globalThis.addEventListener?.('hanzi:languagechange',()=>{for(const group of groups.values())if(group.retry)group.retry.textContent=retryCopy();});
   for(const placeholder of document.querySelectorAll('script[data-lazy-src]')){
     const target=document.querySelector(placeholder.dataset.lazyTarget);
     if(!target)continue;
@@ -28,7 +30,7 @@
     }catch{
       group.target.dataset.demoState='error';
       const retry=document.createElement('button');retry.type='button';retry.className='demo-button demo-retry';retry.dataset.noL10n='';
-      retry.textContent=document.documentElement.lang==='ru'?'Загрузить демо ещё раз':'Retry demo';
+      retry.textContent=retryCopy();
       retry.addEventListener('click',()=>load(group));group.target.querySelector('.interactive-demo')?.append(retry);group.retry=retry;
     }finally{group.running=false;}
   }

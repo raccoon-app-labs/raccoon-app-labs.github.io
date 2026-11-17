@@ -47,13 +47,15 @@
     }
     dirty=false;
   }
-  function activate(run,rect,now){
+  function activation(run){
     const style=getComputedStyle(run.node.parentElement);
     const size=parseFloat(style.fontSize)||16;
-    run.radius=clamp(size*2.4,75,235);
     const yellow=run.node.closest('.app-tab[aria-selected="true"],.button:not(.secondary),.art-stamp');
-    run.palette=root.dataset.theme==='light' || yellow?deep:normal;
-    run.node.style.setProperty('--ink-base',style.color);
+    return {radius:clamp(size*2.4,75,235),palette:root.dataset.theme==='light' || yellow?deep:normal,color:style.color};
+  }
+  function activate(run,rect,now,paint){
+    run.radius=paint.radius;run.palette=paint.palette;
+    run.node.style.setProperty('--ink-base',paint.color);
     run.node.style.setProperty('--ink-radius',run.radius+'px');
     run.node.style.setProperty('--ink-charge','0');
     run.start=now;run.x=pointer.x-rect.left;run.y=pointer.y-rect.top;
@@ -65,7 +67,8 @@
     if(!enabled()){clear();return;}
     if(lastTime && now-lastTime<1000/30){schedule();return;}
     const dt=lastTime?Math.min(64,now-lastTime):33;lastTime=now;
-    if(dirty)measure();
+    // Text can change while the pointer is absent. Keep its geometry lazy.
+    if(dirty && pointer)measure();
     const targets=new Map();
     if(pointer){
       // Read all geometry first, before changing any paint styles.
@@ -80,7 +83,10 @@
         targets.set(run,{rect,power:Math.pow(1-best/range,1.25)});
       }
     }
-    for(const [run,target] of targets)if(!lit.has(run))activate(run,target.rect,now);
+    // Resolve every computed style before writing any activation paint styles.
+    const activations=[];
+    for(const [run,target] of targets)if(!lit.has(run))activations.push({run,rect:target.rect,paint:activation(run)});
+    for(const item of activations)activate(item.run,item.rect,now,item.paint);
     const reduced=still();
     for(const run of lit){
       const target=targets.get(run),power=target?.power || 0;
@@ -111,7 +117,9 @@
       if(record.target.closest?.('neon-ink,.story-magic-layer'))continue;
       for(const node of record.addedNodes){
         const area=areas.find(area=>area.contains(node));
-        if(area){pending.add(area);changed=true;}
+        if(!area)continue;
+        if(node.nodeType===Node.TEXT_NODE){register(node);dirty=true;changed=true;}
+        else if(node.nodeType===Node.ELEMENT_NODE){pending.add(node);changed=true;}
       }
       if(record.removedNodes.length){dirty=true;changed=true;}
     }

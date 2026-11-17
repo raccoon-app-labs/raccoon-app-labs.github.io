@@ -17,7 +17,7 @@ const text = {
   ru: { title: 'Покупка', intro: 'Войди с почтой из игры — покупка появится в этом аккаунте.',
     email: 'Почта из игры', code: 'Код из письма', send: 'Получить код', verify: 'Подтвердить почту', back: 'Другая почта', logout: 'Выйти',
     refresh: 'Обновить покупки', loading: 'Проверяем доступность сервера…', offline: 'Сервис покупок недоступен. Оплата заблокирована. Попробуй позже.',
-    ready: '', choose: 'Выбери монеты или набор в каталоге выше.', buy: 'Выбрать покупку',
+    priceLoading: 'Проверяем цену…', priceUnavailable: 'Цена недоступна', ready: '', choose: 'Выбери монеты или набор в каталоге выше.', buy: 'Выбрать покупку',
     consent: 'Принимаю', terms: 'условия покупки', privacy: 'Конфиденциальность', pay: 'Перейти к оплате',
     details: 'Об оплате и зачислении', edit: 'Изменить', codeIntro: 'Введи код, отправленный на ',
     checking: 'Проверяем аккаунт и сохраняем заказ…', changed: 'Предложение обновилось. Проверь состав и цену и подтверди условия заново.',
@@ -35,7 +35,7 @@ const text = {
   en: { title: 'Checkout', intro: 'Use your in-game email. Your purchase will appear in that account.',
     email: 'In-game email', code: 'Email code', send: 'Send code', verify: 'Confirm email', back: 'Another email', logout: 'Sign out',
     refresh: 'Refresh purchases', loading: 'Checking the purchase service…', offline: 'The purchase service is unavailable. Payment is blocked. Please try later.',
-    ready: '', choose: 'Choose a coin pack or bundle from the catalogue above.', buy: 'Choose purchase',
+    priceLoading: 'Checking price…', priceUnavailable: 'Price unavailable', ready: '', choose: 'Choose a coin pack or bundle from the catalogue above.', buy: 'Choose purchase',
     consent: 'I accept the', terms: 'purchase terms', privacy: 'Privacy', pay: 'Continue to payment',
     details: 'Payment & delivery', edit: 'Change', codeIntro: 'Enter the code sent to ',
     checking: 'Checking your account and saving the order…', changed: 'The offer changed. Review the contents and price, then accept the terms again.',
@@ -74,7 +74,8 @@ export function mountCheckout(root, options = {}) {
   // cross-origin connection for checkout. Other hosts retain the public API.
   const apiOrigin = options.apiOrigin ?? (win.location?.origin === 'https://neonwallkicker.ru' ? '/services/neon' : API_ORIGIN);
   const navigate = options.navigate ?? (url => win.location.assign(url));
-  let language = (document.documentElement.lang || win.navigator.language).startsWith('ru') ? 'ru' : 'en';
+  const languageCode = () => (win.HanziLocale?.code || document.documentElement.lang || win.navigator.language || 'en').split('-')[0];
+  let language = languageCode(), recentOrders = null;
   let saved = {}, durable = true;
   try { saved = JSON.parse(win.sessionStorage.getItem(KEY) || '{}'); } catch { durable = false; }
   if (!saved || typeof saved !== 'object' || Array.isArray(saved)) saved = {};
@@ -95,7 +96,22 @@ export function mountCheckout(root, options = {}) {
     <details class="neon-checkout-details"><summary data-copy="details"></summary><div><p class="neon-rate" data-copy="rate"></p><p data-copy="expiry"></p><p data-copy="delay"></p><a href="/apps/neon-cyber-wall-kicker/shop/privacy/" target="_blank" rel="noopener" data-copy="privacy"></a></div></details>
     <section class="neon-history" hidden><h3 data-copy="history"></h3><div></div></section>`;
   const el = selector => root.querySelector(selector);
-  const copy = key => text[language][key] ?? text[language].error;
+  const localize = (r, e) => {
+    const source = language === 'ru' ? r : e;
+    return win.HanziLocale?.translate?.(source) ?? win.HanziLocale?.t?.(e) ?? source;
+  };
+  const copy = key => localize(text.ru[key] ?? text.ru.error, text.en[key] ?? text.en.error);
+  const productName = product => localize(product.ru || product.en, product.en || product.ru);
+  const orderState = value => {
+    const names = { pending:['Ожидает оплаты','Awaiting payment'], creating:['Создаётся','Creating order'], paid:['Оплачен','Paid'],
+      cancelled:['Отменён','Cancelled'], refunded:['Возвращён','Refunded'], review:['На проверке','Under review'] };
+    return localize(...(names[value] || ['Статус уточняется','Status pending confirmation']));
+  };
+  function renderHistory() {
+    if (recentOrders === null) return;
+    const list = el('.neon-history div'); list.replaceChildren(); el('.neon-history').hidden = false;
+    for (const row of recentOrders) { const item = document.createElement('p'); item.textContent = row.id + ' · ' + orderState(row.state) + ' · ' + money(row.amount, 'RUB'); list.append(item); }
+  }
   let statusKey = 'loading', statusBad = false;
   const status = (key, bad = false) => { statusKey = key; statusBad = bad; const node = el('.neon-checkout-status'); node.textContent = copy(key); node.dataset.error = String(bad); node.hidden = key === 'ready'; };
   const money = (minor, currency) => new Intl.NumberFormat(language, { style: 'currency', currency }).format(minor / 100);
@@ -121,6 +137,7 @@ export function mountCheckout(root, options = {}) {
   }
   function render() {
     root.lang = language;
+    root.setAttribute('aria-label', copy('title'));
     status(statusKey, statusBad);
     root.querySelectorAll('[data-copy]').forEach(node => { node.textContent = copy(node.dataset.copy); });
     root.querySelectorAll('[data-lang]').forEach(button => button.setAttribute('aria-pressed', String(button.dataset.lang === language)));
@@ -143,11 +160,11 @@ export function mountCheckout(root, options = {}) {
     el('[data-retry-service]')?.toggleAttribute('hidden', state.ready);
     if (state.selected) {
       el('.neon-edit').href = state.selected.kind === 'bundle' ? '#bundles' : '#coins';
-      el('.neon-selected h3').textContent = state.selected[language] || state.selected.en;
+      el('.neon-selected h3').textContent = productName(state.selected);
       el('.neon-selected-contents').textContent = new Intl.NumberFormat(language).format(state.selected.coins) + copy('coins');
       if (state.selected.kind === 'bundle') {
-        const names = language === 'ru' ? { starter: 'Рифт-лис · Шов реальности · Осколки измерения', supporter: 'Маэстро затмения · Горизонт событий · Последнее солнце' }
-          : { starter: 'Rift Fox · Rift Stitch · Rift Bloom', supporter: 'Eclipse Maestro · Event Horizon · Eclipse Finale' };
+        const names = { starter: localize('Рифт-лис · Шов реальности · Осколки измерения','Rift Fox · Rift Stitch · Rift Bloom'),
+          supporter: localize('Маэстро затмения · Горизонт событий · Последнее солнце','Eclipse Maestro · Event Horizon · Eclipse Finale') };
         el('.neon-selected-contents').textContent += ' · ' + names[state.selected.id];
       }
       price(state.selected, el('.neon-selected-price'));
@@ -158,17 +175,18 @@ export function mountCheckout(root, options = {}) {
     }
     el('.neon-pending').hidden = !state.pending?.id;
     el('.neon-order-id').textContent = copy('id') + (state.pending?.id || '');
-    el('.neon-order-summary').textContent = state.pending?.offer ? (state.pending.offer[language] || state.pending.offer.en) + ' · ' + money(state.pending.offer.price, 'RUB') : '';
+    el('.neon-order-summary').textContent = state.pending?.offer ? (productName(state.pending.offer)) + ' · ' + money(state.pending.offer.price, 'RUB') : '';
     for (const card of document.querySelectorAll('[data-neon-product]')) {
       const product = state.catalog?.products.find(p => p.id === card.dataset.neonProduct);
       const target = card.querySelector('[data-neon-price]');
       if (product && target) price(product, target);
+      else if (target) target.textContent = copy(statusKey === 'loading' ? 'priceLoading' : 'priceUnavailable');
       const coins = card.querySelector('[data-neon-coins]');
       if (product && coins) coins.textContent = new Intl.NumberFormat(language).format(product.coins);
       const button = card.querySelector('[data-neon-buy]');
       if (button) button.textContent = copy('buy');
     }
-    controls();
+    renderHistory(); controls();
   }
   async function api(path, body) {
     const response = await win.fetch(apiOrigin + path, { method: body ? 'POST' : 'GET', cache: 'no-store', credentials: 'omit', redirect: 'error',
@@ -230,7 +248,7 @@ export function mountCheckout(root, options = {}) {
     if (!persist()) throw new Error('storage');
     if (!(await api('/v1/catalog?channel=website&ready=1')).ok) throw new Error('not_ready');
     await api('/v1/wallet');
-    const body = { channel: 'website', language, product_id: offer.id, request_key: pending.request_key,
+    const body = { channel: 'website', language: language === 'ru' ? 'ru' : 'en', product_id: offer.id, request_key: pending.request_key,
       accept_terms: true, expected_amount: offer.price, expected_offer_version: offer.offer_version, terms_version: terms.terms_version };
     const preflight = await api('/v1/orders', { ...body, preflight: true });
     if (!preflight.ready || preflight.order_created !== false || Date.parse(preflight.expires_at) <= Date.now()) throw new Error('preflight_unavailable');
@@ -253,7 +271,12 @@ export function mountCheckout(root, options = {}) {
     if (!state.token) el('input[name=email]').focus({ preventScroll: true });
   }
   document.querySelectorAll('[data-neon-buy]').forEach(button => button.addEventListener('click', () => choose(button.dataset.neonBuy)));
-  root.querySelectorAll('[data-lang]').forEach(button => button.addEventListener('click', () => { language = button.dataset.lang; render(); }));
+  const syncLanguage = () => { language = languageCode(); render(); };
+  root.querySelectorAll('[data-lang]').forEach(button => button.addEventListener('click', () => {
+    if (win.HanziLocale?.set) Promise.resolve(win.HanziLocale.set(button.dataset.lang)).then(syncLanguage);
+    else { language = button.dataset.lang; render(); }
+  }));
+  win.addEventListener?.('hanzi:languagechange', syncLanguage);
   el('input[name=email]').addEventListener('input', event => { state.email = event.target.value; });
   el('.neon-auth').addEventListener('submit', event => { event.preventDefault(); guard(async () => {
     if (!state.codeSent) { state.email = el('input[name=email]').value.trim().toLowerCase(); await api('/v1/auth/request', { email: state.email }); state.codeSent = true; persist(); status('sent'); render(); el('input[name=code]').focus(); }
@@ -273,8 +296,7 @@ export function mountCheckout(root, options = {}) {
   el('[data-cancel]').addEventListener('click', () => guard(async () => { await api('/v1/orders/' + encodeURIComponent(state.pending.id) + '/cancel', {}); state.pending = null; state.selected = null; persist(); await synchronize(); status('cancelled'); }));
   async function history() {
     const data = await api('/v1/orders?limit=10');
-    const list = el('.neon-history div'); list.replaceChildren(); el('.neon-history').hidden = false;
-    for (const row of data.orders || []) { const item = document.createElement('p'); item.textContent = row.id + ' · ' + row.state + ' · ' + money(row.amount, 'RUB'); list.append(item); }
+    recentOrders = data.orders || []; renderHistory();
   }
   const refresh = document.createElement('button'); refresh.type = 'button'; refresh.className = 'button secondary';
   refresh.textContent = copy('refresh'); refresh.dataset.copy = 'refresh'; refresh.dataset.retryService = ''; refresh.addEventListener('click', () => guard(synchronize)); root.append(refresh);

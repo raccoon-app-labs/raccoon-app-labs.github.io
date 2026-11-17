@@ -23,7 +23,7 @@ test('all page assets exist and every script integrity hash matches the shipped 
    if(a.integrity){const expected='sha256-'+crypto.createHash('sha256').update(read(file)).digest('base64');assert.equal(a.integrity,expected,`${page}: ${url}`);}
   }
  }
- assert.equal(count,59);
+ assert.equal(count,61);
 });
 
 test('product CSS preserves the original cascade and demos are initialized only by the nearby loader',()=>{
@@ -48,7 +48,7 @@ test('localized pages use one base dictionary and one on-demand language loader'
   assert.equal((html.match(/\ssrc="\/assets\/locales\/load.js\?/g)||[]).length,1,page);
   assert.ok(!/\ssrc="\/(?:assets\/locales\/p-[\w-]+|plus\/locale-data)\.js/.test(html),page);
  }
- assert.equal(count,36);
+ assert.equal(count,37);
 });
 
 test('every themed page installs exactly one shared scroll activity controller',()=>{
