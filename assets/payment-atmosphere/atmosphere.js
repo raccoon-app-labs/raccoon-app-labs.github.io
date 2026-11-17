@@ -15,7 +15,6 @@
       for(const d of paths){const path=document.createElementNS(namespace,'path');path.setAttribute('d',d);drawing.append(path);}
       return drawing;
     }
-    for(let i=0;i<3;i++){const wash=document.createElement('span');wash.className='atmosphere-wash wash-'+i;depth.append(wash);}
     const ribbons=document.createElement('div');ribbons.className='atmosphere-ribbons';
     for(let i=0;i<3;i++){
       const ribbon=document.createElement('div');ribbon.className='atmosphere-ribbon ribbon-'+i;

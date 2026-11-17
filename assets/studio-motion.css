@@ -57,22 +57,9 @@
 @media(max-width:600px){.studio-satellite{width:36px;height:36px;margin:-18px}.studio-satellite img{width:25px;height:25px}.studio-satellite a{border-radius:11px}.studio-section::before{left:-10px;width:4px;height:4px}}
 @media(prefers-reduced-motion:reduce){.studio-satellites,.studio-satellite,.studio-rings::before,.studio-rings::after{animation:none}.studio-section h2{animation:none!important}.app-card:hover::after,.visual.is-bursting .studio-pulse,.visual.is-bursting .studio-rings{animation:none}.app-card:hover .app-gallery .shot,.app-card:hover .app-icon-frame{transform:none}.value-card:hover{translate:none}}
 
-/* Soft colour fields remain independent of star highlights. */
+/* A quiet, solid background with sparse interactive stars. */
 :root[data-site-world=studio] body::before,:root[data-site-world=studio] body::after{content:none}
-.studio-atmosphere{--mist-violet:143,102,255;--mist-mint:70,199,169;--mist-rose:187,100,164;--mist-violet-alpha:.30;--mist-mint-alpha:.17;--mist-rose-alpha:.16;position:fixed;inset:0;z-index:-1;overflow:hidden;contain:strict;pointer-events:none}
-.studio-atmosphere-depth{position:absolute;inset:-28px;transform:translate3d(0,0,0)}
-.studio-gradient{position:absolute;display:block;pointer-events:none;transform-origin:center;animation-timing-function:ease-in-out;animation-iteration-count:infinite;animation-direction:alternate}
-.studio-gradient-violet{width:min(900px,90vmax);aspect-ratio:1.12;left:42%;top:-35%;background:radial-gradient(ellipse,rgba(var(--mist-violet),var(--mist-violet-alpha)) 0%,rgba(var(--mist-violet),0) 72%);animation-name:studio-mist-violet;animation-duration:27s;animation-delay:-8s}
-.studio-gradient-mint{width:min(820px,86vmax);aspect-ratio:1.1;left:-16%;bottom:-28%;background:radial-gradient(ellipse,rgba(var(--mist-mint),var(--mist-mint-alpha)) 0%,rgba(var(--mist-mint),0) 72%);animation-name:studio-mist-mint;animation-duration:35s;animation-delay:-19s}
-.studio-gradient-rose{width:min(740px,78vmax);aspect-ratio:1.15;left:24%;top:22%;background:radial-gradient(ellipse,rgba(var(--mist-rose),var(--mist-rose-alpha)) 0%,rgba(var(--mist-rose),0) 72%);animation-name:studio-mist-rose;animation-duration:31s;animation-delay:-12s}
-:root[data-theme=light] .studio-atmosphere{--mist-violet:134,94,224;--mist-mint:58,165,143;--mist-rose:193,108,157;--mist-violet-alpha:.13;--mist-mint-alpha:.10;--mist-rose-alpha:.11}
-@keyframes studio-mist-violet{from{transform:translate3d(-5%,3%,0) rotate(-12deg) scale(.95)}to{transform:translate3d(8%,19%,0) rotate(8deg) scale(1.12)}}
-@keyframes studio-mist-mint{from{transform:translate3d(3%,3%,0) rotate(9deg) scale(1.06)}to{transform:translate3d(15%,-12%,0) rotate(-9deg) scale(.96)}}
-@keyframes studio-mist-rose{from{transform:translate3d(7%,-8%,0) rotate(-6deg) scale(.95)}to{transform:translate3d(-9%,6%,0) rotate(14deg) scale(1.10)}}
-.studio-atmosphere[data-paused=true] .studio-gradient{animation-play-state:paused}
-:root[data-motion=reduced] .studio-gradient{animation:none}
-@media(prefers-reduced-motion:reduce){.studio-gradient{animation:none}}
-@media(max-width:600px){.studio-gradient-violet{left:12%;top:-8%}.studio-gradient-mint{left:-65%;bottom:-8%}.studio-gradient-rose{left:-10%;top:32%}}
+.studio-atmosphere{position:fixed;inset:0;z-index:-1;overflow:hidden;contain:strict;pointer-events:none}
 
 /* The original sparse stars, with input-driven scale and a small cached halo. */
 .studio-stars{--star-ink:175,172,200;--star-mint:146,176,172;position:absolute;inset:0;pointer-events:none}

@@ -1,6 +1,6 @@
 #neon-panel{color-scheme:dark;--bg:#081426;--panel:#0c1d34;--ink:#fff4c5;--muted:#a4b6d2;--yellow:#ffe36b;--cyan:#34e3db;--coral:#ff796b;--line:#344d72;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;font-synthesis:none;scroll-behavior:smooth;scroll-padding-top:28px}
 #neon-panel *{box-sizing:border-box}
-#neon-panel{margin:0;color:var(--ink);background:radial-gradient(ellipse at 0 3%,#16334c 0,transparent 36%),var(--bg);line-height:1.65}
+#neon-panel{margin:0;color:var(--ink);background:var(--bg);line-height:1.65}
 #neon-panel:before{content:"";position:absolute;inset:0 0 auto;height:700px;pointer-events:none;background-image:radial-gradient(#47718f55 1px,transparent 1px);background-size:14px 14px;mask-image:linear-gradient(#000,transparent);z-index:-1}
 #neon-panel a{color:inherit;text-underline-offset:4px}
 #neon-panel a:hover{color:var(--yellow)}

@@ -64,7 +64,7 @@ body.product-neon .hero-scene:before{background:linear-gradient(135deg,#65f4df0d
 /* Native demos and store screenshots remain faithful to the actual apps. */
 .native-app{color-scheme:light;--muted:#716f68}
 .native-app.native-neon{color-scheme:dark;--muted:#9ba9c2}
-.page-atmosphere{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden;contain:strict;background:radial-gradient(ellipse at 85% 10%,color-mix(in srgb,var(--glow) 12%,transparent),transparent 55%),radial-gradient(ellipse at 5% 80%,color-mix(in srgb,var(--glow) 7%,transparent),transparent 50%)}
+.page-atmosphere{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden;contain:strict}
 .ambient-motif{position:absolute;left:var(--x);top:var(--y);width:var(--size);height:var(--size);color:var(--accent);opacity:.09;display:grid;place-items:center;font-family:Georgia,'SimSun',serif;font-size:var(--size);line-height:1;animation:world-drift var(--duration) ease-in-out infinite;animation-delay:var(--delay);transform:rotate(var(--angle));user-select:none}
 .ambient-motif svg{width:100%;height:100%;fill:currentColor}
 .product-stories .ambient-motif{font-size:18px;filter:drop-shadow(0 0 7px #efc58088);animation-name:world-firefly;opacity:.25}

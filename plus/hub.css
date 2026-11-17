@@ -30,7 +30,7 @@
 :root[data-app=neon] #hanzi-content,:root[data-app=neon] #stories-panel,:root[data-app=neon] .account-routes,:root[data-app=neon] #mobile-buybar,:root[data-app=neon] .store-footer a[href*="/hanzi-bloom/plus/"]{display:none!important}
 :root[data-app=neon] #neon-panel[hidden]{display:block!important}
 :root[data-app=neon][data-theme]{--theme-bg:#081426;--theme-text:#fff4c5;--theme-muted:#a4b6d2;--theme-accent:#34e3db;--theme-mint:#34e3db;--theme-button:#ffe36b;--theme-on-button:#081426;--theme-surface:#12253c;--theme-line:#344d72}
-.neon-panel{position:relative;margin:24px -24px 0;padding:0 0 32px;background:radial-gradient(ellipse at 0 3%,#16334c 0,transparent 36%),#081426;isolation:isolate;border-radius:24px;overflow:clip}
+.neon-panel{position:relative;margin:24px -24px 0;padding:0 0 32px;background:#081426;isolation:isolate;border-radius:24px;overflow:clip}
 #neon-panel{line-height:1.65;color:#fff4c5}
 #neon-panel h1,#neon-panel h2,#neon-panel h3{font-family:system-ui,-apple-system,'Segoe UI',sans-serif}
 #neon-panel :is(#bundles,#coins,#terms,#contacts){scroll-margin-top:20px}

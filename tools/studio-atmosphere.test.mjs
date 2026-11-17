@@ -60,19 +60,14 @@ function fixture({width=1280,height=844,reduced=false,fine=true,motion,world='st
   };
 }
 
-function translation(node){
-  const numbers=node.style.transform.match(/translate3d\(\s*([\d.e+-]+)px,\s*([\d.e+-]+)px,\s*(?:0|0px)\s*\)/);
-  assert.ok(numbers,'the depth layer has a composited pixel translation');return [+numbers[1],+numbers[2]];
-}
-
 const stars=f=>f.body.querySelectorAll('.studio-star');
 const near=star=>Number(star.style['--star-near']||0);
 function starPosition(f,star){return [parseFloat(star.style.left)/100*f.context.innerWidth,parseFloat(star.style.top)/100*f.context.innerHeight];}
 
-test('the original sparse stars are restored above the three gradients with deterministic finite positions',()=>{
+test('the sparse stars retain deterministic finite positions over a solid background',()=>{
   const f=fixture(),field=f.host().querySelector('.studio-stars'),points=stars(f);assert.ok(field);assert.equal(points.length,88);
-  assert.equal(field.parentElement,f.host());assert.notEqual(field.parentElement,f.depth(),'stars stay outside gradient parallax so input uses viewport positions');
-  assert.equal(f.depth().querySelectorAll('.studio-gradient').length,3);assert.equal(f.frames.size,0);
+  assert.equal(field.parentElement,f.host());assert.equal(f.depth(),null,'the removed gradient parallax layer is not created');
+  assert.equal(f.host().querySelectorAll('.studio-gradient').length,0);assert.equal(f.frames.size,0);
   const positions=points.map(star=>[parseFloat(star.style.left),parseFloat(star.style.top)]);
   assert.equal(new Set(positions.map(value=>value.join(','))).size,88,'the star positions are distinct');
   for(const [x,y]of positions){assert.ok(Number.isFinite(x)&&x>=0&&x<100);assert.ok(Number.isFinite(y)&&y>=0&&y<100);}
@@ -92,13 +87,13 @@ test('nearby stars grow through a coalesced input frame while distant stars stay
   f.root.emit('pointerleave');if(f.frames.size)f.settle();assert.ok(points.every(star=>near(star)===0),'leaving restores every highlighted star');assert.equal(f.layoutReads(),0);
 });
 
-test('star input is still processed at the centered gradient position and after parallax has settled',()=>{
-  const f=fixture();f.move(f.context.innerWidth/2,f.context.innerHeight/2);assert.equal(f.frames.size,1,'star changes are scheduled even if gradient offset stays zero');
+test('star input is processed at the viewport center and stops after one frame',()=>{
+  const f=fixture();f.move(f.context.innerWidth/2,f.context.innerHeight/2);assert.equal(f.frames.size,1,'star changes are coalesced into one input frame');
   f.tick(16.667);assert.ok(stars(f).some(star=>near(star)>0));assert.equal(f.frames.size,0,'the centered input needs only its star update');
   f.root.emit('pointerleave');if(f.frames.size)f.settle();assert.ok(stars(f).every(star=>near(star)===0));
 });
 
-test('pause, resize and capability changes clear star highlights without removing stars or gradients',()=>{
+test('pause, resize and capability changes clear star highlights without removing stars',()=>{
   const cases=[
     f=>{f.document.hidden=true;f.document.emit('visibilitychange');},
     f=>{f.root.dataset.siteScrolling='true';f.emit('raccoon:scrollstate');},
@@ -110,7 +105,7 @@ test('pause, resize and capability changes clear star highlights without removin
   ];
   for(const change of cases){
     const f=fixture(),target=stars(f)[17];f.move(...starPosition(f,target));f.tick(16.667);assert.ok(near(target)>0);
-    change(f);if(f.frames.size)f.settle();assert.ok(stars(f).every(star=>near(star)===0));assert.equal(stars(f).length,88);assert.equal(f.depth().querySelectorAll('.studio-gradient').length,3);assert.equal(f.frames.size,0);
+    change(f);if(f.frames.size)f.settle();assert.ok(stars(f).every(star=>near(star)===0));assert.equal(stars(f).length,88);assert.equal(f.host().querySelectorAll('.studio-gradient').length,0);assert.equal(f.frames.size,0);
   }
   for(const options of [{fine:false},{reduced:true},{motion:'reduced'}]){const f=fixture(options);f.move(...starPosition(f,stars(f)[17]));assert.equal(f.frames.size,0);assert.ok(stars(f).every(star=>near(star)===0));assert.equal(stars(f).length,88);}
   const touch=fixture();touch.move(...starPosition(touch,stars(touch)[17]),'touch');assert.equal(touch.frames.size,0);assert.ok(stars(touch).every(star=>near(star)===0));
@@ -130,22 +125,13 @@ test('star styling grows nearby points with a small local halo while preserving 
   assert.doesNotMatch(source,/createElement\(['"]canvas['"]\)|quadraticCurveTo|\.ellipse\(/,'stars do not restore the removed canvas spirals');
 });
 
-test('the background creates three decorative CSS layers without a canvas or an idle frame',()=>{
-  const f=fixture(),host=f.host(),depth=f.depth();assert.ok(host&&depth);assert.equal(host.getAttribute('aria-hidden'),'true');
-  assert.equal(depth.querySelectorAll('.studio-gradient').length,3);assert.equal(host.querySelectorAll('canvas').length,0);assert.equal(host.querySelectorAll('img').length,0);
+test('the star background mounts once without a canvas or an idle frame',()=>{
+  const f=fixture(),host=f.host();assert.ok(host);assert.equal(host.getAttribute('aria-hidden'),'true');
+  assert.equal(host.querySelectorAll('.studio-gradient').length,0);assert.equal(host.querySelectorAll('canvas').length,0);assert.equal(host.querySelectorAll('img').length,0);
   assert.equal(f.created.filter(node=>node.tagName==='CANVAS').length,0);assert.equal(f.frames.size,0);assert.equal(f.layoutReads(),0);
   const before=f.created.length;f.runAgain();assert.equal(f.created.length,before);assert.equal(f.body.querySelectorAll('.studio-atmosphere').length,1);assert.equal(f.frames.size,0);
 });
 
-test('fine pointer movement is bounded, smooth, passive and stops once settled',()=>{
-  const f=fixture();f.move(1280,844);assert.equal(f.frames.size,1);f.tick(16.667);
-  const first=translation(f.depth());assert.ok(first.some(value=>Math.abs(value)>0),'movement starts toward the pointer');assert.ok(Math.abs(first[0])<12&&Math.abs(first[1])<10,'the first frame eases toward the target');
-  for(let i=0;i<15;i++)f.move(1280,844);assert.equal(f.frames.size,1);f.settle();
-  let [x,y]=translation(f.depth());assert.ok(Math.abs(x)<=12.01&&Math.abs(y)<=10.01);assert.ok(Math.abs(x)>10&&Math.abs(y)>8);
-  f.move(-10000,10000);f.settle();[x,y]=translation(f.depth());assert.ok(Math.abs(x)<=12.01&&Math.abs(y)<=10.01,'out-of-viewport input is clamped');
-  f.root.emit('pointerleave');f.settle();[x,y]=translation(f.depth());assert.ok(Math.abs(x)<.06&&Math.abs(y)<.06,'leaving the page settles at the center');assert.equal(f.layoutReads(),0);
-  for(const listener of f.listeners.filter(listener=>listener.name==='pointermove'))assert.equal(listener.options?.passive,true);
-});
 
 test('touch, coarse pointers and both reduced motion preferences do not start background frames',()=>{
   for(const options of [{fine:false},{reduced:true},{motion:'reduced'}]){const f=fixture(options);f.move();assert.equal(f.frames.size,0);}
@@ -167,11 +153,6 @@ test('hidden, scrolling, blurred and closed pages pause CSS motion and cancel pe
   for(const [pause,resume]of transitions){f.move();assert.equal(f.frames.size,1);pause();assert.equal(f.frames.size,0);assert.equal(f.host().dataset.paused,'true');f.move();assert.equal(f.frames.size,0);resume();assert.equal(f.host().dataset.paused,'false');if(f.frames.size)f.settle();assert.equal(f.frames.size,0);}
 });
 
-test('resize and pointer capability changes recenter without creating background loops',()=>{
-  const f=fixture();f.move();f.tick(16.667);
-  for(let i=0;i<20;i++){f.context.innerWidth=390+i;f.context.innerHeight=844;f.emit('resize');assert.equal(f.frames.size,0);const [x,y]=translation(f.depth());assert.ok(Math.abs(x)<.06&&Math.abs(y)<.06);}
-  f.move(390,844);f.tick(16.667);f.fineMedia.matches=false;f.fineMedia.emit('change');if(f.frames.size)f.settle();assert.equal(f.frames.size,0);const [x,y]=translation(f.depth());assert.ok(Math.abs(x)<.06&&Math.abs(y)<.06);
-});
 
 test('the seven application links, logo pulse and localized button label are preserved',()=>{
   const f=fixture(),satellites=f.visual.querySelector('.studio-satellites'),links=satellites.querySelectorAll('a'),button=f.core.querySelector('button');
@@ -183,19 +164,4 @@ test('the seven application links, logo pulse and localized button label are pre
 
 test('non-studio pages do not create decorative background state',()=>{
   const f=fixture({world:'neon'});assert.equal(f.host(),null);assert.equal(f.frames.size,0);assert.equal(f.created.length,0);
-});
-
-test('gradient motion has bounded layers, static colour fills and CSS pauses without image or blur work',()=>{
-  const atmosphere=css.slice(css.indexOf('.studio-atmosphere{'));assert.ok(atmosphere.length>0);
-  assert.doesNotMatch(atmosphere,/\burl\(|\bfilter\s*:|\bbackdrop-filter\s*:|\bmix-blend-mode\s*:/,'the new background needs no downloaded texture, blur pass or blend layer');
-  for(const name of ['violet','mint','rose']){
-    const rule=atmosphere.match(new RegExp('\\.studio-gradient-'+name+'\\{([^}]+)\\}'))?.[1];assert.ok(rule);
-    const cap=Number(rule.match(/width:min\((\d+)px,/)?.[1]);assert.ok(cap>0&&cap<=900,'gradient textures remain bounded on wide displays');assert.match(rule,/background:radial-gradient\(/);
-    const motion=atmosphere.match(new RegExp('@keyframes studio-mist-'+name+'\\{from\\{([^}]+)\\}to\\{([^}]+)\\}\\}'));assert.ok(motion);
-    for(const frame of motion.slice(1))assert.match(frame,/^transform:[^;{}]+;?$/,'only a composited transform changes each frame');
-  }
-  assert.match(atmosphere,/\[data-paused=true\] \.studio-gradient\{animation-play-state:paused\}/);
-  assert.match(atmosphere,/\[data-motion=reduced\] \.studio-gradient\{animation:none\}/);
-  assert.match(atmosphere,/@media\(prefers-reduced-motion:reduce\)\{\.studio-gradient\{animation:none\}\}/);
-  assert.match(css,/:root\[data-site-world=studio\] body::before,:root\[data-site-world=studio\] body::after\{content:none\}/,'the old full-viewport grid and conic animation are removed');
 });
