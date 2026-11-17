@@ -3,30 +3,31 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {createHash} from 'node:crypto';
 import vm from 'node:vm';
-const source=readFileSync(new URL('../assets/studio-motion.js',import.meta.url),'utf8');
+const source=readFileSync(process.env.STUDIO_MOTION_SOURCE || new URL('../assets/studio-motion.js',import.meta.url),'utf8');
 const digest=commands=>createHash('sha256').update(JSON.stringify(commands)).digest('hex');
-export function starfield(source,{width=390,height=844,reduced=false,theme='dark',countDistances=true}={}){
-  const commands=[],frames=new Map(),timers=new Map(),canvases=[],stats={hypot:0};let serial=0;
-  const events=()=>{const handlers=new Map();return {addEventListener(name,fn){if(!handlers.has(name))handlers.set(name,[]);handlers.get(name).push(fn);},emit(name,data={}){for(const fn of handlers.get(name)||[])fn(data);}};};
+export function starfield(source,{width=390,height=844,reduced=false,fine=false,theme='dark',countDistances=true}={}){
+  const commands=[],frames=new Map(),timers=new Map(),canvases=[],listeners=[],observers=[],stats={hypot:0,gradients:0};let serial=0;
+  const events=()=>{const handlers=new Map();return {addEventListener(name,fn,options){listeners.push({name,options});if(!handlers.has(name))handlers.set(name,[]);handlers.get(name).push(fn);},emit(name,data={}){for(const fn of handlers.get(name)||[])fn(data);}};};
   const element=tag=>({...events(),tag,style:{},dataset:{},children:[],classList:{add(){},remove(){},toggle(){}},firstChild:null,append(...children){this.children.push(...children);},setAttribute(){},removeAttribute(){}});
   const root={...events(),dataset:{siteWorld:'studio',theme},lang:'ru'},visual=element('div'),core=element('div');visual.querySelector=()=>core;
-  const media={...events(),matches:reduced},globalEvents=events();
+  const media={...events(),matches:reduced},fineMedia={...events(),matches:fine},globalEvents=events();
   const document={...events(),documentElement:root,hidden:false,querySelector:selector=>selector==='.visual'?visual:null,querySelectorAll:()=>[],body:{prepend(){}},createElement(tag){
     const node=element(tag);if(tag!=='canvas')return node;
     const id=canvases.length;canvases.push(node);
     for(const key of ['width','height'])Object.defineProperty(node,key,{set:value=>commands.push([id,key,value])});
     const ctx={};for(const key of ['fillStyle','strokeStyle','lineWidth','globalAlpha'])Object.defineProperty(ctx,key,{set:value=>commands.push([id,key,value])});
-    for(const name of ['setTransform','clearRect','fillRect','beginPath','arc','fill','moveTo','lineTo','stroke'])ctx[name]=(...args)=>commands.push([id,name,...args]);
+    for(const name of ['setTransform','clearRect','fillRect','beginPath','arc','fill','moveTo','lineTo','stroke','quadraticCurveTo','ellipse'])ctx[name]=(...args)=>commands.push([id,name,...args]);
     ctx.drawImage=(sprite,...args)=>commands.push([id,'drawImage',canvases.indexOf(sprite),...args]);
-    ctx.createRadialGradient=(...args)=>{commands.push([id,'createRadialGradient',...args]);return {addColorStop:(...args)=>commands.push([id,'addColorStop',...args])};};
+    ctx.createRadialGradient=(...args)=>{stats.gradients++;commands.push([id,'createRadialGradient',...args]);return {addColorStop:(...args)=>commands.push([id,'addColorStop',...args])};};
     node.getContext=()=>ctx;return node;
   }};
   const math=Object.create(Math);math.hypot=(...args)=>{stats.hypot++;return Math.hypot(...args);};
-  class Observer{observe(){}disconnect(){}}
-  const context={document,Math:countDistances?math:Math,IntersectionObserver:Observer,MutationObserver:Observer,matchMedia:()=>media,innerWidth:width,innerHeight:height,devicePixelRatio:2,scrollY:0,
+  class Observer{constructor(callback){this.callback=callback;observers.push(this);}observe(target,options){this.target=target;this.options=options;}disconnect(){}}
+  const context={document,Math:countDistances?math:Math,IntersectionObserver:Observer,MutationObserver:Observer,matchMedia:query=>query.includes('prefers-reduced-motion')?media:fineMedia,innerWidth:width,innerHeight:height,devicePixelRatio:2,scrollY:0,
     addEventListener:globalEvents.addEventListener,requestAnimationFrame:fn=>{frames.set(++serial,fn);return serial;},cancelAnimationFrame:id=>frames.delete(id),setTimeout:fn=>{timers.set(++serial,fn);return serial;},clearTimeout:id=>timers.delete(id)};
   vm.runInNewContext(source,context);
-  return {commands,stats,frames,root,document,media,context,emit:globalEvents.emit,
+  return {commands,stats,frames,root,document,media,fineMedia,canvases,listeners,context,emit:globalEvents.emit,
+    mutate(name){for(const observer of observers)if(observer.target===root&&observer.options?.attributeFilter?.includes(name))observer.callback([{attributeName:name}]);},
     burst(){core.children[0].emit('click');},
     tick(now){assert.ok(frames.size>0,'a frame is scheduled');const jobs=[...frames.values()];frames.clear();for(const fn of jobs)fn(now);},
     take(){const result={hash:digest(commands),commands:commands.length,hypot:stats.hypot};commands.length=0;stats.hypot=0;return result;}};
@@ -74,4 +75,57 @@ test('repeated viewport changes keep one frame and release it on hide, reduced m
   f.media.matches=false;f.media.emit('change');assert.equal(f.frames.size,1);
   f.emit('pagehide');f.emit('resize');assert.equal(f.frames.size,0);
   f.emit('pageshow');assert.equal(f.frames.size,1);
+});
+
+const curves=f=>f.commands.filter(command=>command[1]==='quadraticCurveTo');
+const waves=f=>f.commands.filter(command=>command[1]==='ellipse');
+const move=(f,x=620,y=350,type='mouse')=>f.document.emit('pointermove',{clientX:x,clientY:y,pointerType:type});
+const click=(f,x=620,y=350,type='mouse')=>f.document.emit('pointerdown',{clientX:x,clientY:y,pointerType:type});
+
+test('fine pointers create local curves and at most two short click waves',()=>{
+  const f=starfield(source,{width:1280,fine:true});f.take();move(f);for(let i=0;i<120;i++)click(f);
+  assert.equal(f.frames.size,1,'input shares the existing background loop');f.tick(34);
+  const ribbons=curves(f),ripples=waves(f);assert.ok(ribbons.length>0&&ribbons.length<=32);assert.ok(ripples.length>0&&ripples.length<=2);
+  for(const command of ribbons)for(let i=2;i<command.length;i+=2){assert.ok(Math.abs(command[i]-620)<=100);assert.ok(Math.abs(command[i+1]-350)<=65);}
+  for(const command of ripples){assert.equal(command[2],620);assert.equal(command[3],350);assert.ok(command[4]<=120&&command[5]<=70);}
+  for(const command of f.commands)for(const value of command.slice(2))if(typeof value==='number')assert.ok(Number.isFinite(value));
+  for(const listener of f.listeners.filter(listener=>['pointermove','pointerdown'].includes(listener.name)))assert.equal(listener.options?.passive,true);
+});
+
+test('pointer effects fade after inactivity and reuse the original cached glow canvases',()=>{
+  const f=starfield(source,{width:1280,fine:true});f.take();const allocated=f.canvases.length,gradients=f.stats.gradients;
+  for(let i=1;i<=100;i++){move(f,600+Math.sin(i)*50,350+Math.cos(i)*30);click(f);f.tick(i*34);assert.ok(waves(f).length<=2);f.take();}
+  assert.equal(f.canvases.length,allocated);assert.equal(f.stats.gradients,gradients,'no per-frame gradients');
+  for(let i=101;i<=160;i++){f.tick(i*34);if(i<160)f.take();}
+  assert.equal(curves(f).length,0,'resting pointer no longer renders ribbons');assert.equal(waves(f).length,0,'click waves expire');
+  assert.equal(f.frames.size,1,'the unchanged ambient background retains its single loop');
+});
+
+test('coarse and touch input do not create the extra pointer field; reduced motion remains static',()=>{
+  for(const options of [{fine:false},{fine:true}]){
+    const f=starfield(source,options);f.take();const type=options.fine?'touch':'mouse';move(f,200,250,type);click(f,200,250,type);f.tick(34);
+    assert.equal(curves(f).length,0);assert.equal(waves(f).length,0);
+  }
+  const f=starfield(source,{fine:true,reduced:true});f.take();move(f);click(f);assert.equal(f.frames.size,0);assert.equal(f.commands.length,0);
+});
+
+test('blur, scrolling, hiding and navigation clear live effects and never duplicate a frame',()=>{
+  for(const [pause,resume]of [
+    [f=>f.emit('blur'),f=>f.emit('focus')],
+    [f=>{f.root.dataset.siteScrolling='true';f.emit('raccoon:scrollstate');},f=>{delete f.root.dataset.siteScrolling;f.emit('raccoon:scrollstate');}],
+    [f=>{f.document.hidden=true;f.document.emit('visibilitychange');},f=>{f.document.hidden=false;f.document.emit('visibilitychange');}],
+    [f=>f.emit('pagehide'),f=>f.emit('pageshow')]
+  ]){
+    const f=starfield(source,{fine:true});f.take();move(f);click(f);f.tick(34);assert.ok(curves(f).length);f.take();
+    pause(f);assert.equal(f.frames.size,0);move(f);click(f);assert.equal(f.frames.size,0);
+    resume(f);assert.equal(f.frames.size,1);f.tick(68);assert.equal(curves(f).length,0);assert.equal(waves(f).length,0);
+    for(let i=0;i<8;i++){f.emit('resize');assert.equal(f.frames.size,1);}
+  }
+});
+
+test('motion override and pointer capability changes clear the active field',()=>{
+  const f=starfield(source,{fine:true});f.take();move(f);click(f);f.tick(34);assert.ok(curves(f).length);f.take();
+  f.root.dataset.motion='reduced';f.mutate('data-motion');assert.equal(f.frames.size,0);assert.equal(curves(f).length,0);assert.equal(waves(f).length,0);
+  f.take();delete f.root.dataset.motion;f.mutate('data-motion');assert.equal(f.frames.size,1);f.take();move(f);f.tick(68);assert.ok(curves(f).length);f.take();
+  f.fineMedia.matches=false;f.fineMedia.emit('change');f.tick(102);assert.equal(curves(f).length,0);assert.equal(waves(f).length,0);
 });

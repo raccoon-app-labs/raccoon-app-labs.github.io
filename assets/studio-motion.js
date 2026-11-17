@@ -1,6 +1,7 @@
 (() => {
   'use strict';
   const root=document.documentElement;if(root.dataset.siteWorld!=='studio')return;
+  const fine=matchMedia('(hover: hover) and (pointer: fine)'),quiet=()=>reduced.matches||root.dataset.motion==='reduced';
   const reduced=matchMedia('(prefers-reduced-motion: reduce)'),visual=document.querySelector('.visual'),core=visual?.querySelector('.core');
   const worlds=[['stories','magical-stories'],['keys','hanzi-keys'],['bloom','hanzi-bloom'],['muropolis','muropolis'],['neon','neon-cyber-wall-kicker'],['food','what-to-eat'],['dokupit','dokupit']];
   if(core){
@@ -25,7 +26,11 @@
   const sections=[...document.querySelectorAll('.showcase,.values,.project-pages')];sections.forEach(n=>n.classList.add('studio-section'));
   const reveal=new IntersectionObserver(entries=>{for(const entry of entries)entry.target.classList.toggle('is-awake',entry.isIntersecting);},{threshold:.12});sections.forEach(n=>reveal.observe(n));
   const canvas=document.createElement('canvas');canvas.className='studio-field';canvas.setAttribute('aria-hidden','true');document.body.prepend(canvas);const ctx=canvas.getContext('2d');if(!ctx)return;
-  let width=1,height=1,frame=0,last=0,time=0,burst=0,closed=false,pointer={x:-1000,y:-1000},scrollOffset=0;
+  let width=1,height=1,frame=0,last=0,time=0,burst=0,closed=false,focused=true,pointer={x:-1000,y:-1000,fx:0,fy:0,energy:0,active:false},scrollOffset=0;
+  const ripples=Array.from({length:2},()=>({x:0,y:0,life:0}));let rippleIndex=0;
+  const ribbons=[new Float64Array(24),new Float64Array(24)];
+  const pointerColors={light:['113,66,166','29,126,119'],dark:['189,161,255','115,239,211']};
+  function clearInteraction(){pointer.active=false;pointer.energy=0;for(const ripple of ripples)ripple.life=0;}
   const stars=Array.from({length:88},(_,i)=>({x:((i*137.51)%997)/997,y:((i*253.79)%991)/991,phase:i*2.399,accent:i%12===0,size:i%12===0?1.45:.75+(i%3)*.14}));
   const points=stars.map(s=>({x:0,y:0,baseX:0,baseY:0,s}));
   const lightColors=['111,99,142','87,123,117'],darkColors=['175,172,200','146,176,172'];
@@ -44,18 +49,25 @@
   }
   function size(){
     // This immediate resize paint replaces, rather than duplicates, our queued frame.
-    cancelAnimationFrame(frame);frame=0;width=innerWidth;height=innerHeight;
+    cancelAnimationFrame(frame);frame=0;clearInteraction();width=innerWidth;height=innerHeight;
     for(const p of points){p.baseX=p.s.x*width;p.baseY=p.s.y*height;}
     const dpr=Math.min(devicePixelRatio||1,1.5);canvas.width=width*dpr;canvas.height=height*dpr;ctx.setTransform(dpr,0,0,dpr,0,0);draw(0);
   }
-  function schedule(){if(!frame&&!closed&&!document.hidden&&!root.dataset.siteScrolling&&!reduced.matches)frame=requestAnimationFrame(draw);}
+  function schedule(){if(!frame&&!closed&&!document.hidden&&!root.dataset.siteScrolling&&focused&&!quiet())frame=requestAnimationFrame(draw);}
   function draw(now){
-    frame=0;if(closed||document.hidden||root.dataset.siteScrolling)return;
-    if(now && now-last<32){schedule();return;}last=now;time+=reduced.matches?0:.012;burst*=.94;ctx.clearRect(0,0,width,height);
+    frame=0;if(closed||!focused||document.hidden||root.dataset.siteScrolling)return;
+    if(now && now-last<32){schedule();return;}const dt=now&&last?Math.min((now-last)/1000,.05):now?1/30:0;last=now;time+=quiet()?0:.012;
+    pointer.energy=Math.max(0,pointer.energy-dt*1.15);
+    if(pointer.active){const follow=1-Math.exp(-dt*14);pointer.fx+=(pointer.x-pointer.fx)*follow;pointer.fy+=(pointer.y-pointer.fy)*follow;}
+    burst*=.94;ctx.clearRect(0,0,width,height);
     scrollOffset+=(scrollY*.025-scrollOffset)*.1;
     const palette=colors(),glow=glowSprites(palette),scroll=scrollOffset,sweepX=(time*.1)%1.4-.2;
     for(let i=0;i<points.length;i++){
       const p=points[i];p.x=p.baseX+Math.sin(time*.18+p.s.phase)*10;p.y=(p.baseY+scroll*(i%2?1:-1)+height*20)%height;
+      if(pointer.energy>0&&!quiet()){
+        const dx=p.x-pointer.fx,dy=p.y-pointer.fy,d2=dx*dx+dy*dy;
+        if(d2<32400){const force=(1-d2/32400)*pointer.energy;p.x+=(-dy*.22-dx*.1)*force;p.y+=(dx*.22-dy*.1)*force;}
+      }
     }
     for(let i=0;i<points.length;i++){
       const p=points[i],pointerX=p.x-pointer.x,pointerY=p.y-pointer.y;
@@ -85,11 +97,54 @@
       ctx.strokeStyle=`rgba(${palette[i%2]},.075)`;ctx.lineWidth=1;ctx.beginPath();
       for(let y=-30;y<height+30;y+=12){const x=width*(.16+i*.34)+Math.sin(y/260+time*.15+i*2+scroll*.003)*width*.12;y===-30?ctx.moveTo(x,y):ctx.lineTo(x,y);}ctx.stroke();
     }
+    drawInteraction(palette,glow,dt);
     schedule();
   }
-  document.addEventListener('pointermove',e=>{pointer.x=e.clientX;pointer.y=e.clientY;},{passive:true});root.addEventListener('pointerleave',()=>{pointer.x=-1000;pointer.y=-1000;});
-  addEventListener('resize',size,{passive:true});addEventListener('scroll',()=>{if(reduced.matches)draw(0);},{passive:true});
-  function activity(){if(document.hidden || root.dataset.siteScrolling){cancelAnimationFrame(frame);frame=0;}else{last=0;schedule();}}
+  function drawInteraction(palette,glow,dt){
+    if(quiet()||!fine.matches)return;
+    const energy=pointer.energy,ink=root.dataset.theme==='light'?pointerColors.light:pointerColors.dark;
+    if(energy>.01){
+      // Two open spiral ribbons: a small magnetic eddy, never a full-screen layer.
+      for(let arm=0;arm<2;arm++){
+        let previousX=0,previousY=0;ctx.beginPath();
+        for(let step=0;step<12;step++){
+          const angle=time*2.8+step*.38+arm*Math.PI,radius=14+step*7;
+          const x=pointer.fx+Math.cos(angle)*radius,y=pointer.fy+Math.sin(angle)*radius*.6;
+          ribbons[arm][step*2]=x;ribbons[arm][step*2+1]=y;
+          if(!step)ctx.moveTo(x,y);else ctx.quadraticCurveTo(previousX,previousY,(previousX+x)*.5,(previousY+y)*.5);
+          previousX=x;previousY=y;
+        }
+        ctx.strokeStyle='rgba('+ink[arm]+','+(energy*.48)+')';ctx.lineWidth=.85;ctx.stroke();
+        for(let step=2;step<12;step+=3){
+          const x=ribbons[arm][step*2],y=ribbons[arm][step*2+1],halo=6+step*.3;
+          ctx.globalAlpha=energy*.55;ctx.drawImage(glow[arm],x-halo,y-halo,halo*2,halo*2);ctx.globalAlpha=1;
+          ctx.fillStyle='rgba('+ink[arm]+','+(energy*.8)+')';ctx.beginPath();ctx.arc(x,y,step%2?1.1:1.6,0,Math.PI*2);ctx.fill();
+        }
+      }
+    }
+    for(const ripple of ripples){
+      if(ripple.life<=0)continue;ripple.life=Math.max(0,ripple.life-dt*1.3);const age=1-ripple.life;
+      ctx.strokeStyle='rgba('+ink[1]+','+(ripple.life*.36)+')';ctx.lineWidth=.75;
+      ctx.beginPath();ctx.ellipse(ripple.x,ripple.y,9+age*109,5+age*62,-.45,0,Math.PI*2);ctx.stroke();
+    }
+  }
+  document.addEventListener('pointermove',e=>{
+    if(e.pointerType==='touch')return;pointer.x=e.clientX;pointer.y=e.clientY;
+    if(!fine.matches||quiet()||closed||!focused||document.hidden||root.dataset.siteScrolling)return;
+    if(!pointer.active||pointer.energy<=.01){pointer.fx=pointer.x;pointer.fy=pointer.y;}
+    pointer.active=true;pointer.energy=1;schedule();
+  },{passive:true});
+  document.addEventListener('pointerdown',e=>{
+    if(e.pointerType==='touch'||!fine.matches||quiet()||closed||!focused||document.hidden||root.dataset.siteScrolling)return;
+    const ripple=ripples[rippleIndex++%ripples.length];ripple.x=e.clientX;ripple.y=e.clientY;ripple.life=1;schedule();
+  },{passive:true});
+  root.addEventListener('pointerleave',()=>{pointer.x=pointer.y=-1000;clearInteraction();});
+  addEventListener('resize',size,{passive:true});addEventListener('scroll',()=>{if(quiet())draw(0);},{passive:true});
+  function activity(){clearInteraction();if(closed||!focused||document.hidden||root.dataset.siteScrolling){cancelAnimationFrame(frame);frame=0;}else{last=0;schedule();}}
   document.addEventListener('visibilitychange',activity);addEventListener('raccoon:scrollstate',activity);
-  reduced.addEventListener('change',()=>{cancelAnimationFrame(frame);frame=0;draw(0);});addEventListener('pagehide',()=>{closed=true;cancelAnimationFrame(frame);frame=0;});addEventListener('pageshow',()=>{closed=false;schedule();});size();
+  reduced.addEventListener('change',()=>{clearInteraction();cancelAnimationFrame(frame);frame=0;draw(0);});
+  fine.addEventListener('change',clearInteraction);
+  new MutationObserver(()=>{clearInteraction();cancelAnimationFrame(frame);frame=0;draw(0);}).observe(root,{attributes:true,attributeFilter:['data-motion']});
+  addEventListener('blur',()=>{focused=false;activity();});addEventListener('focus',()=>{focused=true;activity();});
+  addEventListener('pagehide',()=>{closed=true;activity();});addEventListener('pageshow',()=>{closed=false;activity();});size();
 })();
